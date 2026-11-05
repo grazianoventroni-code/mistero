@@ -139,11 +139,11 @@ function audioInit(){
   AU.fireG=c.createGain();AU.fireG.gain.value=0;fs.connect(fb);fb.connect(AU.fireG);AU.fireG.connect(AU.master);fs.start();
   loadAudioFiles();
 }
-/* temporale e tuoni dai file della cartella `suoni` (audio/temporale.flac in loop, audio/tuoni.mp3); se non si caricano resta il suono sintetico */
+/* temporale e tuoni dai file della cartella `suoni` (audio/temporale.wav in loop (da suoni/temporale: mono 22 kHz, giunzione del loop sfumata), audio/tuoni.mp3); se non si caricano resta il suono sintetico */
 function loadAudioFiles(){
   const c=AU.ctx;if(!c||AU.filesReq)return;AU.filesReq=true;
   const get=(u,fn)=>fetch(u).then(r=>r.arrayBuffer()).then(ab=>new Promise((ok,ko)=>c.decodeAudioData(ab,ok,ko))).then(fn).catch(()=>{});
-  get('audio/temporale.flac',b=>{
+  get('audio/temporale.wav',b=>{
     const s=c.createBufferSource();s.buffer=b;s.loop=true;
     AU.rainFLP=c.createBiquadFilter();AU.rainFLP.type='lowpass';AU.rainFLP.frequency.value=9000;
     AU.rainFG=c.createGain();AU.rainFG.gain.value=0;
@@ -152,7 +152,7 @@ function loadAudioFiles(){
   get('audio/tuoni.mp3',b=>{AU.thBuf=b})}
 function setRain(l,ind){if(!AU.ctx)return;AU.rl=l;AU.rind=ind;const t=AU.ctx.currentTime;
   AU.rainG.gain.setTargetAtTime(AU.rainFReady?0:l*(ind?.12:.3),t,.4);AU.rainLP.frequency.setTargetAtTime(ind?650:7000,t,.3);
-  if(AU.rainFReady){AU.rainFG.gain.setTargetAtTime(l*(ind?1.1:3.2),t,.4);AU.rainFLP.frequency.setTargetAtTime(ind?850:9000,t,.3)}}
+  if(AU.rainFReady){AU.rainFG.gain.setTargetAtTime(l*(ind?.6:1.7),t,.4);AU.rainFLP.frequency.setTargetAtTime(ind?850:9000,t,.3)}}
 function setEng(v,on){if(!AU.ctx)return;const t=AU.ctx.currentTime;AU.engG.gain.setTargetAtTime(on?.04+.03*v:0,t,.3);AU.engO.frequency.setTargetAtTime(36+v*30,t,.3)}
 function setFire(k){if(!AU.ctx)return;AU.fireG.gain.setTargetAtTime(k*(.015+.05*Math.random()),AU.ctx.currentTime,.05)}
 const TH_SEG=[[.15,6.6],[10.5,17.2],[24.1,34.6]];let thLast=-1;
