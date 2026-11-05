@@ -23,6 +23,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:#000;color:#d8cfb0;fon
 #side{min-height:0;width:var(--sw);display:flex;flex-direction:column;align-items:center;gap:8px;padding:4px 0 4px 6px}
 canvas{position:absolute;inset:0;width:100%;height:100%;display:block;object-fit:contain;image-rendering:pixelated;image-rendering:crisp-edges;touch-action:none}
 #hint{position:absolute;left:0;right:0;bottom:3%;text-align:center;pointer-events:none;visibility:hidden;font-family:Verdana,'Trebuchet MS','DejaVu Sans',Arial,sans-serif;font-weight:800;text-transform:uppercase;letter-spacing:.06em;font-size:clamp(10px,3vh,14px);color:#b8bccb;text-shadow:0 0 4px #000,0 1px 0 #000}
+#ios{position:absolute;left:6%;right:6%;bottom:11%;text-align:center;pointer-events:none;display:none;font-family:Verdana,'Trebuchet MS',Arial,sans-serif;font-weight:800;text-transform:uppercase;letter-spacing:.04em;font-size:clamp(9px,2.6vh,12px);color:#8a90a8;line-height:1.3}
 #ver{position:absolute;left:6px;bottom:2px;font:10px Verdana,sans-serif;color:#5a6070;pointer-events:none;opacity:.7}
 #crt{position:absolute;inset:0;pointer-events:none;
  background:repeating-linear-gradient(to bottom,rgba(0,0,0,0) 0,rgba(0,0,0,0) 2px,rgba(0,0,0,.13) 3px),
@@ -56,7 +57,8 @@ button:active{background:#1a2438;transform:translate(1px,1px)}
       <canvas id="c"></canvas>
       <div id="crt"></div>
       <div id="hint"></div>
-      <div id="ver">v. 6 nov 00:10</div>
+      <div id="ios">PER LO SCHERMO INTERO: TOCCA CONDIVIDI, POI «AGGIUNGI ALLA SCHERMATA HOME»</div>
+      <div id="ver">v. 6 nov 01:00</div>
       <div id="menu"></div>
     </div>
     <div id="dlg"><p id="txt"></p></div>
@@ -119,6 +121,12 @@ const txtW=(s,sc=1)=>s.length*4*sc-sc;
 
 /* ================= audio ================= */
 const AU={ctx:null,muted:false};
+/* schermo intero: Safari su iPhone non lo permette per le pagine web (solo con l'icona sulla Home); altrove lo si chiede al primo tocco */
+function goFull(){
+  try{const el=document.documentElement,rf=el.requestFullscreen||el.webkitRequestFullscreen;
+    if(rf&&!document.fullscreenElement&&!document.webkitFullscreenElement&&!navigator.standalone){const pr=rf.call(el);if(pr&&pr.catch)pr.catch(()=>{});
+      if(screen.orientation&&screen.orientation.lock)screen.orientation.lock('landscape').catch(()=>{})}}catch(e){}}
+const IS_IOS=/iPhone|iPad|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
 function audioInit(){
   if(AU.ctx){if(AU.ctx.state==='suspended')AU.ctx.resume();loadAudioFiles();return}
   const C=window.AudioContext||window.webkitAudioContext;if(!C)return;
@@ -477,7 +485,7 @@ const drive={T:0,fired:{},cap:0,
   /* arrivo: l'auto si ferma, il protagonista apre il vano portaoggetti (a destra dell'autoradio): dentro, con una lucina, i fiammiferi */
   glovePhase(T){
     if(S.inv.includes('matches')||this.gDone){this.finish();return}
-    if(!this.gT){this.gT=T;say("Siamo arrivati. Spengo il motore. La casetta è lì davanti.");setEng(0,false)}
+    if(!this.gT){this.gT=T;say("Meglio mettermi al riparo.");setEng(0,false)}
     if(!this.gOpen&&T>this.gT+2.6){this.gOpen=T;sfx.take();say("Apro il vano portaoggetti, accanto alla radio. Si accende una lucina: dentro, la scatola dei fiammiferi.")}
     if(this.gOpen&&!this.gTaken&&T>this.gOpen+9&&!this.gHint)this.gHint=T},
   down(x,y){
@@ -1122,12 +1130,16 @@ const inside={idle:0,matchT:-1,timers:[],hintUntil:0,ph:0,doorOpen:0,
     say("Il fuoco prende. Piano piano il gelo arretra e la stanza prende forma.");
     this.timers.push(setTimeout(()=>{if(cur===inside)say("Ora posso guardarmi intorno con calma.")},6500))},
   hint(){this.hintUntil=NOW+3;say("Tocca gli oggetti per raccoglierli: finiscono nell'inventario in basso. Poi trascinali da lì su ciò che vuoi usare.")},
-  hintTargets(id){if(id==='log'||id==='matches')return [HS.stove];if(id==='candle'&&S.candleLit)return [HS.door];return []},
+  hintTargets(id){if(id==='matches')return this.candleOnTable()&&!S.candleLit?[HS.stove,HS.candle]:[HS.stove];if(id==='log')return [HS.stove];if(id==='candle'&&S.candleLit)return [HS.door];return []},
   candleOnTable(){return !S.candleBath&&!S.inv.includes('candle')},
   down(x,y){this.idle=0;if(fade.a>.3||this.matchT>=0)return;this.click(x,y)},
   /* un oggetto dell'inventario viene lasciato sulla scena */
   dropItem(id,x,y){this.idle=0;if(this.matchT>=0)return;
     const onStove=inZone(HS.stove,x,y,6);
+    if(id==='matches'&&this.candleOnTable()&&!onStove&&inZone(HS.candle,x,y,8)){
+      if(S.candleLit)return say("La candela è già accesa.");
+      S.candleLit=true;save();refreshInv();sfx.scratch();setTimeout(sfx.whoosh,250);
+      say("Striscio un fiammifero e lo avvicino allo stoppino. La candela si accende: una luce piccola, ma ferma. I fiammiferi li tengo.");return}
     if(id==='log'){
       if(!onStove){sfx.no();return}
       if(S.stove.lit)return say("Il fuoco è già acceso: meglio non soffocarlo.");
@@ -1153,7 +1165,7 @@ const inside={idle:0,matchT:-1,timers:[],hintUntil:0,ph:0,doorOpen:0,
   openDoor(){if(this.doorOpen)return;this.doorOpen=NOW;sfx.door();say("Apro la porta del bagno.");setTimeout(()=>{if(cur===inside)goScene('bagno',1.7)},700)},
   click(x,y){
     for(const k of ['candle','comic','books','tome','shelf','wood','stove','win','lantern','door','rwin','rpic','sofa','table','chair']){if(inR(HS[k],x,y)){
-      if(k==='candle'){if(!this.candleOnTable())continue;giveItem('candle');say("Prendo la candela, spenta, e la metto nell'inventario.");return}
+      if(k==='candle'){if(!this.candleOnTable())continue;giveItem('candle');say(S.candleLit?"Prendo la candela accesa: la fiamma è piccola ma ferma. La metto nell'inventario.":"Prendo la candela, spenta, e la metto nell'inventario.");return}
       if(k==='match'){if(S.inv.includes('matches'))continue;giveItem('matches');say("Prendo i fiammiferi. Finiscono nell'inventario: mi serviranno più di una volta.");return}
       if(k==='comic'){openCU('comic');return}
       if(k==='tome'){if(S.inv.includes('book'))continue;giveItem('book');openCU('book');return}
@@ -1285,7 +1297,7 @@ const inside={idle:0,matchT:-1,timers:[],hintUntil:0,ph:0,doorOpen:0,
     if(this.doorOpen&&NOW-this.doorOpen>.12){R(17,29,18,78,'#06080c');R(17,29,2,78,'#2a1d14')}
     const matchOnShelf=false;   // i fiammiferi sono nel vano portaoggetti dell'auto
     if(S.logsLeft>0){ell(96,101,20,2,'#0c0604',.4);for(const [x,y,f] of PILE.slice(0,S.logsLeft))drawLog(x,y,f,false)}
-    if(this.candleOnTable())sprS('candle_unlit_mid',83,60,.7);
+    if(this.candleOnTable()){if(S.candleLit)sprS('candle_lit',82,56.5,.7);else sprS('candle_unlit_mid',83,60,.7)}
     if(matchOnShelf)matchbox(MBX,MBY,(Math.floor(T*1.3+1.5)%5===0&&!lit)?.5:0);
     if(!S.inv.includes('book')){   // il libro antico: una costola blu piu' luminosa tra gli altri libri
       const gl=.5+.5*Math.sin(NOW*3);R(176,59,5,11,'#1c3f9a');R(176,59,1,11,'#5a86e8');R(177,59,2,11,'#3a66d0');R(180,59,1,11,'#12286a');
@@ -1298,13 +1310,14 @@ const inside={idle:0,matchT:-1,timers:[],hintUntil:0,ph:0,doorOpen:0,
     const amb=mx(mx(cur===sogno?'#6a7694':'#1b2134','#d0c0b0',k),'#e8f0ff',fl*.9);   // al buio: solo i lampi illuminano la stanza
     lg.fillStyle=rgb(amb);lg.fillRect(0,0,W,H);
     lg.globalCompositeOperation='lighter';
+    if(this.candleOnTable()&&S.candleLit){const fc=1+.07*Math.sin(T*13)+.05*Math.sin(T*23+2);for(let i=0;i<6;i++)disc(86,58,Math.round((5+i*7)*fc),'#ffb464',.07,lg)}
     if(k>0){const fk=1+.08*Math.sin(T*17)+.05*Math.sin(T*29+1);for(let i=0;i<8;i++)disc(143,82,Math.round((10+i*14)*fk),'#ff9a50',.07*k,lg)}
     if(this.matchT>=0){const a=NOW-this.matchT;for(let i=0;i<4;i++)disc(143,82,8+i*8,'#ffc070',.05*sm(a/.6),lg)}
     if(fl>0)for(let i=0;i<7;i++){disc(87,50,12+i*16,'#8aa6e0',.08*fl,lg);disc(212,48,10+i*14,'#8aa6e0',.07*fl,lg)}
     lg.globalAlpha=1;
     g.globalCompositeOperation='multiply';g.drawImage(lc,0,0);g.globalCompositeOperation='source-over';
     // oggetti da raccogliere leggermente in rilievo
-    if(this.candleOnTable()){g.globalAlpha=.4;sprS('candle_unlit_mid',83,60,.7);g.globalAlpha=1}
+    if(S.logsLeft>0&&!lit){g.globalAlpha=.14;for(const [x,y,f] of PILE.slice(0,S.logsLeft))drawLog(x,y,f,false);g.globalAlpha=1}   // la legna emerge appena dal buio
     if(matchOnShelf)matchbox(MBX,MBY,0);
 
     // ---- emissivi ----
@@ -1450,16 +1463,16 @@ const bagno={hintUntil:0,
 /* ================================================================
    SCHERMATA INIZIALE (nero)
    ================================================================ */
-const start={enter(){S.scene='start';stormReset();document.getElementById('bHint').style.display='none';
+const start={enter(){S.scene='start';{const io=document.getElementById('ios');if(io)io.style.display=(IS_IOS&&!navigator.standalone)?'block':'none'}stormReset();document.getElementById('bHint').style.display='none';
     const sv=loadSave(),m=document.getElementById('menu');
     if(sv&&(sv.scene==='outside'||sv.scene==='inside')){
       m.innerHTML='<button id="mC">Continua</button><button id="mN">Nuova partita</button>';m.style.display='flex';
-      document.getElementById('mC').onclick=e=>{e.stopPropagation();audioInit();m.style.display='none';loadState(sv);if(sv.stove.lit)S.stove.litAt=NOW-100;goScene(sv.scene,1.4)};
-      document.getElementById('mN').onclick=e=>{e.stopPropagation();audioInit();clearSave();resetState();m.style.display='none';goScene('drive',1.4)};
+      document.getElementById('mC').onclick=e=>{e.stopPropagation();audioInit();goFull();m.style.display='none';loadState(sv);if(sv.stove.lit)S.stove.litAt=NOW-100;goScene(sv.scene,1.4)};
+      document.getElementById('mN').onclick=e=>{e.stopPropagation();audioInit();goFull();clearSave();resetState();m.style.display='none';goScene('drive',1.4)};
     }else m.style.display='none';
     this.hasSave=!!(sv&&(sv.scene==='outside'||sv.scene==='inside'));say('')},
   update(){},
-  down(){if(this.hasSave||fade.a>.3)return;audioInit();goScene('drive',1.2)},
+  down(){if(this.hasSave||fade.a>.3)return;audioInit();goFull();goScene('drive',1.2)},
   diag(){const pr=document.getElementById('probe'),cs=getComputedStyle(pr),wr=document.getElementById('wrap').getBoundingClientRect(),vv=window.visualViewport;
     const n=v=>Math.round(parseFloat(v)||0);
     return ['FINESTRA '+innerWidth+'X'+innerHeight+' VV '+Math.round(vv?vv.width:0)+'X'+Math.round(vv?vv.height:0)+' Y'+Math.round(vv?vv.offsetTop:0),
@@ -1647,7 +1660,7 @@ function thunderSoft(){if(AU.ctx)nburst(90,1,1.6,.09,'lowpass')}
 function startDream(){if(S.dreamSeen||cur!==inside)return;fadeTo(1,1.3,()=>{setScene('sogno');fadeTo(0,1.3)})}
 const scenes={start,drive,outside,inside,bagno,sogno};
 let cur=start;
-function setScene(n){cur=scenes[n];setHint('');const ve=document.getElementById('ver');if(ve)ve.style.display=n==='start'?'':'none';cur.enter();refreshInv()}
+function setScene(n){cur=scenes[n];setHint('');const ve=document.getElementById('ver');if(ve)ve.style.display=n==='start'?'':'none';const io=document.getElementById('ios');if(io)io.style.display=(n==='start'&&IS_IOS&&!navigator.standalone)?'block':'none';cur.enter();refreshInv()}
 let lastWR='';
 function frame(ms){const t=ms/1000;
   {const b=document.getElementById('wrap').getBoundingClientRect(),k=Math.round(b.width)+'x'+Math.round(b.height);if(k!==lastWR){lastWR=k;resizeDisplay()}}
