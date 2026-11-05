@@ -120,7 +120,7 @@ const txtW=(s,sc=1)=>s.length*4*sc-sc;
 /* ================= audio ================= */
 const AU={ctx:null,muted:false};
 function audioInit(){
-  if(AU.ctx){if(AU.ctx.state==='suspended')AU.ctx.resume();return}
+  if(AU.ctx){if(AU.ctx.state==='suspended')AU.ctx.resume();loadAudioFiles();return}
   const C=window.AudioContext||window.webkitAudioContext;if(!C)return;
   const c=AU.ctx=new C();
   const n=c.sampleRate*2,buf=c.createBuffer(1,n,c.sampleRate),d=buf.getChannelData(0);
@@ -137,11 +137,33 @@ function audioInit(){
   o.connect(lp);lp.connect(AU.engG);AU.engG.connect(AU.master);o.start();
   const fs=loopNoise(),fb=c.createBiquadFilter();fb.type='bandpass';fb.frequency.value=700;fb.Q.value=.5;
   AU.fireG=c.createGain();AU.fireG.gain.value=0;fs.connect(fb);fb.connect(AU.fireG);AU.fireG.connect(AU.master);fs.start();
+  loadAudioFiles();
 }
-function setRain(l,ind){if(!AU.ctx)return;const t=AU.ctx.currentTime;AU.rainG.gain.setTargetAtTime(l*(ind?.12:.3),t,.4);AU.rainLP.frequency.setTargetAtTime(ind?650:7000,t,.3)}
+/* temporale e tuoni dai file della cartella `suoni` (audio/temporale.flac in loop, audio/tuoni.mp3); se non si caricano resta il suono sintetico */
+function loadAudioFiles(){
+  const c=AU.ctx;if(!c||AU.filesReq)return;AU.filesReq=true;
+  const get=(u,fn)=>fetch(u).then(r=>r.arrayBuffer()).then(ab=>new Promise((ok,ko)=>c.decodeAudioData(ab,ok,ko))).then(fn).catch(()=>{});
+  get('audio/temporale.flac',b=>{
+    const s=c.createBufferSource();s.buffer=b;s.loop=true;
+    AU.rainFLP=c.createBiquadFilter();AU.rainFLP.type='lowpass';AU.rainFLP.frequency.value=9000;
+    AU.rainFG=c.createGain();AU.rainFG.gain.value=0;
+    s.connect(AU.rainFLP);AU.rainFLP.connect(AU.rainFG);AU.rainFG.connect(AU.master);s.start(0,Math.random()*30);
+    AU.rainFReady=true;setRain(AU.rl||0,!!AU.rind)});
+  get('audio/tuoni.mp3',b=>{AU.thBuf=b})}
+function setRain(l,ind){if(!AU.ctx)return;AU.rl=l;AU.rind=ind;const t=AU.ctx.currentTime;
+  AU.rainG.gain.setTargetAtTime(AU.rainFReady?0:l*(ind?.12:.3),t,.4);AU.rainLP.frequency.setTargetAtTime(ind?650:7000,t,.3);
+  if(AU.rainFReady){AU.rainFG.gain.setTargetAtTime(l*(ind?1.1:3.2),t,.4);AU.rainFLP.frequency.setTargetAtTime(ind?850:9000,t,.3)}}
 function setEng(v,on){if(!AU.ctx)return;const t=AU.ctx.currentTime;AU.engG.gain.setTargetAtTime(on?.04+.03*v:0,t,.3);AU.engO.frequency.setTargetAtTime(36+v*30,t,.3)}
 function setFire(k){if(!AU.ctx)return;AU.fireG.gain.setTargetAtTime(k*(.015+.05*Math.random()),AU.ctx.currentTime,.05)}
-function thunder(v=1){if(!AU.ctx)return;const c=AU.ctx,t0=c.currentTime+.02;
+const TH_SEG=[[.15,6.6],[10.5,17.2],[24.1,34.6]];let thLast=-1;
+function thunder(v=1){
+  if(!AU.ctx)return;
+  if(AU.thBuf){const c=AU.ctx;let i;do{i=Math.floor(Math.random()*TH_SEG.length)}while(i===thLast&&TH_SEG.length>1);thLast=i;
+    const [a,b]=TH_SEG[i],t=c.currentTime+.02,s=c.createBufferSource();s.buffer=AU.thBuf;
+    const g2=c.createGain(),vol=Math.min(1.3,.45+.25*v);g2.gain.setValueAtTime(0,t);g2.gain.linearRampToValueAtTime(vol,t+.04);g2.gain.setValueAtTime(vol,t+(b-a)-1.2);g2.gain.linearRampToValueAtTime(0,t+(b-a));
+    s.connect(g2);g2.connect(AU.master);s.start(t,a,b-a);return}
+  thunderSynth(v)}
+function thunderSynth(v=1){if(!AU.ctx)return;const c=AU.ctx,t0=c.currentTime+.02;
   if(!AU.rev){const len=Math.floor(c.sampleRate*7),ib=c.createBuffer(2,len,c.sampleRate);
     for(let ch=0;ch<2;ch++){const d=ib.getChannelData(ch);let lp=0;for(let i=0;i<len;i++){lp+=((Math.random()*2-1)-lp)*(.1+.45*(1-i/len));d[i]=lp*Math.pow(1-i/len,1.7)*3.2}}
     AU.rev=c.createConvolver();AU.rev.buffer=ib;AU.revG=c.createGain();AU.revG.gain.value=1.3;
@@ -313,7 +335,7 @@ const S={scene:'start',stove:{wood:false,lit:false,litAt:-1000},inv:[],logs:0,lo
 const SAVE='mistero-save-v3';
 function save(){try{localStorage.setItem(SAVE,JSON.stringify({scene:S.scene,stove:S.stove,inv:S.inv,logs:S.logs,logsLeft:S.logsLeft,candleLit:S.candleLit,candleBath:S.candleBath,bookOpen:S.bookOpen,bathSeen:S.bathSeen,keyTaken:S.keyTaken,binOpen:S.binOpen,paperStage:S.paperStage,dreamSeen:S.dreamSeen}))}catch(e){}}
 function resetState(){S.stove={wood:false,lit:false,litAt:-1000};S.inv=[];S.logs=0;S.logsLeft=3;S.candleLit=false;S.candleBath=false;S.bookOpen=false;S.bathSeen=false;S.keyTaken=false;S.binOpen=false;S.paperStage=0;S.dreamSeen=false}
-function loadState(sv){resetState();Object.assign(S.stove,sv.stove||{});S.inv=sv.inv||[];S.logs=sv.logs||0;S.logsLeft=(sv.logsLeft===undefined?3:sv.logsLeft);S.candleLit=!!sv.candleLit;S.candleBath=!!sv.candleBath;S.bookOpen=!!sv.bookOpen;S.bathSeen=!!sv.bathSeen;S.keyTaken=!!sv.keyTaken;S.binOpen=!!sv.binOpen;S.paperStage=sv.paperStage||0;S.dreamSeen=!!sv.dreamSeen}
+function loadState(sv){resetState();Object.assign(S.stove,sv.stove||{});S.inv=sv.inv||[];S.logs=sv.logs||0;S.logsLeft=(sv.logsLeft===undefined?3:sv.logsLeft);S.candleLit=!!sv.candleLit;S.candleBath=!!sv.candleBath;S.bookOpen=!!sv.bookOpen;S.bathSeen=!!sv.bathSeen;S.keyTaken=!!sv.keyTaken;if(sv.scene!=='drive'&&!S.inv.includes('matches')&&!(sv.stove&&sv.stove.lit))S.inv.push('matches');S.binOpen=!!sv.binOpen;S.paperStage=sv.paperStage||0;S.dreamSeen=!!sv.dreamSeen}
 function loadSave(){try{return JSON.parse(localStorage.getItem(SAVE))}catch(e){return null}}
 function clearSave(){try{localStorage.removeItem(SAVE)}catch(e){}}
 let NOW=0,DT=0;
@@ -441,15 +463,24 @@ const WH=dist(31)+.8,CK=3.2,KX=26;
 const curv=w=>sm((WH-6-w)/10)*CK*(Math.sin(w*.3)+.6*Math.sin(w*.13+2.1)+.25*Math.sin(w*.71));
 let CAB=null;
 
+const GLOVE_MATCH={x:168,y:90,w:16,h:16};
 const drive={T:0,fired:{},cap:0,
-  enter(){this.makeCab();this.T=0;this.fired={};this.cap=0;this.leaving=false;say('');setRain(.2,false);setEng(1,true);musicStart('drive',5);document.getElementById('bHint').style.display='none'},
+  enter(){this.makeCab();this.T=0;this.fired={};this.cap=0;this.leaving=false;this.gT=0;this.gOpen=0;this.gTaken=false;this.gDone=false;this.gHint=0;say('');setRain(.2,false);setEng(1,true);musicStart('drive',5);document.getElementById('bHint').style.display='none'},
   update(dt){this.T+=dt;const T=this.T;
     while(this.cap<CAPS.length&&T>=CAPS[this.cap][0]){say(CAPS[this.cap][1]);this.cap++}
     FL.forEach((e,i)=>{if(!this.fired[i]&&T>e.t+.5+hash(i)*.6){this.fired[i]=1;thunder(3.4)}});
     setRain(rainAt(T)*1.7,false);setEng(vel(T),true);
-    if(this.T>=DRIVE_END&&!this.leaving)this.finish()},
+    if(this.T>=DRIVE_END&&!this.leaving)this.glovePhase(T)},
+  /* arrivo: l'auto si ferma, il protagonista apre il vano portaoggetti (a destra dell'autoradio): dentro, con una lucina, i fiammiferi */
+  glovePhase(T){
+    if(S.inv.includes('matches')||this.gDone){this.finish();return}
+    if(!this.gT){this.gT=T;say("Siamo arrivati. Spengo il motore. La casetta è lì davanti.");setEng(0,false)}
+    if(!this.gOpen&&T>this.gT+2.6){this.gOpen=T;sfx.take();say("Apro il vano portaoggetti, accanto alla radio. Si accende una lucina: dentro, la scatola dei fiammiferi.")}
+    if(this.gOpen&&!this.gTaken&&T>this.gOpen+9&&!this.gHint)this.gHint=T},
+  down(x,y){
+    if(!this.gOpen||this.gTaken||this.leaving)return;
+    if(inR(GLOVE_MATCH,x,y)){this.gTaken=true;giveItem('matches');this.gDone=true;say("Prendo i fiammiferi. Finiscono nell'inventario: mi serviranno più di una volta.");setTimeout(()=>{if(cur===drive)this.finish()},3200)}},
   finish(){if(this.leaving)return;this.leaving=true;musicStop(3);fadeTo(1,1.2,()=>{this.leaving=false;setEng(0,false);setScene('outside');fadeTo(0,1.2)})},
-  down(){},
   makeCab(){if(CAB)return;
     if(IMG_CAB.complete&&IMG_CAB.naturalWidth){CAB=mkTex(144,104,k=>{k.imageSmoothingEnabled=false;k.drawImage(IMG_CAB,0,104-IMG_CAB.naturalHeight-3)});return}
     g.globalAlpha=1;g.clearRect(0,0,W,H);outside.cabin(0);CAB=mkTex(144,104,k=>{k.drawImage(scn,92,6,144,104,0,0,144,104)});g.clearRect(0,0,W,H)},
@@ -544,6 +575,7 @@ const drive={T:0,fired:{},cap:0,
       line(pv[0],pv[1],pv[0]+Math.cos(ang)*10,pv[1]-Math.sin(ang)*10,'#1a1c22',3)}
     // interno dell'auto: immagine di Gemini (parabrezza e finestrini trasparenti), poi il volante che sterza
     if(IMG_CAR.complete&&IMG_CAR.naturalWidth)g.drawImage(IMG_CAR,0,0);
+    this.gloveBox(T);
     this.gauges(T);this.radio(T);
     const steer=clamp(curv(D+1.2)*.5,-1,1)*.7+.03*Math.sin(T*3);
     if(IMG_WHEEL.complete&&IMG_WHEEL.naturalWidth){const hw=IMG_WHEEL.naturalWidth,hh=IMG_WHEEL.naturalHeight;
@@ -582,6 +614,20 @@ const drive={T:0,fired:{},cap:0,
       if(on){g.globalAlpha=.3*fk;R(bx-1,by-1,4,bh+2,'#39ff6a');g.globalAlpha=1}
       R(bx,by,2,bh,on?NEON:DIM)}
   },
+  gloveBox(T){
+    if(!this.gOpen||this.gDone&&!this.gOpen)return;
+    const k=sm((T-this.gOpen)/.5);
+    // cavita' scura con bordo, sportello abbassato, lucina calda
+    g.globalAlpha=k;
+    R(150,87,52,20,'#05060a');R(149,86,54,1,'#3a3e4a');R(149,86,1,22,'#2a2e38');R(202,86,1,22,'#2a2e38');
+    R(151,88,50,17,'#0e1016');R(151,88,50,1,'#1c202a');
+    const gl=.85+.15*Math.sin(T*9);
+    g.globalAlpha=1;for(let i=0;i<5;i++){disc(156,92,10-i*1.9,'#ffc870',k*(.05+.03*i)*gl)}
+    g.globalAlpha=k;R(154,89,5,2,'#fff4c8');R(155,90,3,1,'#ffe08a');
+    R(149,106,54,4,'#232733');R(149,106,54,1,'#4a5062');R(149,109,54,1,'#0a0b10');   // sportello abbassato
+    if(!this.gTaken){const mb=sprTex('matchbox_small');g.drawImage(mb,172,92,mb.width,mb.height);
+      if((T>this.gOpen+1.2)&&Math.floor(T*2)%2===0){g.globalAlpha=.9;outline(GLOVE_MATCH,'#d8cfb0')}}
+    g.globalAlpha=1},
   /* strumenti animati sopra il cruscotto dipinto: lancette che seguono la velocita' e spie che lampeggiano */
   gauges(T){
     const v=vel(T);
@@ -1061,7 +1107,7 @@ const inside={idle:0,matchT:-1,timers:[],hintUntil:0,ph:0,doorOpen:0,
     document.getElementById('bHint').style.display='';
     if(S.stove.lit)S.stove.litAt=Math.min(S.stove.litAt,NOW-100);
     {const fb=S.fromBath;S.fromBath=false;if(fb){say(S.stove.lit?"Di nuovo nella stanza calda.":"Torno nella stanza principale. Qui fa ancora freddo.");return}}
-    say(S.stove.lit?"Il fuoco ha fatto il suo lavoro: la stanza è calda e il temporale è lontano.":"Dentro è buio e gelido. La stufa è spenta, e lì accanto ci sono legna e fiammiferi.")},
+    say(S.stove.lit?"Il fuoco ha fatto il suo lavoro: la stanza è calda e il temporale è lontano.":"Dentro è buio e gelido. La stufa è spenta, e lì accanto c'è della legna. Mi servirà qualcosa per accenderla: i fiammiferi li ho lasciati in macchina.")},
   update(dt){updateStorm();this.idle+=dt;
     if(S.stove.lit&&NOW-S.stove.litAt>3.5&&MU.name!=='mystery')musicStart('mystery',6);
     if(this.matchT>=0&&NOW-this.matchT>1.1&&!S.stove.lit)this.ignite();
@@ -1101,7 +1147,7 @@ const inside={idle:0,matchT:-1,timers:[],hintUntil:0,ph:0,doorOpen:0,
     say("Porto la candela nel bagno e la poggio sulla mensola. Ora posso entrare.");setTimeout(()=>{if(cur===inside)goScene('bagno',1.7)},900)},
   openDoor(){if(this.doorOpen)return;this.doorOpen=NOW;sfx.door();say("Apro la porta del bagno.");setTimeout(()=>{if(cur===inside)goScene('bagno',1.7)},700)},
   click(x,y){
-    for(const k of ['candle','match','comic','books','tome','shelf','wood','stove','win','lantern','door','rwin','rpic','sofa','table','chair']){if(inR(HS[k],x,y)){
+    for(const k of ['candle','comic','books','tome','shelf','wood','stove','win','lantern','door','rwin','rpic','sofa','table','chair']){if(inR(HS[k],x,y)){
       if(k==='candle'){if(!this.candleOnTable())continue;giveItem('candle');say("Prendo la candela, spenta, e la metto nell'inventario.");return}
       if(k==='match'){if(S.inv.includes('matches'))continue;giveItem('matches');say("Prendo i fiammiferi. Finiscono nell'inventario: mi serviranno più di una volta.");return}
       if(k==='comic'){openCU('comic');return}
@@ -1232,7 +1278,7 @@ const inside={idle:0,matchT:-1,timers:[],hintUntil:0,ph:0,doorOpen:0,
     rainWin(76,36,22,28,18,0);rainWin(206,32,12,34,9,50);
     // porta del bagno aperta: si vede il buio
     if(this.doorOpen&&NOW-this.doorOpen>.12){R(17,29,18,78,'#06080c');R(17,29,2,78,'#2a1d14')}
-    const matchOnShelf=!S.inv.includes('matches');
+    const matchOnShelf=false;   // i fiammiferi sono nel vano portaoggetti dell'auto
     if(S.logsLeft>0){ell(96,101,20,2,'#0c0604',.4);for(const [x,y,f] of PILE.slice(0,S.logsLeft))drawLog(x,y,f,false)}
     if(this.candleOnTable())sprS('candle_unlit_mid',83,60,.7);
     if(matchOnShelf)matchbox(MBX,MBY,(Math.floor(T*1.3+1.5)%5===0&&!lit)?.5:0);
@@ -1602,7 +1648,7 @@ document.addEventListener('visibilitychange',()=>{if(AU.ctx){if(document.hidden)
 
 if('serviceWorker' in navigator&&location.protocol.startsWith('http')&&!['localhost','127.0.0.1'].includes(location.hostname)){navigator.serviceWorker.register('sw.js').catch(()=>{})}
 
-window.__dbg={sprTex,itemTex,bagno,openCU,giveItem,combine,refreshInv,takeLog,ITEMS,IDR,CU,AU,MU,S,drive,outside,inside,sogno,startDream,setScene,fade,go:n=>{fade.a=0;fade.to=0;setScene(n)},scenes};
+window.__dbg={AU,thunder,setRain,sprTex,itemTex,bagno,openCU,giveItem,combine,refreshInv,takeLog,ITEMS,IDR,CU,AU,MU,S,drive,outside,inside,sogno,startDream,setScene,fade,go:n=>{fade.a=0;fade.to=0;setScene(n)},scenes};
 fade.a=1;fade.to=1;cur=start;start.enter();fadeTo(0,2);
 requestAnimationFrame(frame);
 })();
