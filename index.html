@@ -59,7 +59,7 @@ button:active{background:#1a2438;transform:translate(1px,1px)}
       <div id="crt"></div>
       <div id="hint"></div>
       <div id="ios">PER LO SCHERMO INTERO: TOCCA CONDIVIDI, POI «AGGIUNGI ALLA SCHERMATA HOME»</div>
-      <div id="ver">v. 5 nov 20:05</div>
+      <div id="ver">v. 5 nov 20:40</div>
       <div id="menu"></div>
     </div>
     <div id="dlg"><p id="txt"></p></div>
@@ -128,7 +128,24 @@ function goFull(){
     if(rf&&!document.fullscreenElement&&!document.webkitFullscreenElement&&!navigator.standalone){const pr=rf.call(el);if(pr&&pr.catch)pr.catch(()=>{});
       if(screen.orientation&&screen.orientation.lock)screen.orientation.lock('landscape').catch(()=>{})}}catch(e){}}
 const IS_IOS=/iPhone|iPad|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+/* iPhone con l'interruttore del silenzioso: l'audio "web" viene zittito, quello dei lettori multimediali no.
+   Si dichiara l'audio come "riproduzione" e si tiene acceso un file silenzioso in loop, cosi' l'audio del gioco passa dagli altoparlanti. */
+let SILENT_EL=null;
+function unmuteSilentSwitch(){
+  try{if(navigator.audioSession)navigator.audioSession.type='playback'}catch(e){}
+  try{
+    if(!SILENT_EL){
+      const sr=8000,n=sr,b=new Uint8Array(44+n*2),dv=new DataView(b.buffer),w=(o,t)=>{for(let i=0;i<t.length;i++)b[o+i]=t.charCodeAt(i)};
+      w(0,'RIFF');dv.setUint32(4,36+n*2,true);w(8,'WAVEfmt ');dv.setUint32(16,16,true);dv.setUint16(20,1,true);dv.setUint16(22,1,true);dv.setUint32(24,sr,true);dv.setUint32(28,sr*2,true);dv.setUint16(32,2,true);dv.setUint16(34,16,true);w(36,'data');dv.setUint32(40,n*2,true);
+      for(let i=0;i<n;i++)dv.setInt16(44+i*2,(i%2?1:-1),true);          // quasi silenzio (±1 su 32768), non zero assoluto
+      const a=document.createElement('audio');a.src=URL.createObjectURL(new Blob([b],{type:'audio/wav'}));a.loop=true;a.preload='auto';a.volume=1;
+      a.setAttribute('playsinline','');a.setAttribute('x-webkit-airplay','deny');a.style.display='none';document.body.appendChild(a);SILENT_EL=a;
+      if(navigator.mediaSession){try{navigator.mediaSession.metadata=null;navigator.mediaSession.playbackState='none'}catch(e){}}
+    }
+    if(SILENT_EL.paused){const pr=SILENT_EL.play();if(pr&&pr.catch)pr.catch(()=>{})}
+  }catch(e){}}
 function audioInit(){
+  unmuteSilentSwitch();
   if(AU.ctx){if(AU.ctx.state==='suspended')AU.ctx.resume();loadAudioFiles();return}
   const C=window.AudioContext||window.webkitAudioContext;if(!C)return;
   const c=AU.ctx=new C();
@@ -1703,10 +1720,10 @@ document.addEventListener('wheel',e=>{if(e.ctrlKey)e.preventDefault()},{passive:
  if(window.visualViewport){visualViewport.addEventListener('resize',reset);visualViewport.addEventListener('scroll',reset)}
  window.addEventListener('scroll',()=>{if(window.scrollX||window.scrollY)window.scrollTo(0,0)});
  setInterval(reset,700)}
-document.addEventListener('visibilitychange',()=>{if(AU.ctx){if(document.hidden)AU.ctx.suspend();else AU.ctx.resume()}});
+document.addEventListener('visibilitychange',()=>{if(document.hidden){if(SILENT_EL)SILENT_EL.pause()}else if(AU.ctx)unmuteSilentSwitch();if(AU.ctx){if(document.hidden)AU.ctx.suspend();else AU.ctx.resume()}});
 
 /* aggiornamento automatico: se sul server c'e' una versione piu' nuova di questa, ricarica una volta (cancella anche le copie salvate) */
-const BUILD='5 nov 20:05';
+const BUILD='5 nov 20:40';
 {const ve=document.getElementById('ver');if(ve)ve.textContent='v. '+BUILD;
  if(location.protocol.startsWith('http')){
   fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{
