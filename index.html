@@ -59,7 +59,7 @@ button:active{background:#1a2438;transform:translate(1px,1px)}
       <div id="crt"></div>
       <div id="hint"></div>
       <div id="ios">PER LO SCHERMO INTERO: TOCCA CONDIVIDI, POI «AGGIUNGI ALLA SCHERMATA HOME»</div>
-      <div id="ver">v. 6 nov 01:00</div>
+      <div id="ver">v. 5 nov 20:05</div>
       <div id="menu"></div>
     </div>
     <div id="dlg"><p id="txt"></p></div>
@@ -1691,6 +1691,7 @@ document.addEventListener('contextmenu',e=>e.preventDefault());
 /* schermata fissa: niente pizzico, doppio tocco o zoom, e se il browser ingrandisce comunque si torna subito a scala 1 */
 for(const ev of ['gesturestart','gesturechange','gestureend'])document.addEventListener(ev,e=>e.preventDefault(),{passive:false});
 document.addEventListener('dblclick',e=>e.preventDefault(),{passive:false});
+document.addEventListener('touchstart',e=>{if(e.touches.length>1)e.preventDefault()},{passive:false});
 document.addEventListener('touchmove',e=>{if(e.touches.length>1||(e.scale&&e.scale!==1))e.preventDefault()},{passive:false});
 {let lastTE=0;document.addEventListener('touchend',e=>{const n=Date.now();if(n-lastTE<400)e.preventDefault();lastTE=n},{passive:false})}
 document.addEventListener('wheel',e=>{if(e.ctrlKey)e.preventDefault()},{passive:false});
@@ -1704,6 +1705,15 @@ document.addEventListener('wheel',e=>{if(e.ctrlKey)e.preventDefault()},{passive:
  setInterval(reset,700)}
 document.addEventListener('visibilitychange',()=>{if(AU.ctx){if(document.hidden)AU.ctx.suspend();else AU.ctx.resume()}});
 
+/* aggiornamento automatico: se sul server c'e' una versione piu' nuova di questa, ricarica una volta (cancella anche le copie salvate) */
+const BUILD='5 nov 20:05';
+{const ve=document.getElementById('ver');if(ve)ve.textContent='v. '+BUILD;
+ if(location.protocol.startsWith('http')){
+  fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{
+    const m=t.match(/const BUILD='([^']+)'/);if(!m||m[1]===BUILD)return;
+    try{if(sessionStorage.getItem('upd')===m[1])return;sessionStorage.setItem('upd',m[1])}catch(e){}
+    const regs=navigator.serviceWorker&&navigator.serviceWorker.getRegistrations?navigator.serviceWorker.getRegistrations().then(rs=>Promise.all(rs.map(r=>r.update()))):Promise.resolve();
+    regs.catch(()=>{}).then(()=>window.caches&&caches.keys?caches.keys().then(ks=>Promise.all(ks.map(k=>caches.delete(k)))):0).catch(()=>{}).then(()=>location.reload())}).catch(()=>{})}}
 if('serviceWorker' in navigator&&location.protocol.startsWith('http')&&!['localhost','127.0.0.1'].includes(location.hostname)){navigator.serviceWorker.register('sw.js').catch(()=>{})}
 
 window.__dbg={storm,SOGNO_T,AU,thunder,setRain,sprTex,itemTex,bagno,openCU,giveItem,combine,refreshInv,takeLog,ITEMS,IDR,CU,AU,MU,S,drive,outside,inside,sogno,startDream,setScene,fade,go:n=>{fade.a=0;fade.to=0;setScene(n)},scenes};
