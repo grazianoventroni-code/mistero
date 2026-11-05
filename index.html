@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,viewport-fit=cover,user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -12,7 +12,8 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <title>Mistero</title>
 <style>
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;touch-action:manipulation}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 html,body{margin:0;height:100%;overflow:hidden;background:#000;color:#d8cfb0;font-family:"Courier New",Courier,monospace;overscroll-behavior:none}
 #screen{position:fixed;inset:0;display:grid;grid-template-columns:minmax(0,1fr) var(--sw);
   padding:0 min(env(safe-area-inset-right),10px) 0 0;
@@ -459,7 +460,7 @@ const CAPS=[[1.6,"Notte. Pioggia. La strada si infila nel bosco fitto, curva dop
  [13.2,"Ormai è un temporale. Il cielo si spacca a ogni lampo."],
  [17.8,"Gli alberi si diradano. Il cielo si apre, tra la nebbia e le montagne."],
  [21.2,"Un altro lampo... Più avanti, una sagoma. Un tetto."],
- [26.6,"Una casetta di montagna. Con questo tempo, meglio fermarsi finché non passa."]];
+ [26.6,"Una baita abbandonata. Con questo tempo, meglio fermarsi finché non passa."]];
 const DRIVE_END=31.5;
 const dist=T=>{if(T<=20)return 2.4*T;const u=Math.min(1,(T-20)/11);return 2.4*(20+11*(u-u*u*u+u*u*u*u/2))};
 const vel=T=>T<20?1:1-sm((T-20)/11);
@@ -567,7 +568,7 @@ const drive={T:0,fired:{},cap:0,
         R(x,y-h,Math.max(1,o.p*3),h,mix('#0c0a08','#2a2018',s+fl*.3));R(x-o.p*6,y-h+o.p*4,o.p*14,Math.max(1,o.p*1.5),mix('#0c0a08','#2a2018',s));
         R(x-o.p*5,y-h+o.p*9,o.p*12,Math.max(1,o.p*1.2),mix('#0c0a08','#2a2018',s));
       }else{
-        // stessa casetta della scena esterna, in scala
+        // stessa baita della scena esterna, in scala
         const sc=o.p*1.15;if(sc<.03)continue;
         const x=c+half+8+62*sc;
         g.globalAlpha=clamp(.3+s*.8,0,1);g.drawImage(CAB,Math.round(x-68*sc),Math.round(y-101*sc),Math.round(144*sc),Math.round(104*sc));g.globalAlpha=1;
@@ -774,7 +775,7 @@ const outside={chr:{x:84,dir:1,tx:null,walking:false,dist:0,enter:0},idle:0,ripp
   enter(){this.chr={x:84,dir:1,tx:null,walking:false,dist:0,enter:0};this.idle=0;this.ripples=[];stormReset(4);
     setRain(.9,false);setEng(0,false);S.scene='outside';save();
     document.getElementById('bHint').style.display='';
-    say("Spengo il motore. Fuori diluvia. Davanti a me, una casetta nel bosco: almeno è un riparo.")},
+    say("Spengo il motore. Fuori diluvia. Davanti a me, una baita abbandonata nel bosco: almeno è un riparo.")},
   update(dt){updateStorm();this.idle+=dt;const c=this.chr;
     if(c.tx!==null&&!c.enter){const d=c.tx-c.x;if(Math.abs(d)<1){c.x=c.tx;c.tx=null;c.walking=false;
         if(this.toDoor){this.toDoor=false;this.enterDoor()}}
@@ -797,8 +798,8 @@ const outside={chr:{x:84,dir:1,tx:null,walking:false,dist:0,enter:0},idle:0,ripp
       else say("Pochi passi nel fango e sono al riparo.");return}
     if(x<72&&y>66){say("La mia auto. Il motore è ancora caldo, ma con questo temporale non vado da nessuna parte.");return}
     if(y>=GROUND-2){this.toDoor=false;this.chr.tx=clamp(x,76,DOORX+8)}
-    else say("Solo buio e pioggia. Gli alberi sembrano chiudersi attorno alla casetta.")},
-  hint(){this.idle=20;say("Tocca la casetta per camminare fino alla porta.")},
+    else say("Solo buio e pioggia. Gli alberi sembrano chiudersi attorno alla baita.")},
+  hint(){this.idle=20;say("Tocca la baita per camminare fino alla porta.")},
   draw(){
     const [fl,bx,age]=stormF(),T=NOW,c=this.chr;
     // sfondo: immagine dipinta (generata da riferimenti e ridotta a 240x120)
@@ -1687,7 +1688,20 @@ cv.addEventListener('pointercancel',()=>{if(cur===inside)inside.drag=null});
 document.getElementById('bHint').onclick=e=>{e.stopPropagation();audioInit();if(cur.hint)cur.hint()};
 document.getElementById('bSnd').onclick=e=>{e.stopPropagation();AU.muted=!AU.muted;if(AU.master)AU.master.gain.value=AU.muted?0:.9;e.currentTarget.style.opacity=AU.muted?.35:.8};
 document.addEventListener('contextmenu',e=>e.preventDefault());
-document.addEventListener('gesturestart',e=>e.preventDefault());
+/* schermata fissa: niente pizzico, doppio tocco o zoom, e se il browser ingrandisce comunque si torna subito a scala 1 */
+for(const ev of ['gesturestart','gesturechange','gestureend'])document.addEventListener(ev,e=>e.preventDefault(),{passive:false});
+document.addEventListener('dblclick',e=>e.preventDefault(),{passive:false});
+document.addEventListener('touchmove',e=>{if(e.touches.length>1||(e.scale&&e.scale!==1))e.preventDefault()},{passive:false});
+{let lastTE=0;document.addEventListener('touchend',e=>{const n=Date.now();if(n-lastTE<400)e.preventDefault();lastTE=n},{passive:false})}
+document.addEventListener('wheel',e=>{if(e.ctrlKey)e.preventDefault()},{passive:false});
+{const vm=document.querySelector('meta[name=viewport]'),VC=vm?vm.content:'';
+ const reset=()=>{const vv=window.visualViewport;if(!vv)return;
+   if(vv.scale>1.001||vv.offsetLeft>0.5||vv.offsetTop>0.5){window.scrollTo(0,0);
+     if(vm){vm.content='width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,viewport-fit=cover,user-scalable=no';
+       setTimeout(()=>{vm.content=VC;window.scrollTo(0,0)},60)}}};
+ if(window.visualViewport){visualViewport.addEventListener('resize',reset);visualViewport.addEventListener('scroll',reset)}
+ window.addEventListener('scroll',()=>{if(window.scrollX||window.scrollY)window.scrollTo(0,0)});
+ setInterval(reset,700)}
 document.addEventListener('visibilitychange',()=>{if(AU.ctx){if(document.hidden)AU.ctx.suspend();else AU.ctx.resume()}});
 
 if('serviceWorker' in navigator&&location.protocol.startsWith('http')&&!['localhost','127.0.0.1'].includes(location.hostname)){navigator.serviceWorker.register('sw.js').catch(()=>{})}
