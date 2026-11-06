@@ -59,7 +59,7 @@ button:active{background:#1a2438;transform:translate(1px,1px)}
       <div id="crt"></div>
       <div id="hint"></div>
       <div id="ios">PER LO SCHERMO INTERO: TOCCA CONDIVIDI, POI «AGGIUNGI ALLA SCHERMATA HOME»</div>
-      <div id="ver">v. 6 nov 21:00</div>
+      <div id="ver">v. 6 nov 22:00</div>
       <div id="menu"></div>
     </div>
     <div id="dlg"><p id="txt"></p></div>
@@ -1702,31 +1702,56 @@ function nearOnPoly(P,x,y){let best=null,bd=1e9;for(let i=0;i<P.length;i++){cons
   /* un filo verso l'interno, cosi' il punto resta dentro l'area */
   const cx=P.reduce((a,p)=>a+p[0],0)/P.length,cy=P.reduce((a,p)=>a+p[1],0)/P.length,l=Math.hypot(cx-best[0],cy-best[1])||1;return [best[0]+(cx-best[0])/l*.8,best[1]+(cy-best[1])/l*.8]}
 class Actor{
-  constructor(name,x,y){this.n=name;this.c=CHARS[name];this.x=x;this.y=y;this.dir='S';this.state='idle';this.t=Math.random()*6;this.tx=null;this.ty=null;this.run=false;this.talking=false;this.seed=Math.random()*100}
-  go(x,y,run){this.tx=x;this.ty=y;this.run=!!run}
-  sit(on){this.state=on?'sit':'idle';this.tx=this.ty=null}
+  constructor(name,x,y){this.n=name;this.c=CHARS[name];this.x=x;this.y=y;this.dir='S';this.state='idle';this.t=Math.random()*6;this.tx=null;this.ty=null;this.run=false;this.talking=false;this.seed=Math.random()*100;
+    this.seq=null;this.si=0;this.st=0;this.pending=null;this.v=0;this.seatI=0}
+  /* azioni a pose: ogni sequenza e' una lista [posa,durata]; durata 0 = resta cosi' finche' non arriva un altro comando; posa '#' = fine */
+  has(n){return !!this.c.fr[n]}
+  crouchP(){return this.has('crouch')?'crouch':this.has('kneel_pray')?'kneel_pray':null}
+  reachP(){return this.has('reach')?'reach':this.has('kneel_reach')?'kneel_reach':null}
+  seats(){return ['sit_chair','sit_crossed','sit_floor','sit_sofa_read'].filter(n=>this.has(n))}
+  play(list){this.seq=list.filter(a=>a[0]==='#'||this.has(a[0]));this.si=0;this.st=0;this.tx=this.ty=null;this.run=false;this.v=0}
+  sitDown(){const s=this.seats();if(!s.length||this.state==='sit')return;this.state='sit';this.play([[this.crouchP(),.14],[s[this.seatI%s.length],0]])}
+  standUp(){if(this.state!=='sit')return;this.state='rise';this.play([[this.crouchP(),.14],['#',0]])}
+  nextSeat(){const s=this.seats();if(this.state!=='sit'||s.length<2)return;this.seatI=(this.seatI+1)%s.length;this.play([[s[this.seatI],0]])}
+  pickUp(){if(this.state==='sit'||this.seq)return;this.state='act';this.play([[this.crouchP(),.18],[this.reachP(),.8],[this.crouchP(),.18],['#',0]])}
+  pointAt(){if(this.state==='sit'||this.seq)return;this.state='act';this.play([['point',1.5],['#',0]])}
+  go(x,y,run){
+    if(this.state==='sit'){this.pending=[x,y,!!run];this.standUp();return}
+    if(this.seq){this.pending=[x,y,!!run];return}
+    this.tx=x;this.ty=y;this.run=!!run;this.v=Math.max(this.v,.25)}
+  sit(on){on?this.sitDown():this.standUp()}
   update(dt,area,spd){
     this.t+=dt;
-    if(this.tx===null){if(this.state==='walk')this.state='idle';return}
-    const dx=this.tx-this.x,dy=this.ty-this.y,d=Math.hypot(dx,dy),step=spd*(this.run?1.9:1)*dt;
-    if(d<=Math.max(.5,step)){this.x=this.tx;this.y=this.ty;this.tx=this.ty=null;this.state='idle';return}
+    if(this.seq){
+      this.st+=dt;let cur=this.seq[this.si];
+      while(cur&&cur[1]>0&&this.st>=cur[1]){this.st-=cur[1];this.si++;cur=this.seq[this.si]}
+      if(!cur||cur[0]==='#'){                      // sequenza finita: se c'e' un comando in attesa (camminare) parte ora
+        this.seq=null;this.state='idle';const q=this.pending;this.pending=null;
+        if(q){this.tx=q[0];this.ty=q[1];this.run=q[2];this.v=.25}}
+      else return}
+    if(this.tx===null){if(this.state==='walk')this.state='idle';this.v=0;return}
+    this.v=Math.min(1,this.v+dt*4);
+    const dx=this.tx-this.x,dy=this.ty-this.y,d=Math.hypot(dx,dy),step=spd*(this.run?1.9:1)*dt*(.4+.6*this.v)*(d<5?Math.max(.45,d/5):1);
+    if(d<=Math.max(.5,step)){this.x=this.tx;this.y=this.ty;this.tx=this.ty=null;this.state='idle';this.v=0;return}
     const nx=this.x+dx/d*step,ny=this.y+dy/d*step;
     if(inPoly(area,nx,ny)){this.x=nx;this.y=ny}
     else if(Math.abs(dx)>.5&&inPoly(area,nx,this.y))this.x=nx;
     else if(Math.abs(dy)>.5&&inPoly(area,this.x,ny))this.y=ny;
-    else{this.tx=this.ty=null;this.state='idle';return}
-    this.state='walk';
+    else{this.tx=this.ty=null;this.state='idle';this.v=0;return}
+    this.state='walk';this.lastD=d;
     const horiz=this.dir==='E'||this.dir==='W';
     if(horiz?Math.abs(dy)>Math.abs(dx)*1.3:Math.abs(dx)>Math.abs(dy)*1.3){this.dir=Math.abs(dx)>Math.abs(dy)?(dx>0?'E':'W'):(dy>0?'S':'N')}
     else if(horiz)this.dir=dx>0?'E':'W';else this.dir=dy>0?'S':'N'}
   pose(){
     const f=this.c.fr,d=this.dir,E=d==='E'||d==='W',flip=d==='W',stat={S:'front',N:'back',E:'right',W:'left'}[d];
-    if(this.state==='sit'&&f.sit_chair)return {n:'sit_chair',flip,dy:0};
+    if(this.seq&&this.seq[this.si]&&this.seq[this.si][0])return {n:this.seq[this.si][0],flip,dy:0};
+    if(this.state==='sit'&&this.seats().length)return {n:this.seats()[this.seatI%this.seats().length],flip,dy:0};
     if(this.state==='walk'){
       const key=E?'walk_E_':'walk_'+d+'_',a=[];for(let i=1;f[key+i];i++)a.push(key+i);
       if(!a.length&&E)for(let i=1;f['walk'+i];i++)a.push('walk'+i);
       const rate=this.run?11:7.5;
-      if(a.length)return {n:a[Math.floor(this.t*rate)%a.length],flip,dy:0};
+      if(this.run&&E&&f.run&&this.v>.85&&(this.lastD||0)>7)return {n:'run',flip,dy:-Math.abs(Math.sin(this.t*rate*.9))*1.4};   // corsa: posa di corsa con rimbalzo; a inizio e fine si usa ancora la camminata
+      if(a.length)return {n:a[Math.floor(this.t*rate)%a.length],flip,dy:this.run?-Math.abs(Math.sin(this.t*rate*.55))*.8:0};
       return {n:stat,flip:false,dy:-Math.abs(Math.sin(this.t*rate*.55))*.9}}   // segnaposto: posa ferma che rimbalza
     if(d==='S'&&this.talking&&f.talk_S_1)return {n:'talk_S_'+(1+Math.floor(hash(Math.floor(this.t*9)+this.seed)*4)%4),flip:false,dy:0};   // parla: bocca che si muove
     if(d==='S'&&f.idle_S_1){                                                    // fermo animato: respiro e ammiccare
@@ -1752,7 +1777,7 @@ const prova={actors:[],sel:0,ready:false,lastTap:0,fps:0,fn:0,ft:0,
     const nomi=['protagonista-interno','donna','prete','leonardo','protagonista-esterno'];
     Promise.all(nomi.map(loadChar)).then(()=>{
       this.actors=nomi.map((n,i)=>new Actor(n,50+i*38,104+(i%2)*6));this.sel=0;this.ready=true;
-      setHint('TOCCA: CAMMINA · DOPPIO TOCCO: CORRE · TOCCA UN PERSONAGGIO: LO SCEGLI, DI NUOVO: PARLA')})},
+      setHint('TOCCA: CAMMINA · DOPPIO TOCCO: CORRE · TOCCA UN PERSONAGGIO: LO SCEGLI, DI NUOVO: PARLA · PULSANTI: SEDUTA, RACCOGLI, INDICA')})},
   update(dt){
     this.fn++;this.ft+=dt;if(this.ft>=.5){this.fps=Math.round(this.fn/this.ft);this.fn=0;this.ft=0}
     if(!this.ready)return;
@@ -1766,11 +1791,19 @@ const prova={actors:[],sel:0,ready:false,lastTap:0,fps:0,fn:0,ft:0,
     const a=this.actors[this.sel],sc=pvScale(a.y),top=a.y-a.c.h/RS*sc-5;
     R(a.x-2,top,5,1,'#e0a040');R(a.x-1,top+1,3,1,'#e0a040');R(a.x,top+2,1,1,'#e0a040');
     txt(a.n.toUpperCase().replace(/-/g,' '),4,4,'#d8cfb0');
-    txt(this.fps+' FPS',W-34,4,'#8aa860')},
+    txt(this.fps+' FPS',W-34,4,'#8aa860');
+    for(const b of this.buttons()){R(b.x,b.y,b.w,9,'#10131a');R(b.x,b.y,b.w,1,'#5a6070');R(b.x,b.y+8,b.w,1,'#2a2e38');txt(b.t,b.x+3,b.y+2,b.on?'#e0a040':'#d8cfb0')}},
+  /* pulsanti delle azioni del personaggio scelto */
+  buttons(){const a=this.actors[this.sel],sit=a.state==='sit';
+    const l=[{t:sit?'ALZATI':'SIEDITI',k:'sit',w:sit?32:34},{t:'RACCOGLI',k:'pick',w:38},{t:'INDICA',k:'point',w:30}];
+    if(sit&&a.seats().length>1)l.splice(1,0,{t:'ALTRA SEDUTA',k:'seat',w:56});
+    let x=4;for(const b of l){b.x=x;b.y=14;x+=b.w+3}return l},
   down(x,y){
     if(!this.ready||fade.a>.3)return;
     for(let i=this.actors.length-1;i>=0;i--){const a=this.actors[i],sc=pvScale(a.y),h=a.c.h/RS*sc,w=a.c.w/RS*sc*.45;
       if(Math.abs(x-a.x)<w&&y<a.y+2&&y>a.y-h){if(this.sel===i)a.talking=!a.talking;this.sel=i;return}}
+    for(const b of this.buttons()){if(x>=b.x&&x<b.x+b.w&&y>=b.y&&y<b.y+9){const a=this.actors[this.sel];
+      if(b.k==='sit'){a.state==='sit'?a.standUp():a.sitDown()}else if(b.k==='seat')a.nextSeat();else if(b.k==='pick')a.pickUp();else a.pointAt();return}}
     const run=NOW-this.lastTap<.35;this.lastTap=NOW;
     const p=inPoly(PV_AREA,x,y)?[x,y]:nearOnPoly(PV_AREA,x,y);
     this.actors[this.sel].go(p[0],p[1],run)}};
@@ -1817,7 +1850,7 @@ document.addEventListener('wheel',e=>{if(e.ctrlKey)e.preventDefault()},{passive:
 document.addEventListener('visibilitychange',()=>{if(document.hidden){if(SILENT_EL)SILENT_EL.pause()}else if(AU.ctx)unmuteSilentSwitch();if(AU.ctx){if(document.hidden)AU.ctx.suspend();else AU.ctx.resume()}});
 
 /* aggiornamento automatico: se sul server c'e' una versione piu' nuova di questa, ricarica una volta (cancella anche le copie salvate) */
-const BUILD='6 nov 21:00';
+const BUILD='6 nov 22:00';
 {const ve=document.getElementById('ver');if(ve)ve.textContent='v. '+BUILD;
  if(location.protocol.startsWith('http')){
   fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{
