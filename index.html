@@ -59,7 +59,7 @@ button:active{background:#1a2438;transform:translate(1px,1px)}
       <div id="crt"></div>
       <div id="hint"></div>
       <div id="ios">PER LO SCHERMO INTERO: TOCCA CONDIVIDI, POI «AGGIUNGI ALLA SCHERMATA HOME»</div>
-      <div id="ver">v. 6 nov 17:00</div>
+      <div id="ver">v. 6 nov 17:30</div>
       <div id="menu"></div>
     </div>
     <div id="dlg"><p id="txt"></p></div>
@@ -1702,7 +1702,7 @@ function nearOnPoly(P,x,y){let best=null,bd=1e9;for(let i=0;i<P.length;i++){cons
   /* un filo verso l'interno, cosi' il punto resta dentro l'area */
   const cx=P.reduce((a,p)=>a+p[0],0)/P.length,cy=P.reduce((a,p)=>a+p[1],0)/P.length,l=Math.hypot(cx-best[0],cy-best[1])||1;return [best[0]+(cx-best[0])/l*.8,best[1]+(cy-best[1])/l*.8]}
 class Actor{
-  constructor(name,x,y){this.n=name;this.c=CHARS[name];this.x=x;this.y=y;this.dir='S';this.state='idle';this.t=Math.random()*6;this.tx=null;this.ty=null;this.run=false}
+  constructor(name,x,y){this.n=name;this.c=CHARS[name];this.x=x;this.y=y;this.dir='S';this.state='idle';this.t=Math.random()*6;this.tx=null;this.ty=null;this.run=false;this.talking=false;this.seed=Math.random()*100}
   go(x,y,run){this.tx=x;this.ty=y;this.run=!!run}
   sit(on){this.state=on?'sit':'idle';this.tx=this.ty=null}
   update(dt,area,spd){
@@ -1728,6 +1728,10 @@ class Actor{
       const rate=this.run?11:7.5;
       if(a.length)return {n:a[Math.floor(this.t*rate)%a.length],flip,dy:0};
       return {n:stat,flip:false,dy:-Math.abs(Math.sin(this.t*rate*.55))*.9}}   // segnaposto: posa ferma che rimbalza
+    if(d==='S'&&this.talking&&f.talk_S_1)return {n:'talk_S_'+(1+Math.floor(hash(Math.floor(this.t*9)+this.seed)*4)%4),flip:false,dy:0};   // parla: bocca che si muove
+    if(d==='S'&&f.idle_S_1){                                                    // fermo animato: respiro e ammiccare
+      if(f.idle_S_4&&(this.t+this.seed)%4.3<.14)return {n:'idle_S_4',flip:false,dy:0};
+      return {n:'idle_S_'+[1,2,3,2][Math.floor((this.t+this.seed)/.6)%4],flip:false,dy:0}}
     return {n:stat,flip:false,dy:Math.sin(this.t*1.6)*.1}}                      // fermo: piccolo respiro
   draw(sc){
     const c=this.c;if(!c.ready||!c.img.naturalWidth)return;
@@ -1748,7 +1752,7 @@ const prova={actors:[],sel:0,ready:false,lastTap:0,fps:0,fn:0,ft:0,
     const nomi=['protagonista-interno','donna','prete','leonardo','protagonista-esterno'];
     Promise.all(nomi.map(loadChar)).then(()=>{
       this.actors=nomi.map((n,i)=>new Actor(n,50+i*38,104+(i%2)*6));this.sel=0;this.ready=true;
-      setHint('TOCCA PER CAMMINARE · DOPPIO TOCCO PER CORRERE · TOCCA UN PERSONAGGIO PER SCEGLIERLO')})},
+      setHint('TOCCA: CAMMINA · DOPPIO TOCCO: CORRE · TOCCA UN PERSONAGGIO: LO SCEGLI, DI NUOVO: PARLA')})},
   update(dt){
     this.fn++;this.ft+=dt;if(this.ft>=.5){this.fps=Math.round(this.fn/this.ft);this.fn=0;this.ft=0}
     if(!this.ready)return;
@@ -1766,7 +1770,7 @@ const prova={actors:[],sel:0,ready:false,lastTap:0,fps:0,fn:0,ft:0,
   down(x,y){
     if(!this.ready||fade.a>.3)return;
     for(let i=this.actors.length-1;i>=0;i--){const a=this.actors[i],sc=pvScale(a.y),h=a.c.h/RS*sc,w=a.c.w/RS*sc*.45;
-      if(Math.abs(x-a.x)<w&&y<a.y+2&&y>a.y-h){this.sel=i;return}}
+      if(Math.abs(x-a.x)<w&&y<a.y+2&&y>a.y-h){if(this.sel===i)a.talking=!a.talking;this.sel=i;return}}
     const run=NOW-this.lastTap<.35;this.lastTap=NOW;
     const p=inPoly(PV_AREA,x,y)?[x,y]:nearOnPoly(PV_AREA,x,y);
     this.actors[this.sel].go(p[0],p[1],run)}};
@@ -1813,7 +1817,7 @@ document.addEventListener('wheel',e=>{if(e.ctrlKey)e.preventDefault()},{passive:
 document.addEventListener('visibilitychange',()=>{if(document.hidden){if(SILENT_EL)SILENT_EL.pause()}else if(AU.ctx)unmuteSilentSwitch();if(AU.ctx){if(document.hidden)AU.ctx.suspend();else AU.ctx.resume()}});
 
 /* aggiornamento automatico: se sul server c'e' una versione piu' nuova di questa, ricarica una volta (cancella anche le copie salvate) */
-const BUILD='6 nov 17:00';
+const BUILD='6 nov 17:30';
 {const ve=document.getElementById('ver');if(ve)ve.textContent='v. '+BUILD;
  if(location.protocol.startsWith('http')){
   fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{
@@ -1823,7 +1827,7 @@ const BUILD='6 nov 17:00';
     regs.catch(()=>{}).then(()=>window.caches&&caches.keys?caches.keys().then(ks=>Promise.all(ks.map(k=>caches.delete(k)))):0).catch(()=>{}).then(()=>location.reload())}).catch(()=>{})}}
 if('serviceWorker' in navigator&&location.protocol.startsWith('http')&&!['localhost','127.0.0.1'].includes(location.hostname)){navigator.serviceWorker.register('sw.js').catch(()=>{})}
 
-window.__dbg={storm,SOGNO_T,AU,thunder,setRain,sprTex,itemTex,bagno,openCU,giveItem,combine,refreshInv,takeLog,ITEMS,IDR,CU,AU,MU,S,drive,outside,inside,sogno,startDream,setScene,fade,go:n=>{fade.a=0;fade.to=0;setScene(n)},scenes};
+window.__dbg={prova,CHARS,storm,SOGNO_T,AU,thunder,setRain,sprTex,itemTex,bagno,openCU,giveItem,combine,refreshInv,takeLog,ITEMS,IDR,CU,AU,MU,S,drive,outside,inside,sogno,startDream,setScene,fade,go:n=>{fade.a=0;fade.to=0;setScene(n)},scenes};
 const boot=()=>{fade.a=1;fade.to=1;if(/[?&]prova/.test(location.search)){cur=prova;prova.enter()}else{cur=start;start.enter()}fadeTo(0,2);requestAnimationFrame(frame)};
 Promise.all(IMGS).then(boot);
 })();
