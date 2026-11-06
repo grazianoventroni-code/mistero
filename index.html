@@ -59,7 +59,7 @@ button:active{background:#1a2438;transform:translate(1px,1px)}
       <div id="crt"></div>
       <div id="hint"></div>
       <div id="ios">PER LO SCHERMO INTERO: TOCCA CONDIVIDI, POI «AGGIUNGI ALLA SCHERMATA HOME»</div>
-      <div id="ver">v. 6 nov 15:30</div>
+      <div id="ver">v. 6 nov 16:30</div>
       <div id="menu"></div>
     </div>
     <div id="dlg"><p id="txt"></p></div>
@@ -1682,7 +1682,96 @@ const sogno={t:0,steps:0,lastStep:0,vis:-1,
 };
 function thunderSoft(){if(AU.ctx)nburst(90,1,1.6,.09,'lowpass')}
 function startDream(){if(S.dreamSeen||(cur!==inside&&cur!==bagno))return;fadeTo(1,1.3,()=>{setScene('sogno');fadeTo(0,1.3)})}
-const scenes={start,drive,outside,inside,bagno,sogno};
+
+/* ================= motore dei personaggi animati =================
+   Ogni personaggio e' un atlante (img/char/NOME.png + NOME.json) con le pose: front, left, right, back, walk1..6, sit_chair, ...
+   - direzioni: S (verso lo schermo), N (di schiena), E e W (profilo; W e' lo specchio di E)
+   - quando ci saranno le camminate frontale e dorsale basta aggiungere i fotogrammi walk_S_1.., walk_N_1.., walk_E_1..:
+     il motore li usa da solo. Finche' mancano, di fronte/di schiena si vede la posa ferma che rimbalza (segnaposto).
+   - la scala dipende dalla profondita' (y) e la velocita' segue la scala; l'ombra segue i piedi.
+   - l'area calpestabile e' un poligono: il personaggio non ne esce e si ferma sul bordo piu' vicino. */
+const CHARS={};
+function loadChar(name){
+  if(CHARS[name])return CHARS[name].p;
+  const c=CHARS[name]={ready:false,fr:{},w:0,h:0,ax:0,img:new Image()};
+  c.p=Promise.all([new Promise(r=>{c.img.addEventListener('load',r);c.img.addEventListener('error',r);c.img.src='img/char/'+name+'.png'}),
+    fetch('img/char/'+name+'.json').then(r=>r.json()).then(j=>{c.w=j.w;c.h=j.h;c.ax=j.ax;c.fr=j.frames})]).then(()=>{c.ready=true;return c}).catch(()=>c);
+  return c.p}
+function inPoly(P,x,y){let r=false;for(let i=0,j=P.length-1;i<P.length;j=i++){const [xi,yi]=P[i],[xj,yj]=P[j];if((yi>y)!==(yj>y)&&x<(xj-xi)*(y-yi)/(yj-yi)+xi)r=!r}return r}
+function nearOnPoly(P,x,y){let best=null,bd=1e9;for(let i=0;i<P.length;i++){const [ax,ay]=P[i],[bx,by]=P[(i+1)%P.length],dx=bx-ax,dy=by-ay,t=clamp(((x-ax)*dx+(y-ay)*dy)/(dx*dx+dy*dy),0,1),px=ax+dx*t,py=ay+dy*t,d=Math.hypot(x-px,y-py);if(d<bd){bd=d;best=[px,py]}}
+  /* un filo verso l'interno, cosi' il punto resta dentro l'area */
+  const cx=P.reduce((a,p)=>a+p[0],0)/P.length,cy=P.reduce((a,p)=>a+p[1],0)/P.length,l=Math.hypot(cx-best[0],cy-best[1])||1;return [best[0]+(cx-best[0])/l*.8,best[1]+(cy-best[1])/l*.8]}
+class Actor{
+  constructor(name,x,y){this.n=name;this.c=CHARS[name];this.x=x;this.y=y;this.dir='S';this.state='idle';this.t=Math.random()*6;this.tx=null;this.ty=null;this.run=false}
+  go(x,y,run){this.tx=x;this.ty=y;this.run=!!run}
+  sit(on){this.state=on?'sit':'idle';this.tx=this.ty=null}
+  update(dt,area,spd){
+    this.t+=dt;
+    if(this.tx===null){if(this.state==='walk')this.state='idle';return}
+    const dx=this.tx-this.x,dy=this.ty-this.y,d=Math.hypot(dx,dy),step=spd*(this.run?1.9:1)*dt;
+    if(d<=Math.max(.5,step)){this.x=this.tx;this.y=this.ty;this.tx=this.ty=null;this.state='idle';return}
+    const nx=this.x+dx/d*step,ny=this.y+dy/d*step;
+    if(inPoly(area,nx,ny)){this.x=nx;this.y=ny}
+    else if(Math.abs(dx)>.5&&inPoly(area,nx,this.y))this.x=nx;
+    else if(Math.abs(dy)>.5&&inPoly(area,this.x,ny))this.y=ny;
+    else{this.tx=this.ty=null;this.state='idle';return}
+    this.state='walk';
+    const horiz=this.dir==='E'||this.dir==='W';
+    if(horiz?Math.abs(dy)>Math.abs(dx)*1.3:Math.abs(dx)>Math.abs(dy)*1.3){this.dir=Math.abs(dx)>Math.abs(dy)?(dx>0?'E':'W'):(dy>0?'S':'N')}
+    else if(horiz)this.dir=dx>0?'E':'W';else this.dir=dy>0?'S':'N'}
+  pose(){
+    const f=this.c.fr,d=this.dir,E=d==='E'||d==='W',flip=d==='W',stat={S:'front',N:'back',E:'right',W:'left'}[d];
+    if(this.state==='sit'&&f.sit_chair)return {n:'sit_chair',flip,dy:0};
+    if(this.state==='walk'){
+      const key=E?'walk_E_':'walk_'+d+'_',a=[];for(let i=1;f[key+i];i++)a.push(key+i);
+      if(!a.length&&E)for(let i=1;f['walk'+i];i++)a.push('walk'+i);
+      const rate=this.run?11:7.5;
+      if(a.length)return {n:a[Math.floor(this.t*rate)%a.length],flip,dy:0};
+      return {n:stat,flip:false,dy:-Math.abs(Math.sin(this.t*rate*.55))*.9}}   // segnaposto: posa ferma che rimbalza
+    return {n:stat,flip:false,dy:Math.sin(this.t*1.6)*.1}}                      // fermo: piccolo respiro
+  draw(sc){
+    const c=this.c;if(!c.ready||!c.img.naturalWidth)return;
+    const p=this.pose(),fr=c.fr[p.n]||c.fr.front;if(!fr)return;
+    const s=sc/RS,dw=c.w*s,dh=c.h*s,ax=c.ax*s,q=v=>Math.round(v*RS)/RS,y0=q(this.y-dh+p.dy*sc);
+    ell(this.x,this.y,dw*.2,Math.max(1,dh*.035),'#000',.38);
+    g.save();g.imageSmoothingEnabled=false;
+    if(p.flip){g.translate(q(this.x),0);g.scale(-1,1);g.drawImage(c.img,fr.x,fr.y,c.w,c.h,-ax,y0,dw,dh)}
+    else g.drawImage(c.img,fr.x,fr.y,c.w,c.h,q(this.x-ax),y0,dw,dh);
+    g.restore()}}
+
+/* ================= scena di prova (apri il gioco con ?prova) ================= */
+const PV_AREA=[[26,94],[222,94],[238,117],[4,117]];
+const pvScale=y=>lerp(1.45,1.9,clamp((y-94)/(117-94),0,1));
+const prova={actors:[],sel:0,ready:false,lastTap:0,fps:0,fn:0,ft:0,
+  enter(){
+    document.getElementById('bHint').style.display='none';say('');this.ready=false;
+    const nomi=['protagonista-interno','donna','prete','leonardo','protagonista-esterno'];
+    Promise.all(nomi.map(loadChar)).then(()=>{
+      this.actors=nomi.map((n,i)=>new Actor(n,50+i*38,104+(i%2)*6));this.sel=0;this.ready=true;
+      setHint('TOCCA PER CAMMINARE · DOPPIO TOCCO PER CORRERE · TOCCA UN PERSONAGGIO PER SCEGLIERLO')})},
+  update(dt){
+    this.fn++;this.ft+=dt;if(this.ft>=.5){this.fps=Math.round(this.fn/this.ft);this.fn=0;this.ft=0}
+    if(!this.ready)return;
+    for(const a of this.actors)a.update(dt,PV_AREA,30*pvScale(a.y)/1.45)},
+  draw(){
+    g.globalAlpha=1;g.globalCompositeOperation='source-over';
+    if(BG_STUFA.complete&&BG_STUFA.naturalWidth)g.drawImage(BG_STUFA,0,0);else R(0,0,W,H,'#111');
+    if(!this.ready){txt('CARICO...',90,56,'#d8cfb0');return}
+    const L=[...this.actors].sort((a,b)=>a.y-b.y);
+    for(const a of L)a.draw(pvScale(a.y));
+    const a=this.actors[this.sel],sc=pvScale(a.y),top=a.y-a.c.h/RS*sc-5;
+    R(a.x-2,top,5,1,'#e0a040');R(a.x-1,top+1,3,1,'#e0a040');R(a.x,top+2,1,1,'#e0a040');
+    txt(a.n.toUpperCase().replace(/-/g,' '),4,4,'#d8cfb0');
+    txt(this.fps+' FPS',W-34,4,'#8aa860')},
+  down(x,y){
+    if(!this.ready||fade.a>.3)return;
+    for(let i=this.actors.length-1;i>=0;i--){const a=this.actors[i],sc=pvScale(a.y),h=a.c.h/RS*sc,w=a.c.w/RS*sc*.45;
+      if(Math.abs(x-a.x)<w&&y<a.y+2&&y>a.y-h){this.sel=i;return}}
+    const run=NOW-this.lastTap<.35;this.lastTap=NOW;
+    const p=inPoly(PV_AREA,x,y)?[x,y]:nearOnPoly(PV_AREA,x,y);
+    this.actors[this.sel].go(p[0],p[1],run)}};
+
+const scenes={start,drive,outside,inside,bagno,sogno,prova};
 let cur=start;
 function setScene(n){cur=scenes[n];setHint('');const ve=document.getElementById('ver');if(ve)ve.style.display=n==='start'?'':'none';const io=document.getElementById('ios');if(io)io.style.display=(n==='start'&&IS_IOS&&!navigator.standalone)?'block':'none';cur.enter();refreshInv()}
 let lastWR='';
@@ -1724,7 +1813,7 @@ document.addEventListener('wheel',e=>{if(e.ctrlKey)e.preventDefault()},{passive:
 document.addEventListener('visibilitychange',()=>{if(document.hidden){if(SILENT_EL)SILENT_EL.pause()}else if(AU.ctx)unmuteSilentSwitch();if(AU.ctx){if(document.hidden)AU.ctx.suspend();else AU.ctx.resume()}});
 
 /* aggiornamento automatico: se sul server c'e' una versione piu' nuova di questa, ricarica una volta (cancella anche le copie salvate) */
-const BUILD='6 nov 15:30';
+const BUILD='6 nov 16:30';
 {const ve=document.getElementById('ver');if(ve)ve.textContent='v. '+BUILD;
  if(location.protocol.startsWith('http')){
   fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{
@@ -1735,7 +1824,7 @@ const BUILD='6 nov 15:30';
 if('serviceWorker' in navigator&&location.protocol.startsWith('http')&&!['localhost','127.0.0.1'].includes(location.hostname)){navigator.serviceWorker.register('sw.js').catch(()=>{})}
 
 window.__dbg={storm,SOGNO_T,AU,thunder,setRain,sprTex,itemTex,bagno,openCU,giveItem,combine,refreshInv,takeLog,ITEMS,IDR,CU,AU,MU,S,drive,outside,inside,sogno,startDream,setScene,fade,go:n=>{fade.a=0;fade.to=0;setScene(n)},scenes};
-const boot=()=>{fade.a=1;fade.to=1;cur=start;start.enter();fadeTo(0,2);requestAnimationFrame(frame)};
+const boot=()=>{fade.a=1;fade.to=1;if(/[?&]prova/.test(location.search)){cur=prova;prova.enter()}else{cur=start;start.enter()}fadeTo(0,2);requestAnimationFrame(frame)};
 Promise.all(IMGS).then(boot);
 })();
 </script>
