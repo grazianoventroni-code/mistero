@@ -59,7 +59,7 @@ button:active{background:#1a2438;transform:translate(1px,1px)}
       <div id="crt"></div>
       <div id="hint"></div>
       <div id="ios">PER LO SCHERMO INTERO: TOCCA CONDIVIDI, POI «AGGIUNGI ALLA SCHERMATA HOME»</div>
-      <div id="ver">v. 6 nov 22:00</div>
+      <div id="ver">v. 6 nov 23:00</div>
       <div id="menu"></div>
     </div>
     <div id="dlg"><p id="txt"></p></div>
@@ -789,8 +789,10 @@ function win(x,y,w,h,fl,shutters){
   R(x+w/2-.5,y,1,h,'#1a100a');R(x,y+h/2-.5,w,1,'#1a100a');
   R(x-2,y+h+1,w+4,2,'#4a3622');R(x-2,y+h+1,w+4,1,'#6a4e30');
   if(shutters){for(const sx of [x-4,x+w]){R(sx,y-1,4,h+2,'#5a3a24');for(let yy=y;yy<y+h;yy+=2)R(sx,yy,4,1,'#3a2314');R(sx,y-1,4,1,'#7a5434')}}}
-const outside={chr:{x:84,dir:1,tx:null,walking:false,dist:0,enter:0},idle:0,ripples:[],
+const OUT_SC=1.05;   // scala del protagonista fuori: circa 32 px di altezza nella scena
+const outside={chr:{x:84,dir:1,tx:null,walking:false,dist:0,enter:0},idle:0,ripples:[],act:null,
   enter(){this.chr={x:84,dir:1,tx:null,walking:false,dist:0,enter:0};this.idle=0;this.ripples=[];stormReset(4);
+    loadChar('protagonista-esterno').then(()=>{if(!this.act)this.act=new Actor('protagonista-esterno',this.chr.x,110)});
     setRain(.9,false);setEng(0,false);S.scene='outside';save();
     document.getElementById('bHint').style.display='';
     say("Spengo il motore. Fuori diluvia. Davanti a me, una baita abbandonata nel bosco: almeno è un riparo.")},
@@ -798,6 +800,7 @@ const outside={chr:{x:84,dir:1,tx:null,walking:false,dist:0,enter:0},idle:0,ripp
     if(c.tx!==null&&!c.enter){const d=c.tx-c.x;if(Math.abs(d)<1){c.x=c.tx;c.tx=null;c.walking=false;
         if(this.toDoor){this.toDoor=false;this.enterDoor()}}
       else{const sp=28*dt,st=Math.sign(d)*Math.min(sp,Math.abs(d));c.x+=st;c.dist+=Math.abs(st);c.dir=Math.sign(d);c.walking=true}}
+    {const a=this.act;if(a){a.t+=dt;a.x=c.x;a.y=110;a.dir=c.dir>0?'E':'W';a.state=c.walking?'walk':'idle';a.v=1;a.run=false;a.lastD=99}}   // l'attore del motore segue il movimento di questa scena
     if(Math.random()<dt*3)this.ripples.push({x:20+Math.random()*(W-40),y:GROUND+8+Math.random()*18,t:NOW});
     this.ripples=this.ripples.filter(r=>NOW-r.t<.9)},
   branches(fl){
@@ -830,7 +833,7 @@ const outside={chr:{x:84,dir:1,tx:null,walking:false,dist:0,enter:0},idle:0,ripp
     // auto parcheggiata
     ell(CAR_X+32,110,34,2,'#05060a',.55);
     if(IMG_CARX.complete&&IMG_CARX.naturalWidth)g.drawImage(IMG_CARX,CAR_X,110-IMG_CARX.naturalHeight);
-    if(!(c.enter&&NOW-c.enter>.45))drawChar(c.x,110,c.dir,c.walking,c.dist);
+    if(!(c.enter&&NOW-c.enter>.45)){if(this.act&&this.act.c.ready)this.act.draw(OUT_SC);else drawChar(c.x,110,c.dir,c.walking,c.dist)}
     if(fl>0){g.globalAlpha=fl*.14;R(0,0,W,H,'#b4c4e4');g.globalAlpha=1}
     rainFx(190,0,H,150,.55,T);
     g.globalAlpha=.07;R(0,0,W,H,'#0a1a2a');g.globalAlpha=1;
@@ -1850,7 +1853,7 @@ document.addEventListener('wheel',e=>{if(e.ctrlKey)e.preventDefault()},{passive:
 document.addEventListener('visibilitychange',()=>{if(document.hidden){if(SILENT_EL)SILENT_EL.pause()}else if(AU.ctx)unmuteSilentSwitch();if(AU.ctx){if(document.hidden)AU.ctx.suspend();else AU.ctx.resume()}});
 
 /* aggiornamento automatico: se sul server c'e' una versione piu' nuova di questa, ricarica una volta (cancella anche le copie salvate) */
-const BUILD='6 nov 22:00';
+const BUILD='6 nov 23:00';
 {const ve=document.getElementById('ver');if(ve)ve.textContent='v. '+BUILD;
  if(location.protocol.startsWith('http')){
   fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{
