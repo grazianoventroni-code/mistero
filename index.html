@@ -59,7 +59,7 @@ button:active{background:#1a2438;transform:translate(1px,1px)}
       <div id="crt"></div>
       <div id="hint"></div>
       <div id="ios">PER LO SCHERMO INTERO: TOCCA CONDIVIDI, POI «AGGIUNGI ALLA SCHERMATA HOME»</div>
-      <div id="ver">v. 6 nov 13:00</div>
+      <div id="ver">v. 6 nov 14:00</div>
       <div id="menu"></div>
     </div>
     <div id="dlg"><p id="txt"></p></div>
@@ -941,7 +941,7 @@ function iconOf(id){
 function openCU(id){CU.id=id;CU.t0=NOW;say(itemText(id))}
 const hintEl=document.getElementById('hint');
 function setHint(t,on=true){hintEl.textContent=t||'';hintEl.style.visibility=(t&&on)?'visible':'hidden'}
-function closeCU(){const was=CU.id;CU.id=null;setHint('');if(was==='book'&&S.bookOpen&&!S.dreamSeen&&cur===inside)setTimeout(()=>startDream(),600)}
+function closeCU(){const was=CU.id;CU.id=null;setHint('');if(was==='book'&&S.bookOpen&&!S.dreamSeen&&(cur===inside||cur===bagno))setTimeout(()=>startDream(),600)}
 function giveItem(id){if(!S.inv.includes(id))S.inv.push(id);save();refreshInv();sfx.take()}
 function removeItem(id){S.inv=S.inv.filter(x=>x!==id);save();refreshInv()}
 function takeLog(){S.logs++;S.logsLeft--;if(!S.inv.includes('log'))S.inv.push('log');save();refreshInv();sfx.thud()}
@@ -1680,7 +1680,7 @@ const sogno={t:0,steps:0,lastStep:0,vis:-1,
     g.globalAlpha=1-env;R(0,0,W,H,'#000');g.globalAlpha=1}
 };
 function thunderSoft(){if(AU.ctx)nburst(90,1,1.6,.09,'lowpass')}
-function startDream(){if(S.dreamSeen||cur!==inside)return;fadeTo(1,1.3,()=>{setScene('sogno');fadeTo(0,1.3)})}
+function startDream(){if(S.dreamSeen||(cur!==inside&&cur!==bagno))return;fadeTo(1,1.3,()=>{setScene('sogno');fadeTo(0,1.3)})}
 const scenes={start,drive,outside,inside,bagno,sogno};
 let cur=start;
 function setScene(n){cur=scenes[n];setHint('');const ve=document.getElementById('ver');if(ve)ve.style.display=n==='start'?'':'none';const io=document.getElementById('ios');if(io)io.style.display=(n==='start'&&IS_IOS&&!navigator.standalone)?'block':'none';cur.enter();refreshInv()}
@@ -1723,7 +1723,7 @@ document.addEventListener('wheel',e=>{if(e.ctrlKey)e.preventDefault()},{passive:
 document.addEventListener('visibilitychange',()=>{if(document.hidden){if(SILENT_EL)SILENT_EL.pause()}else if(AU.ctx)unmuteSilentSwitch();if(AU.ctx){if(document.hidden)AU.ctx.suspend();else AU.ctx.resume()}});
 
 /* aggiornamento automatico: se sul server c'e' una versione piu' nuova di questa, ricarica una volta (cancella anche le copie salvate) */
-const BUILD='6 nov 13:00';
+const BUILD='6 nov 14:00';
 {const ve=document.getElementById('ver');if(ve)ve.textContent='v. '+BUILD;
  if(location.protocol.startsWith('http')){
   fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{
