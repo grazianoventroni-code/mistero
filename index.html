@@ -59,7 +59,7 @@ button:active{background:#1a2438;transform:translate(1px,1px)}
       <div id="crt"></div>
       <div id="hint"></div>
       <div id="ios">PER LO SCHERMO INTERO: TOCCA CONDIVIDI, POI «AGGIUNGI ALLA SCHERMATA HOME»</div>
-      <div id="ver">v. 6 nov 18:00</div>
+      <div id="ver">v. 6 nov 18:30</div>
       <div id="menu"></div>
     </div>
     <div id="dlg"><p id="txt"></p></div>
@@ -655,7 +655,7 @@ const drive={T:0,fired:{},cap:0,
     g.globalAlpha=1;for(let i=0;i<5;i++){disc(156,92,10-i*1.9,'#ffc870',k*(.05+.03*i)*gl)}
     g.globalAlpha=k;R(154,89,5,2,'#fff4c8');R(155,90,3,1,'#ffe08a');
     R(149,106,54,4,'#232733');R(149,106,54,1,'#4a5062');R(149,109,54,1,'#0a0b10');   // sportello abbassato
-    if(!this.gTaken){const mb=sprTex('matchbox_small');g.drawImage(mb,172,92,mb.width,mb.height);
+    if(!this.gTaken){const mb=sprTex('matchbox_small');g.drawImage(mb,170,90,mb.width,mb.height);
       if((T>this.gOpen+1.2)&&Math.floor(T*2)%2===0){g.globalAlpha=.9;outline(GLOVE_MATCH,'#d8cfb0')}}
     g.globalAlpha=1},
   /* strumenti animati sopra il cruscotto dipinto: lancette che seguono la velocita' e spie che lampeggiano */
@@ -900,7 +900,7 @@ function sprS(k,x,y,sc,a=1){const t=sprTex(k);g.globalAlpha=a;g.drawImage(t,Math
 const ITEMS={
   comic:{name:'Fumetto',spr:()=>'comic',zoom:1,frame:true,
     text:"«Dylan Dog», numero 1: «L'alba dei morti viventi». In copertina, un uomo con la pistola e mani di morti che escono dalla terra, sotto una luna gialla. Non serve a niente, ma è bello."},
-  matches:{name:'Fiammiferi',spr:()=>'matchbox',zoom:4,
+  matches:{name:'Fiammiferi',spr:()=>'matchbox',zoom:2,
     text:()=>"Una scatola di fiammiferi. Ne restano abbastanza. Li trascino su ciò che voglio accendere."},
   log:{name:'Legna',spr:()=>'LOG',zoom:5,
     text:()=>S.logs>1?"Qualche ciocco di legna secca. Li trascino sulla stufa.":"Un ciocco di legna secca. Lo trascino sulla stufa."},
@@ -933,7 +933,7 @@ function paperTap(x,y){
 const itemText=id=>{const t=ITEMS[id].text;return typeof t==='function'?t():t};
 function itemTex(id){const k=ITEMS[id].spr();if(k==='LOG'){return logTex()}return sprTex(k)}
 function iconOf(id){
-  if(id==='matches')return {t:sprTex('matchbox_small'),sc:2};
+  if(id==='matches')return {t:sprTex('matchbox_small'),sc:1.5};
   if(id==='log'){return {t:logTex(),sc:2}}
   if(id==='candle')return {t:sprTex(S.candleLit?'candle_lit':'candle_unlit_mid'),sc:2};
   if(id==='book')return {t:sprTex('book_locked_small'),sc:1};
@@ -1120,7 +1120,7 @@ function logSide(x,y,len,glow=0){
 /* scatola di fiammiferi di tre quarti, con un fiammifero disegnato sul fronte */
 function matchbox(x,y,glow=0){spr('matchbox_small',x,y);if(glow){g.globalAlpha=glow;R(x+2,y+3,4,1,'#fff');g.globalAlpha=1}}
 function logSprite(x,y,a=1,big=true){if(big){g.globalAlpha=a*.6;R(x-20,y-11,40,22,'rgba(216,207,176,.28)');g.globalAlpha=a;drawLog(x-16,y-9,false,true)}else{g.globalAlpha=a*.6;R(x-11,y-7,22,14,'rgba(216,207,176,.28)');g.globalAlpha=a;drawLog(x-8,y-4,false,false)}g.globalAlpha=1}
-function matchSprite(x,y,a=1){g.globalAlpha=a*.6;R(x-15,y-17,30,34,'rgba(216,207,176,.28)');spr('matchbox',x-12,y-13,false,a)}
+function matchSprite(x,y,a=1){g.globalAlpha=a*.6;R(x-22,y-25,44,50,'rgba(216,207,176,.28)');spr('matchbox',x-19,y-22,false,a)}
 const MBX=70,MBY=60;               // scatola di fiammiferi sulla mensola
 const PILE=[[89,101,false],[103,101,true],[96,95,false]];   // due ciocchi a terra e il terzo appoggiato sopra, al centro   // catasta: due tronchi sotto, uno sopra
 
@@ -1817,7 +1817,7 @@ document.addEventListener('wheel',e=>{if(e.ctrlKey)e.preventDefault()},{passive:
 document.addEventListener('visibilitychange',()=>{if(document.hidden){if(SILENT_EL)SILENT_EL.pause()}else if(AU.ctx)unmuteSilentSwitch();if(AU.ctx){if(document.hidden)AU.ctx.suspend();else AU.ctx.resume()}});
 
 /* aggiornamento automatico: se sul server c'e' una versione piu' nuova di questa, ricarica una volta (cancella anche le copie salvate) */
-const BUILD='6 nov 18:00';
+const BUILD='6 nov 18:30';
 {const ve=document.getElementById('ver');if(ve)ve.textContent='v. '+BUILD;
  if(location.protocol.startsWith('http')){
   fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{
