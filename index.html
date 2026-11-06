@@ -59,7 +59,7 @@ button:active{background:#1a2438;transform:translate(1px,1px)}
       <div id="crt"></div>
       <div id="hint"></div>
       <div id="ios">PER LO SCHERMO INTERO: TOCCA CONDIVIDI, POI «AGGIUNGI ALLA SCHERMATA HOME»</div>
-      <div id="ver">v. 6 nov 20:15</div>
+      <div id="ver">v. 6 nov 21:00</div>
       <div id="menu"></div>
     </div>
     <div id="dlg"><p id="txt"></p></div>
@@ -493,7 +493,7 @@ const WH=dist(31)+.8,CK=3.2,KX=26;
 const curv=w=>sm((WH-6-w)/10)*CK*(Math.sin(w*.3)+.6*Math.sin(w*.13+2.1)+.25*Math.sin(w*.71));
 let CAB=null;
 
-const GLOVE_MATCH={x:168,y:90,w:16,h:16};
+const GLOVE_MATCH={x:167,y:87,w:17,h:19};
 const drive={T:0,fired:{},cap:0,
   enter(){this.makeCab();this.T=0;this.fired={};this.cap=0;this.leaving=false;this.gT=0;this.gOpen=0;this.gTaken=false;this.gDone=false;this.gHint=0;say('');setRain(.2,false);setEng(1,true);musicStart('drive',5);document.getElementById('bHint').style.display='none'},
   update(dt){this.T+=dt;const T=this.T;
@@ -655,7 +655,7 @@ const drive={T:0,fired:{},cap:0,
     g.globalAlpha=1;for(let i=0;i<5;i++){disc(156,92,10-i*1.9,'#ffc870',k*(.05+.03*i)*gl)}
     g.globalAlpha=k;R(154,89,5,2,'#fff4c8');R(155,90,3,1,'#ffe08a');
     R(149,106,54,4,'#232733');R(149,106,54,1,'#4a5062');R(149,109,54,1,'#0a0b10');   // sportello abbassato
-    if(!this.gTaken){const mb=sprTex('matchbox_small');g.drawImage(mb,170,90,mb.width,mb.height);
+    if(!this.gTaken){const mb=sprTex('matchbox_small');g.drawImage(mb,168,88,mb.width*.75,mb.height*.75);   // 3 pixel schermo per pixel dello sprite: entra nel vano
       if((T>this.gOpen+1.2)&&Math.floor(T*2)%2===0){g.globalAlpha=.9;outline(GLOVE_MATCH,'#d8cfb0')}}
     g.globalAlpha=1},
   /* strumenti animati sopra il cruscotto dipinto: lancette che seguono la velocita' e spie che lampeggiano */
@@ -1817,7 +1817,7 @@ document.addEventListener('wheel',e=>{if(e.ctrlKey)e.preventDefault()},{passive:
 document.addEventListener('visibilitychange',()=>{if(document.hidden){if(SILENT_EL)SILENT_EL.pause()}else if(AU.ctx)unmuteSilentSwitch();if(AU.ctx){if(document.hidden)AU.ctx.suspend();else AU.ctx.resume()}});
 
 /* aggiornamento automatico: se sul server c'e' una versione piu' nuova di questa, ricarica una volta (cancella anche le copie salvate) */
-const BUILD='6 nov 20:15';
+const BUILD='6 nov 21:00';
 {const ve=document.getElementById('ver');if(ve)ve.textContent='v. '+BUILD;
  if(location.protocol.startsWith('http')){
   fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{
