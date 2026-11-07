@@ -311,7 +311,7 @@ class Scena{
       this.oggetti=(this.cfg.oggetti||[]).map(o=>({...o,img:o.img?mkImg(o.img):null}));
       this.pronto=true;if(arr&&arr.cammina)this.giocatore.vaiA(arr.cammina.x,arr.cammina.y,false,arr.cammina.dir);
       const amb=this.cfg.ambiente;if(amb)ambiente(amb);
-      if(this.cfg.entra)this.cfg.entra(this)})},
+      if(this.cfg.entra)this.cfg.entra(this)})}
   update(dt){
     this.t+=dt;if(!this.pronto)return;
     for(const k in this.attori)this.attori[k].update(dt);
@@ -339,9 +339,9 @@ class Scena{
   /* ---- tocchi ---- */
   trova(x,y){
     for(const u of this.cfg.uscite||[]){const r=u.rect;if(x>=r[0]&&x<r[0]+r[2]&&y>=r[1]&&y<r[1]+r[3])return {tipo:'uscita',o:u,rect:r,nome:u.nome}}
-    for(const h of this.cfg.punti||[]){if(h.visibile&&!h.visibile(this))continue;const r=h.rect;if(r&&x>=r[0]&&x<r[0]+r[2]&&y>=r[1]&&y<r[1]+r[3])return {tipo:'punto',o:h,rect:r,nome:h.nome}}
     for(const k in this.attori){if(k==='_io')continue;const a=this.attori[k];if(a.visibile===false)continue;const h=a.altezza(),w=a.c.w/RS*a.scala()*.28;
       if(Math.abs(x-a.x)<w&&y<a.y+2&&y>a.y-h)return {tipo:'attore',o:a,rect:[a.x-w,a.y-h,w*2,h],nome:a.etichetta}}
+    for(const h of this.cfg.punti||[]){if(h.visibile&&!h.visibile(this))continue;const r=h.rect;if(r&&x>=r[0]&&x<r[0]+r[2]&&y>=r[1]&&y<r[1]+r[3])return {tipo:'punto',o:h,rect:r,nome:h.nome}}
     return null}
   move(x,y){if(!this.pronto)return;const t=this.trova(x,y);this.hover=t;setHint(t&&t.nome?t.nome:(this.cfg.suggerimento||''))}
   async down(x,y){
