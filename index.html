@@ -59,7 +59,7 @@ button:active{background:#1a2438;transform:translate(1px,1px)}
       <div id="crt"></div>
       <div id="hint"></div>
       <div id="ios">PER LO SCHERMO INTERO: TOCCA CONDIVIDI, POI «AGGIUNGI ALLA SCHERMATA HOME»</div>
-      <div id="ver">v. 7 nov 12:30</div>
+      <div id="ver">v. 7 nov 13:00</div>
       <div id="menu"></div>
     </div>
     <div id="dlg"><p id="txt"></p></div>
@@ -1796,8 +1796,9 @@ const prova={actors:[],sel:0,ready:false,lastTap:0,fps:0,fn:0,ft:0,
   enter(){
     document.getElementById('bHint').style.display='none';say('');this.ready=false;
     const nomi=['protagonista-interno','donna','prete','leonardo','protagonista-esterno'];
+    if(/prova=tutti/.test(location.search))nomi.push('anna','anna-senza-giacca','lillo','greg');   // ?prova=tutti: tutti i personaggi nuovi
     Promise.all(nomi.map(loadChar)).then(()=>{
-      this.actors=nomi.map((n,i)=>new Actor(n,50+i*38,104+(i%2)*6));this.sel=0;this.ready=true;
+      this.actors=nomi.map((n,i)=>new Actor(n,18+i*(204/Math.max(4,nomi.length-1)),104+(i%2)*6));this.sel=0;this.ready=true;
       setHint('TOCCA: CAMMINA · DOPPIO TOCCO: CORRE · TOCCA UN PERSONAGGIO: LO SCEGLI, DI NUOVO: PARLA · PULSANTI: SEDUTA, RACCOGLI, INDICA')})},
   update(dt){
     this.fn++;this.ft+=dt;if(this.ft>=.5){this.fps=Math.round(this.fn/this.ft);this.fn=0;this.ft=0}
@@ -1832,7 +1833,7 @@ const prova={actors:[],sel:0,ready:false,lastTap:0,fps:0,fn:0,ft:0,
 loadChar('protagonista-interno');loadChar('protagonista-esterno');   // servono nel sogno e fuori dalla baita
 const scenes={start,drive,outside,inside,bagno,sogno,prova};
 let cur=start;
-function setScene(n){cur=scenes[n];setHint('');const ve=document.getElementById('ver');if(ve)ve.style.display=n==='start'?'':'none';const io=document.getElementById('ios');if(io)io.style.display=(n==='start'&&IS_IOS&&!navigator.standalone)?'block':'none';cur.enter();refreshInv()}
+function setScene(n){if(n==='start'&&window.__pendingReload){location.reload();return}cur=scenes[n];setHint('');const ve=document.getElementById('ver');if(ve)ve.style.display=n==='start'?'':'none';const io=document.getElementById('ios');if(io)io.style.display=(n==='start'&&IS_IOS&&!navigator.standalone)?'block':'none';cur.enter();refreshInv()}
 let lastWR='';
 function frame(ms){const t=ms/1000;
   {const b=document.getElementById('wrap').getBoundingClientRect(),k=Math.round(b.width)+'x'+Math.round(b.height);if(k!==lastWR){lastWR=k;resizeDisplay()}}
@@ -1872,7 +1873,7 @@ document.addEventListener('wheel',e=>{if(e.ctrlKey)e.preventDefault()},{passive:
 document.addEventListener('visibilitychange',()=>{if(document.hidden){if(SILENT_EL)SILENT_EL.pause()}else if(AU.ctx)unmuteSilentSwitch();if(AU.ctx){if(document.hidden)AU.ctx.suspend();else AU.ctx.resume()}});
 
 /* aggiornamento automatico: se sul server c'e' una versione piu' nuova di questa, ricarica una volta (cancella anche le copie salvate) */
-const BUILD='7 nov 12:30';
+const BUILD='7 nov 13:00';
 {const ve=document.getElementById('ver');if(ve)ve.textContent='v. '+BUILD;
  if(location.protocol.startsWith('http')){
   fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{
@@ -1880,7 +1881,10 @@ const BUILD='7 nov 12:30';
     try{if(sessionStorage.getItem('upd')===m[1])return;sessionStorage.setItem('upd',m[1])}catch(e){}
     const regs=navigator.serviceWorker&&navigator.serviceWorker.getRegistrations?navigator.serviceWorker.getRegistrations().then(rs=>Promise.all(rs.map(r=>r.update()))):Promise.resolve();
     regs.catch(()=>{}).then(()=>window.caches&&caches.keys?caches.keys().then(ks=>Promise.all(ks.map(k=>caches.delete(k)))):0).catch(()=>{}).then(()=>location.reload())}).catch(()=>{})}}
-if('serviceWorker' in navigator&&location.protocol.startsWith('http')&&!['localhost','127.0.0.1'].includes(location.hostname)){navigator.serviceWorker.register('sw.js').catch(()=>{})}
+if('serviceWorker' in navigator&&location.protocol.startsWith('http')&&!['localhost','127.0.0.1'].includes(location.hostname)){
+  const had=!!navigator.serviceWorker.controller;navigator.serviceWorker.register('sw.js').catch(()=>{});
+  /* quando una versione nuova prende il posto della vecchia, ricarico: subito se siamo alla schermata d'inizio, altrimenti appena ci si torna (cosi' non si perde la scena in corso) */
+  navigator.serviceWorker.addEventListener('controllerchange',()=>{if(!had||window.__rl)return;window.__rl=1;if(cur===start)location.reload();else window.__pendingReload=true})}
 
 window.__dbg={prova,CHARS,storm,SOGNO_T,AU,thunder,setRain,sprTex,itemTex,bagno,openCU,giveItem,combine,refreshInv,takeLog,ITEMS,IDR,CU,AU,MU,S,drive,outside,inside,sogno,startDream,setScene,fade,go:n=>{fade.a=0;fade.to=0;setScene(n)},scenes};
 const boot=()=>{fade.a=1;fade.to=1;if(/[?&]prova/.test(location.search)){cur=prova;prova.enter()}else{cur=start;start.enter()}fadeTo(0,2);requestAnimationFrame(frame)};
