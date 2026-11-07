@@ -1,7 +1,7 @@
 // Service worker: il gioco funziona offline.
 // - i file del gioco (immagini, audio, icone) sono salvati alla prima apertura (sempre scaricati freschi: cache reload) e serviti dalla memoria del telefono;
 // - la pagina e questo file si chiedono prima alla rete (cosi' gli aggiornamenti arrivano subito) e, senza rete, si usa la copia salvata.
-const VERSION = "8 nov 03:00";
+const VERSION = "8 nov 04:00";
 const CACHE = "mistero-" + VERSION;
 const FILES = [
   "./",
@@ -135,18 +135,22 @@ const FILES = [
   "img/char/protagonista-esterno.png",
   "img/char/protagonista-interno.json",
   "img/char/protagonista-interno.png",
+  "img/emb/auto164_34fronte.png",
+  "img/emb/auto164_34retro.png",
+  "img/emb/auto164_fronte.png",
+  "img/emb/auto164_retro.png",
   "img/emb/bg_bagno.png",
   "img/emb/bg_out.png",
   "img/emb/bg_stufa.png",
   "img/emb/img_cab.png",
-  "img/emb/img_car.png",
-  "img/emb/img_carx.png",
+  "img/emb/img_car_164.png",
+  "img/emb/img_carx_164.png",
   "img/emb/img_dream_0.png",
   "img/emb/img_dream_1.png",
   "img/emb/img_dream_2.png",
   "img/emb/img_dream_3.png",
-  "img/emb/img_glove.png",
-  "img/emb/img_glove0.png",
+  "img/emb/img_glove0_164.png",
+  "img/emb/img_glove_164.png",
   "img/emb/img_log.png",
   "img/emb/img_pint.png",
   "img/emb/img_prot.png",
@@ -158,7 +162,7 @@ const FILES = [
   "img/emb/img_trees_4.png",
   "img/emb/img_walk12.png",
   "img/emb/img_walk8.png",
-  "img/emb/img_wheel.png",
+  "img/emb/img_wheel_164.png",
   "img/emb/img_woman.png",
   "img/emb/spr_book_locked.png",
   "img/emb/spr_book_locked_small.png",

@@ -430,7 +430,7 @@ function fpine(x,by,h,pal,seed,k=g){
 }
 /* ===== immagini generate (Gemini) e ridotte: interno auto, volante, abeti ===== */
 const IMGS=[];const mkImg=p=>{const i=new Image();IMGS.push(new Promise(r=>{i.addEventListener('load',r);i.addEventListener('error',r)}));i.src=p;return i};
-const IMG_CAR=mkImg('img/emb/img_car.png'),IMG_WHEEL=mkImg('img/emb/img_wheel.png'),IMG_GLOVE=mkImg('img/emb/img_glove.png'),IMG_GLOVE0=mkImg('img/emb/img_glove0.png');
+const IMG_CAR=mkImg('img/emb/img_car_164.png'),IMG_WHEEL=mkImg('img/emb/img_wheel_164.png'),IMG_GLOVE=mkImg('img/emb/img_glove_164.png'),IMG_GLOVE0=mkImg('img/emb/img_glove0_164.png');
 const IMG_PROT=mkImg('img/emb/img_prot.png');   // protagonista con cappello e impermeabile: 5 pose (ferma + 4 passi), 16x32 ciascuna
 const IMG_WALK12=mkImg('img/emb/img_walk12.png');   // camminata realistica a 12 pose 32x56; il libro e' sotto il braccio e spunta solo dietro la schiena
 const IMG_WALK8=mkImg('img/emb/img_walk8.png');   // camminata a 8 fotogrammi 28x56 (ciclo: contatto, discesa, passaggio, salita, ripetuto per l'altra gamba)
@@ -738,7 +738,7 @@ let OUT=null;const FAR=[],MID=[];
 for(let x=-6;x<W+10;x+=8)FAR.push([x,34+hash(x)*24]);
 for(let x=-8;x<W+10;x+=14)MID.push([x+hash(x+1)*5,48+hash(x+4)*26]);
 const GROUND=92,BY=102,DOORX=152,CAR_X=6;
-const BG_OUT=mkImg('img/emb/bg_out.png'),IMG_CARX=mkImg('img/emb/img_carx.png');
+const BG_OUT=mkImg('img/emb/bg_out.png'),IMG_CARX=mkImg('img/emb/auto164_34retro.png');
 function drawCar(x,y){
   const body='#3c4650',hi='#5a6874',dk='#222a32';
   ell(x+30,y+1,34,3,'#05060a',.6);
@@ -828,8 +828,8 @@ const outside={chr:{x:84,dir:1,tx:null,walking:false,dist:0,enter:0},idle:0,ripp
     // porta che si apre
     if(c.enter){const a=clamp((NOW-c.enter)/.5,0,1);R(147,62,10,21,'#06080c');g.globalAlpha=a*.7;R(147,62,10,21,'#c8903c');g.globalAlpha=1;R(147+Math.round(10*a),62,Math.max(0,10-Math.round(10*a)),21,'#3a2616')}
     // auto parcheggiata
-    ell(CAR_X+48,110,50,2.5,'#05060a',.55);
-    if(IMG_CARX.complete&&IMG_CARX.naturalWidth)g.drawImage(IMG_CARX,CAR_X,110-IMG_CARX.naturalHeight);
+    ell(CAR_X+50,111,52,3,'#05060a',.55);
+    if(IMG_CARX.complete&&IMG_CARX.naturalWidth)g.drawImage(IMG_CARX,CAR_X,112-IMG_CARX.naturalHeight);
     if(!(c.enter&&NOW-c.enter>.45)){if(this.act&&this.act.c.ready)this.act.draw(OUT_SC);else drawChar(c.x,110,c.dir,c.walking,c.dist)}
     if(fl>0){g.globalAlpha=fl*.14;R(0,0,W,H,'#b4c4e4');g.globalAlpha=1}
     rainFx(190,0,H,150,.55,T);
@@ -1876,7 +1876,7 @@ document.addEventListener('wheel',e=>{if(e.ctrlKey)e.preventDefault()},{passive:
 document.addEventListener('visibilitychange',()=>{if(document.hidden){if(SILENT_EL)SILENT_EL.pause()}else if(AU.ctx)unmuteSilentSwitch();if(AU.ctx){if(document.hidden)AU.ctx.suspend();else AU.ctx.resume()}});
 
 /* aggiornamento automatico: se sul server c'e' una versione piu' nuova di questa, ricarica una volta (cancella anche le copie salvate) */
-const BUILD='8 nov 03:00';
+const BUILD='8 nov 04:00';
 {const ve=document.getElementById('ver');if(ve)ve.textContent='v. '+BUILD;
  if(location.protocol.startsWith('http')){
   fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{
