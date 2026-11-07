@@ -1880,7 +1880,7 @@ document.addEventListener('wheel',e=>{if(e.ctrlKey)e.preventDefault()},{passive:
 document.addEventListener('visibilitychange',()=>{if(document.hidden){if(SILENT_EL)SILENT_EL.pause()}else if(AU.ctx)unmuteSilentSwitch();if(AU.ctx){if(document.hidden)AU.ctx.suspend();else AU.ctx.resume()}});
 
 /* aggiornamento automatico: se sul server c'e' una versione piu' nuova di questa, ricarica una volta (cancella anche le copie salvate) */
-const BUILD='8 nov 11:00';
+const BUILD='8 nov 11:30';
 {const ve=document.getElementById('ver');if(ve)ve.textContent='v. '+BUILD;
  if(location.protocol.startsWith('http')){
   fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{
@@ -1899,7 +1899,11 @@ window.__dbg={prova,CHARS,storm,SOGNO_T,AU,thunder,setRain,sprTex,itemTex,bagno,
  const API={g,W,H,RS,R,txt,ell,clamp,lerp,hash,inPoly,nearOnPoly,Actor,loadChar,CHARS,say,setHint,fade,fadeTo,setScene,scenes,mkImg,AU,tone,nburst,sfx,setRain,setFire,musicStart,musicStop,cv,wrap:wrapEl,
    view:()=>{const r=cv.getBoundingClientRect();return {k:Math.min(r.width/DW,r.height/H),DW,OX}},now:()=>NOW};
  for(const f of (window.__ext||[])){try{f(API)}catch(e){console.error('estensione',e)}}}
-const boot=()=>{fade.a=1;fade.to=1;const dm=/[?&]demo/.test(location.search)&&scenes.demo,mg=(location.search.match(/[?&](tutti|uomini|donne|bambini|animali)(?=[&=#]|$)/)||[])[1],tt=mg&&scenes[mg];if(tt){cur=tt;tt.enter()}else if(dm){cur=scenes.demo;scenes.demo.enter()}else if(/[?&]prova/.test(location.search)){cur=prova;prova.enter()}else{cur=start;start.enter()}fadeTo(0,2);requestAnimationFrame(frame)};
+const boot=()=>{fade.a=1;fade.to=1;const dm=/[?&]demo/.test(location.search)&&scenes.demo,mg=(location.search.match(/[?&](tutti|uomini|donne|bambini|animali)(?=[&=#]|$)/)||[])[1],tt=mg&&scenes[mg];
+ if(mg&&!tt&&!sessionStorage.getItem('heal')){   // i file js in memoria sono vecchi: si svuota la memoria del gioco e si ricarica una volta sola
+   sessionStorage.setItem('heal','1');const rl=()=>location.reload();
+   (navigator.serviceWorker&&navigator.serviceWorker.getRegistrations?navigator.serviceWorker.getRegistrations().then(rs=>Promise.all(rs.map(r=>r.unregister()))):Promise.resolve()).catch(()=>{}).then(()=>window.caches&&caches.keys?caches.keys().then(ks=>Promise.all(ks.map(k=>caches.delete(k)))):0).catch(()=>{}).then(rl);return}
+ if(tt){cur=tt;tt.enter()}else if(dm){cur=scenes.demo;scenes.demo.enter()}else if(/[?&]prova/.test(location.search)){cur=prova;prova.enter()}else{cur=start;start.enter()}fadeTo(0,2);requestAnimationFrame(frame)};
 Promise.all(IMGS).then(boot);
 })();
 </script>
