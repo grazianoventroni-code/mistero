@@ -38,6 +38,7 @@ button:active{background:#1a2438;transform:translate(1px,1px)}
 #dlg.on{opacity:1;pointer-events:auto;cursor:pointer}
 #txt{margin:0;font-family:Verdana,'Trebuchet MS','DejaVu Sans',Arial,sans-serif;font-weight:800;text-transform:uppercase;letter-spacing:.03em;text-align:center;font-size:clamp(11px,3.5vh,16px);line-height:1.25;color:#e8dfc0}
 #bar{display:flex;flex-direction:column;gap:6px}
+#bSkip{position:fixed;z-index:6;right:calc(var(--sl) + 28px);top:10px;width:auto;height:auto;padding:8px 16px;white-space:nowrap;font-size:clamp(13px,4vh,17px);letter-spacing:2px;opacity:1;background:rgba(10,13,20,.92);border:2px solid #d8cfb0}
 #inv{display:none;grid-auto-flow:row;gap:4px;padding:4px;background:rgba(6,8,13,.82);border:2px solid #4a5a70;box-shadow:3px 3px 0 rgba(0,0,0,.5);touch-action:none}
 #inv .slot{position:relative;width:var(--sl);height:var(--sl);background:#10141c;border:2px solid #2e3a4c;display:flex;align-items:center;justify-content:center;touch-action:none;cursor:grab}
 #inv .slot canvas{width:90%;height:90%;image-rendering:pixelated;pointer-events:none}
@@ -65,7 +66,7 @@ button:active{background:#1a2438;transform:translate(1px,1px)}
     <div id="dlg"><p id="txt"></p></div>
   </div>
   <div id="side">
-    <div id="bar"><button id="bSkip" style="display:none">Salta &raquo;</button><button id="bHint">?</button><button id="bSnd">♪</button></div>
+    <button id="bSkip" style="display:none">SALTA&nbsp;&nbsp;&#10140;</button><div id="bar"><button id="bHint">?</button><button id="bSnd">♪</button></div>
     <div id="inv"></div>
   </div>
 </div>
@@ -1526,7 +1527,7 @@ const ft=document.createElement('canvas');ft.width=W*RS;ft.height=H*RS;const fx=
 const fm=document.createElement('canvas');fm.width=W*RS;fm.height=H*RS;const fmx=fm.getContext('2d');
 const dc=document.createElement('canvas');dc.width=W;dc.height=H;const dx=dc.getContext('2d');
 fx.imageSmoothingEnabled=fmx.imageSmoothingEnabled=dx.imageSmoothingEnabled=false;
-const DREAM_SC=2.05,SEAT_X=205,SEAT_K=.78;   // scala del protagonista nel sogno (circa 56 px di altezza) e posizione della testa da seduto
+const DREAM_SC=2.05,SEAT_X=196,SEAT_K=.78;   // scala del protagonista nel sogno (circa 56 px di altezza) e posizione della testa da seduto
 const SOGNO_T={walk0:1.0,walkSpeed:38,x0:62,x1:200,fy:108,read:0,sleep:0,black:0,dream0:0,vis:6.4,gap:.9};
 SOGNO_T.walkEnd=SOGNO_T.walk0+(SOGNO_T.x1-SOGNO_T.x0)/SOGNO_T.walkSpeed;   // arriva davanti al divano
 SOGNO_T.sitEnd=SOGNO_T.walkEnd+.7;
@@ -1887,7 +1888,7 @@ document.addEventListener('wheel',e=>{if(e.ctrlKey)e.preventDefault()},{passive:
 document.addEventListener('visibilitychange',()=>{if(document.hidden){if(SILENT_EL)SILENT_EL.pause()}else if(AU.ctx)unmuteSilentSwitch();if(AU.ctx){if(document.hidden)AU.ctx.suspend();else AU.ctx.resume()}});
 
 /* aggiornamento automatico: se sul server c'e' una versione piu' nuova di questa, ricarica una volta (cancella anche le copie salvate) */
-const BUILD='7 nov 22:00';
+const BUILD='7 nov 22:30';
 {const ve=document.getElementById('ver');if(ve)ve.textContent='v. '+BUILD;
  if(location.protocol.startsWith('http')){
   fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{
