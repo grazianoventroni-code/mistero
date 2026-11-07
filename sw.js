@@ -1,17 +1,16 @@
 // Service worker: il gioco funziona offline.
 // - i file del gioco (immagini, audio, icone) sono salvati alla prima apertura (sempre scaricati freschi: cache reload) e serviti dalla memoria del telefono;
 // - la pagina e questo file si chiedono prima alla rete (cosi' gli aggiornamenti arrivano subito) e, senza rete, si usa la copia salvata.
-const VERSION = "8 nov 13:30";
+const VERSION = "8 nov 14:00";
 const CACHE = "mistero-" + VERSION;
 const FILES = [
   "./",
   "apple-touch-icon.png",
   "audio/temporale.wav",
   "audio/tuoni.mp3",
-  "audio/versi/bela_1.mp3",
-  "audio/versi/bela_2.mp3",
-  "audio/versi/miao_khora.mp3",
-  "audio/versi/miao_mia.mp3",
+  "audio/versi/bela_v2.mp3",
+  "audio/versi/miao_khora_v2.mp3",
+  "audio/versi/miao_mia_v2.mp3",
   "audio/voci/anna-5229e163.mp3",
   "audio/voci/anna-52c3387b.mp3",
   "audio/voci/anna-8a244a63.mp3",

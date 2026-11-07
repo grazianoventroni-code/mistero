@@ -39,7 +39,7 @@ const DESC={ // descrizione guida di ogni voce (la stessa con cui sono costruite
  'blues-brothers-alto':'adulto, voce bassa e profonda','blues-brothers-basso':'adulto, voce più squillante','controllore-del-treno':'voce neutra',
  'doc-ritorno-al-futuro':'anziano, squillante e vivace','graziano':'adulto, bassa e sensuale','igor':'adulto, gracchiante e vivace','kurt-cobain':'adulto, voce calda',
  'lillo':'adulto, più squillante e vivace','greg':'adulto, bassa e profonda','macgyver':'adulto, voce calda','mark-knopfler':'adulto, voce calda',
- 'marty-mcfly-ritorno-al-futuro':'ragazzo, squillante e vivace','leonardo':'bambino, vivace e intelligente','gemella':'due voci uguali in coro, robotiche e inquietanti','anna':'adulta, vivace e simpatica','anna-senza-giacca':'adulta, vivace e simpatica','carmen-san-diego':'adulta, bassa e rauca','donna':'adulta, bassa e sensuale','lara-croft':'adulta, bassa e decisa','poliziotta':'adulta, ferma e decisa','prete':'anziano, bassa, profonda, rauca','protagonista-interno':'adulto, bassa e intensa','protagonista-esterno':'adulto, bassa e intensa'};
+ 'marty-mcfly-ritorno-al-futuro':'ragazzo, squillante e vivace','leonardo':'bambino, vivace e intelligente','gemella':'due voci uguali in coro, robotiche e inquietanti','anna':'adulta, vivace e simpatica','anna-senza-giacca':'adulta, vivace e simpatica','carmen-san-diego':'adulta, bassa e rauca','donna':'adulta, bassa e sensuale','lara-croft':'adulta, bassa e decisa','poliziotta':'adulta, ferma e decisa','prete':'anziano, bassa, profonda, rauca','khora':'miagolio dolce','mia':'miagolio dolce','capra':'belato','protagonista-interno':'adulto, bassa e intensa','protagonista-esterno':'adulto, bassa e intensa'};
 function frasi(et,nome){
   if(et==='LE GEMELLE')return ['Ciao, siamo le gemelle. Questa è la nostra voce.',"Stanotte non si dorme: c'è troppo da fare.",'Hai sentito anche tu quel rumore?'];
   const gruppo=(PERS.find(p=>p[0]===nome)||[])[2];
@@ -67,13 +67,16 @@ function verso(tipo,f0){
   o.connect(f1);f1.connect(gn);gn.connect(AU.master);o.start(t);lfo.start(t);o.stop(t+d+.05);lfo.stop(t+d+.05);return d}
 
 /* versi veri (registrazioni libere di Wikimedia Commons, in audio/versi); se non si caricano resta il verso sintetizzato */
-const VERSI={khora:['miao_khora'],mia:['miao_mia'],capra:['bela_1','bela_2']};
+const VERSI={khora:['miao_khora_v2'],mia:['miao_mia_v2'],capra:['bela_v2']};
+let versoAttuale=null;   // un solo verso alla volta: quello nuovo ferma sempre il precedente
 function versoReale(nome){
   const l=VERSI[nome];if(!l||AU.muted)return Promise.resolve(null);
+  if(versoAttuale){try{versoAttuale.pause()}catch(e){}versoAttuale=null}
   const a=new Audio('audio/versi/'+l[Math.floor(Math.random()*l.length)]+'.mp3');a.volume=1;
-  return new Promise(res=>{let ok=false;const fine=d=>{if(!ok){ok=true;res(d)}};
-    a.addEventListener('loadedmetadata',()=>{a.play().then(()=>fine(a.duration||1)).catch(()=>fine(null))});
-    a.addEventListener('error',()=>fine(null));setTimeout(()=>fine(null),2500)})}
+  return new Promise(res=>{let fatto=false;const fine=d=>{if(!fatto){fatto=true;res(d)}};
+    a.addEventListener('loadedmetadata',()=>{a.play().then(()=>{versoAttuale=a;fine(a.duration||1)}).catch(()=>fine(null))});
+    a.addEventListener('error',()=>fine(null));
+    setTimeout(()=>{if(!fatto){try{a.pause();a.removeAttribute('src');a.load()}catch(e){}fine(null)}},6000)})}   // il verso sintetico parte solo se il file non si carica (mai insieme a quello vero)
 function hintSel(a,sopra){const p=a&&PERS.find(q=>q[0]===a.nome);A.setHint(sopra?sopra:(p?p[1]+(DESC[p[0]]?' — '+DESC[p[0]].toUpperCase():'')+' · TOCCA IL PAVIMENTO PER MUOVERLO':'TOCCA UN PERSONAGGIO'))}
 
 class ScenaTutti extends Scena{
