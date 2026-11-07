@@ -817,7 +817,7 @@ const outside={chr:{x:84,dir:1,tx:null,walking:false,dist:0,enter:0},idle:0,ripp
     if(x>=98&&y>=14){this.toDoor=true;this.chr.tx=DOORX-1;
       if(Math.abs(this.chr.x-(DOORX-1))<1){this.chr.tx=null;this.toDoor=false;this.enterDoor()}
       else say("Pochi passi nel fango e sono al riparo.");return}
-    if(x<64&&y>74){say("La mia auto. Il motore è ancora caldo, ma con questo temporale non vado da nessuna parte.");return}
+    if(x<84&&y>70){say("La mia auto. Il motore è ancora caldo, ma con questo temporale non vado da nessuna parte.");return}
     if(y>=GROUND-2){this.toDoor=false;this.chr.tx=clamp(x,76,DOORX+8)}
     else say("Solo buio e pioggia. Gli alberi sembrano chiudersi attorno alla baita.")},
   hint(){this.idle=20;say("Tocca la baita per camminare fino alla porta.")},
@@ -831,7 +831,7 @@ const outside={chr:{x:84,dir:1,tx:null,walking:false,dist:0,enter:0},idle:0,ripp
     // porta che si apre
     if(c.enter){const a=clamp((NOW-c.enter)/.5,0,1);R(147,62,10,21,'#06080c');g.globalAlpha=a*.7;R(147,62,10,21,'#c8903c');g.globalAlpha=1;R(147+Math.round(10*a),62,Math.max(0,10-Math.round(10*a)),21,'#3a2616')}
     // auto parcheggiata
-    ell(CAR_X+28,111,30,2.5,'#05060a',.55);
+    ell(CAR_X+37,111,40,2.5,'#05060a',.55);
     if(IMG_CARX.complete&&IMG_CARX.naturalWidth)g.drawImage(IMG_CARX,CAR_X,112-IMG_CARX.naturalHeight);
     if(!(c.enter&&NOW-c.enter>.45)){if(this.act&&this.act.c.ready)this.act.draw(OUT_SC);else drawChar(c.x,110,c.dir,c.walking,c.dist)}
     if(fl>0){g.globalAlpha=fl*.14;R(0,0,W,H,'#b4c4e4');g.globalAlpha=1}
@@ -1880,7 +1880,7 @@ document.addEventListener('wheel',e=>{if(e.ctrlKey)e.preventDefault()},{passive:
 document.addEventListener('visibilitychange',()=>{if(document.hidden){if(SILENT_EL)SILENT_EL.pause()}else if(AU.ctx)unmuteSilentSwitch();if(AU.ctx){if(document.hidden)AU.ctx.suspend();else AU.ctx.resume()}});
 
 /* aggiornamento automatico: se sul server c'e' una versione piu' nuova di questa, ricarica una volta (cancella anche le copie salvate) */
-const BUILD='8 nov 06:00';
+const BUILD='8 nov 06:30';
 {const ve=document.getElementById('ver');if(ve)ve.textContent='v. '+BUILD;
  if(location.protocol.startsWith('http')){
   fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{
