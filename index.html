@@ -59,7 +59,7 @@ button:active{background:#1a2438;transform:translate(1px,1px)}
       <div id="crt"></div>
       <div id="hint"></div>
       <div id="ios">PER LO SCHERMO INTERO: TOCCA CONDIVIDI, POI «AGGIUNGI ALLA SCHERMATA HOME»</div>
-      <div id="ver">v. 7 nov 11:00</div>
+      <div id="ver">v. 7 nov 12:00</div>
       <div id="menu"></div>
     </div>
     <div id="dlg"><p id="txt"></p></div>
@@ -1616,7 +1616,7 @@ const sogno={t:0,steps:0,lastStep:0,vis:-1,
   drawRoom(t){
     const T=SOGNO_T;inside.draw();
     const PN=CHARS['protagonista-interno'],newOK=!!(PN&&PN.ready&&PN.fr.walk_book_1&&PN.fr.seat_read_1);
-    const sx=210,legalpha=clamp((t-T.walkEnd)/.5,0,1);
+    const sx=210,legalpha=clamp((t-T.walkEnd-.12)/.4,0,1),walkFade=clamp((t-T.walkEnd)/.18,0,1);   // in piedi sparisce in fretta, poi compare la figura seduta (niente doppia esposizione)
     const wk=t>T.walk0&&t<T.walkEnd,u=clamp((t-T.walk0)/(T.walkEnd-T.walk0),0,1);
     const RM=.1,Du=u<RM?u*u/(2*RM):u<1-RM?RM/2+(u-RM):(1-RM)-(1-u)*(1-u)/(2*RM);   // parte e si ferma gradualmente
     const x=T.x0+(T.x1-T.x0)*Du/(1-RM);
@@ -1624,8 +1624,8 @@ const sogno={t:0,steps:0,lastStep:0,vis:-1,
     const f=wk?pi%12:4;                          // da fermo: gambe vicine (posa di passaggio)
     const bob=0;
     const seated=t>=T.walkEnd;
-    if(!seated||legalpha<1){
-      const a=seated?1-legalpha:Math.min(1,t/.8);
+    if(!seated||walkFade<1){
+      const a=seated?1-walkFade:Math.min(1,t/.8);
       g.globalAlpha=.6*a;ell(x-2,T.fy+1,12,3,'#05060a');g.globalAlpha=1;
       figureLit(c=>{
         if(newOK){this.dreamFrame(c,'walk_book_'+(wk?(Math.floor(d/5.5)%6)+1:4),x,T.fy+1,false,a);return}
@@ -1872,7 +1872,7 @@ document.addEventListener('wheel',e=>{if(e.ctrlKey)e.preventDefault()},{passive:
 document.addEventListener('visibilitychange',()=>{if(document.hidden){if(SILENT_EL)SILENT_EL.pause()}else if(AU.ctx)unmuteSilentSwitch();if(AU.ctx){if(document.hidden)AU.ctx.suspend();else AU.ctx.resume()}});
 
 /* aggiornamento automatico: se sul server c'e' una versione piu' nuova di questa, ricarica una volta (cancella anche le copie salvate) */
-const BUILD='7 nov 11:00';
+const BUILD='7 nov 12:00';
 {const ve=document.getElementById('ver');if(ve)ve.textContent='v. '+BUILD;
  if(location.protocol.startsWith('http')){
   fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{
