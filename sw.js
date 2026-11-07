@@ -1,7 +1,7 @@
 // Service worker: il gioco funziona offline.
 // - i file del gioco (immagini, audio, icone) sono salvati alla prima apertura (sempre scaricati freschi: cache reload) e serviti dalla memoria del telefono;
 // - la pagina e questo file si chiedono prima alla rete (cosi' gli aggiornamenti arrivano subito) e, senza rete, si usa la copia salvata.
-const VERSION = "8 nov 16:00";
+const VERSION = "8 nov 17:00";
 const CACHE = "mistero-" + VERSION;
 const FILES = [
   "./",
@@ -135,6 +135,18 @@ const FILES = [
   "audio/voci/protagonista-interno-c4ecf67b.mp3",
   "audio/voci/protagonista-interno-e80dd064.mp3",
   "audio/voci/protagonista-interno-f130d025.mp3",
+  "audio/voci/ramone-1-057be5bb.mp3",
+  "audio/voci/ramone-1-3e2102d6.mp3",
+  "audio/voci/ramone-1-bcbd2ee6.mp3",
+  "audio/voci/ramone-2-7d6a6b61.mp3",
+  "audio/voci/ramone-2-8375611d.mp3",
+  "audio/voci/ramone-2-a22f7a56.mp3",
+  "audio/voci/ramone-3-4f8ecbe5.mp3",
+  "audio/voci/ramone-3-8ae38782.mp3",
+  "audio/voci/ramone-3-a77f9d7d.mp3",
+  "audio/voci/ramone-4-2a609121.mp3",
+  "audio/voci/ramone-4-5fb96a29.mp3",
+  "audio/voci/ramone-4-a24128cf.mp3",
   "audio/voci2/anna-5229e163.mp3",
   "audio/voci2/anna-52c3387b.mp3",
   "audio/voci2/anna-8a244a63.mp3",
@@ -314,6 +326,14 @@ const FILES = [
   "img/char-r14/protagonista-esterno.png",
   "img/char-r14/protagonista-interno.json",
   "img/char-r14/protagonista-interno.png",
+  "img/char-r14/ramone-1.json",
+  "img/char-r14/ramone-1.png",
+  "img/char-r14/ramone-2.json",
+  "img/char-r14/ramone-2.png",
+  "img/char-r14/ramone-3.json",
+  "img/char-r14/ramone-3.png",
+  "img/char-r14/ramone-4.json",
+  "img/char-r14/ramone-4.png",
   "img/emb/auto164_34fronte.png",
   "img/emb/auto164_34retro_d69.png",
   "img/emb/auto164_fronte.png",
@@ -413,6 +433,7 @@ const FILES = [
   "index.html",
   "js/motore.js",
   "js/scena-demo.js",
+  "js/scena-ramones.js",
   "js/scena-tutti.js",
   "manifest.webmanifest"
 ];

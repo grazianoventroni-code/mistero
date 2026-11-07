@@ -50,13 +50,14 @@ registraScena({
       await s.dici(p,'E se il testo è lungo, la nuvola si allarga e resta dentro lo schermo, senza coprire troppo la scena.')},
     leonardo:async(s,a,p)=>{await s.dici(a,'Ehi! Anche io ho una voce tutta mia, più acuta e veloce.',{vel:1.1})}}});
 
-/* ---------- il furgone dei panini (?furgone): prova di dimensione e definizione ---------- */
+/* ---------- il furgone dei panini (?furgone): solo il furgone, isolato su fondo neutro; la posizione la decide l'autore ---------- */
 registraScena({
-  id:'furgone',sfondo:'img/scene/strada-alpi.png',giocatore:'protagonista-esterno',partenza:{x:200,y:108,dir:'W'},
+  id:'furgone',giocatore:'protagonista-esterno',partenza:{x:200,y:108,dir:'W'},
+  disegnaSfondo(g){const R=(x,y,w,h,c)=>{g.fillStyle=c;g.fillRect(x,y,w,h)};R(0,0,240,120,'#161a24');R(0,70,240,50,'#222838');for(let y=76;y<120;y+=6)R(0,y,240,1,'#2a3044')},
   area:[[6,98],[234,98],[238,118],[2,118]],ostacoli:[[[56,103],[150,103],[150,113],[56,113]]],
-  prof:[98,118,1.0,1.2],superficie:'ghiaia',ambiente:{stanza:0,vento:.3,pioggia:0},
-  oggetti:[{img:'img/emb/furgone_panini_hd.png',x:56,y:53,w:94,h:60,baseY:113}],   // 348x223 disegnato a 94x60 unita': stessa densita' dei personaggi
-  punti:[{nome:'IL FURGONE DEI PANINI',rect:[56,55,94,56],cammina:{x:160,y:114,dir:'W'},guarda:'Il furgone dei panini. Qui lavora qualcuno: da qui si ordina.'}]});
+  prof:[98,118,1.0,1.2],superficie:'ghiaia',ambiente:{stanza:0,vento:0,pioggia:0},
+  oggetti:[{img:'img/emb/furgone_panini_hd.png',x:56,y:53,w:94,h:60,baseY:113}],   // 348x223 px disegnato a 94x60 unita' logiche
+  punti:[{nome:'IL FURGONE DEI PANINI',rect:[56,55,94,56],cammina:{x:160,y:114,dir:'W'},guarda:'Il furgone dei panini.'}]});
 
 /* ---------- 2. il bagno (seconda scena: piastrelle, uscita che torna indietro) ---------- */
 registraScena({
