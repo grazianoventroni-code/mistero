@@ -35,7 +35,7 @@ button:active{background:#1a2438;transform:translate(1px,1px)}
 #dlg{height:var(--ph);width:100%;padding:4px 10px;display:flex;align-items:center;justify-content:center;text-align:center;overflow:hidden;
   background:rgba(6,8,13,.9);border:2px solid #4a5a70;box-shadow:inset 0 0 0 1px #05070c;
   opacity:0;transition:opacity .5s;pointer-events:none}
-#dlg.on{opacity:1}
+#dlg.on{opacity:1;pointer-events:auto;cursor:pointer}
 #txt{margin:0;font-family:Verdana,'Trebuchet MS','DejaVu Sans',Arial,sans-serif;font-weight:800;text-transform:uppercase;letter-spacing:.03em;text-align:center;font-size:clamp(11px,3.5vh,16px);line-height:1.25;color:#e8dfc0}
 #bar{display:flex;flex-direction:column;gap:6px}
 #inv{display:none;grid-auto-flow:row;gap:4px;padding:4px;background:rgba(6,8,13,.82);border:2px solid #4a5a70;box-shadow:3px 3px 0 rgba(0,0,0,.5);touch-action:none}
@@ -65,7 +65,7 @@ button:active{background:#1a2438;transform:translate(1px,1px)}
     <div id="dlg"><p id="txt"></p></div>
   </div>
   <div id="side">
-    <div id="bar"><button id="bHint">?</button><button id="bSnd">♪</button></div>
+    <div id="bar"><button id="bSkip" style="display:none">Salta &raquo;</button><button id="bHint">?</button><button id="bSnd">♪</button></div>
     <div id="inv"></div>
   </div>
 </div>
@@ -358,6 +358,10 @@ function say(s){clearInterval(typer);clearTimeout(hideT);typer=null;txtEl.textCo
 function finishText(){
   if(typer){clearInterval(typer);typer=null;txtEl.textContent=full;afterText();return}
   if(qrest.length){clearTimeout(hideT);nextChunk()}}
+/* un tocco sulla casella del testo: completa la frase, poi passa alla successiva o chiude la nuvola */
+dlgEl.addEventListener('pointerdown',e=>{e.stopPropagation();e.preventDefault();
+  if(typer||qrest.length){finishText();return}
+  clearTimeout(hideT);dlgEl.classList.remove('on')});
 
 /* ================= stato ================= */
 const S={scene:'start',stove:{wood:false,lit:false,litAt:-1000},inv:[],logs:0,logsLeft:3,candleLit:false,candleBath:false,bookOpen:false,bathSeen:false,keyTaken:false,binOpen:false,paperStage:0,dreamSeen:false};
@@ -512,6 +516,8 @@ const drive={T:0,fired:{},cap:0,
   down(x,y){
     if(!this.gOpen||this.gTaken||this.leaving)return;
     if(inR(GLOVE_MATCH,x,y)){this.gTaken=true;giveItem('matches');this.gDone=true;say("Dei fiammiferi, mi potranno servire.");setTimeout(()=>{if(cur===drive)this.finish()},3200)}},
+  canSkip(){return this.T<DRIVE_END&&!this.leaving},
+  skip(){if(!this.canSkip())return;this.T=DRIVE_END;this.cap=CAPS.length;say('')},
   finish(){if(this.leaving)return;this.leaving=true;musicStop(3);fadeTo(1,1.2,()=>{this.leaving=false;setEng(0,false);setScene('outside');fadeTo(0,1.2)})},
   makeCab(){if(CAB)return;
     if(IMG_CAB.complete&&IMG_CAB.naturalWidth){CAB=mkTex(144,104,k=>{k.imageSmoothingEnabled=false;k.drawImage(IMG_CAB,0,104-IMG_CAB.naturalHeight-3)});return}
@@ -1520,7 +1526,7 @@ const ft=document.createElement('canvas');ft.width=W*RS;ft.height=H*RS;const fx=
 const fm=document.createElement('canvas');fm.width=W*RS;fm.height=H*RS;const fmx=fm.getContext('2d');
 const dc=document.createElement('canvas');dc.width=W;dc.height=H;const dx=dc.getContext('2d');
 fx.imageSmoothingEnabled=fmx.imageSmoothingEnabled=dx.imageSmoothingEnabled=false;
-const DREAM_SC=1.95,SEAT_X=214;   // scala del protagonista nel sogno (circa 56 px di altezza) e posizione della testa da seduto
+const DREAM_SC=1.85,SEAT_X=205,SEAT_K=.86;   // scala del protagonista nel sogno (circa 56 px di altezza) e posizione della testa da seduto
 const SOGNO_T={walk0:1.0,walkSpeed:38,x0:62,x1:200,fy:108,read:0,sleep:0,black:0,dream0:0,vis:6.4,gap:.9};
 SOGNO_T.walkEnd=SOGNO_T.walk0+(SOGNO_T.x1-SOGNO_T.x0)/SOGNO_T.walkSpeed;   // arriva davanti al divano
 SOGNO_T.sitEnd=SOGNO_T.walkEnd+.7;
@@ -1590,6 +1596,8 @@ const sogno={t:0,steps:0,lastStep:0,vis:-1,
       const v=Math.floor((t-T.dream0)/(T.vis+T.gap));if(v!==this.vis&&v<4){this.vis=v}}
     if(t>=T.end&&!this.done){this.done=true;S.dreamSeen=true;save();musicStop(2.5);setRain(0,true);setFire(0)}
     if(this.done)setHint('FINE DEL PRIMO CAPITOLO',true)},
+  canSkip(){return this.t>=SOGNO_T.dream0&&this.t<SOGNO_T.end-.6},
+  skip(){if(this.canSkip())this.t=SOGNO_T.end-.6},
   down(){if(this.done&&this.t>SOGNO_T.end+2.5)location.reload()},
   /* battito di cuore: due colpi sordi (lub-dub) che accelerano e si fanno piu' forti con il sonno */
   heart(t){const T=SOGNO_T;if(!AU.ctx||t<T.readEnd+2.5||t>T.end-.8)return;
@@ -1610,9 +1618,9 @@ const sogno={t:0,steps:0,lastStep:0,vis:-1,
     if(t>T.sleepEnd&&t<T.dream0){g.globalAlpha=clamp((t-T.sleepEnd)/1.8,0,1);R(0,0,W,H,'#000');g.globalAlpha=1}
     if(t>=T.end-.6){g.globalAlpha=clamp((t-(T.end-.6))/.6,0,1);R(0,0,W,H,'#000');g.globalAlpha=1}},
   /* disegna un fotogramma dell'atlante del protagonista: x = centro della testa, yb = piedi */
-  dreamFrame(c,name,x,yb,flip,alpha,sy=1){
+  dreamFrame(c,name,x,yb,flip,alpha,sy=1,kk=1){
     const ch=CHARS['protagonista-interno'],fr=ch&&ch.fr[name];if(!fr)return;
-    const s=DREAM_SC/RS,dw=ch.w*s,dh=ch.h*s,ax=ch.ax*s;
+    const s=DREAM_SC*kk/RS,dw=ch.w*s,dh=ch.h*s,ax=ch.ax*s;
     c.save();c.globalAlpha=alpha;c.translate(Math.round(x*RS)/RS,yb);c.scale(flip?-1:1,sy);
     c.drawImage(ch.img,fr.x,fr.y,ch.w,ch.h,-ax,-dh,dw,dh);c.restore()},
   drawRoom(t){
@@ -1644,8 +1652,8 @@ const sogno={t:0,steps:0,lastStep:0,vis:-1,
         if(newOK){   // atlante del motore: legge, gira la pagina, si assopisce, dorme (rivolto verso la stanza, a sinistra)
           const slp=t-T.readEnd,k=sm(clamp(slp/1.9,0,1)),k2=sm(clamp((slp-1.2)/2.6,0,1)),sg=sm(clamp((slp-.3)/2.6,0,1));
           const sq=1-.05*sg,bre=slp>3?Math.sin((slp-3)*1.25)*.012:0,SX=SEAT_X,GY=T.fy+1;
-          if(t<T.readEnd)this.dreamFrame(c,flip?'seat_read_2':'seat_read_1',SX,GY,true,legalpha,1);
-          else{this.dreamFrame(c,'seat_read_1',SX,GY,true,legalpha*(1-k),sq+bre);this.dreamFrame(c,'seat_doze',SX,GY,true,legalpha*k*(1-k2),sq+bre);this.dreamFrame(c,'seat_sleep',SX,GY,true,legalpha*k2,sq+bre)}
+          if(t<T.readEnd)this.dreamFrame(c,flip?'seat_read_2':'seat_read_1',SX,GY,true,legalpha,1,SEAT_K);
+          else{this.dreamFrame(c,'seat_read_1',SX,GY,true,legalpha*(1-k),sq+bre,SEAT_K);this.dreamFrame(c,'seat_doze',SX,GY,true,legalpha*k*(1-k2),sq+bre,SEAT_K);this.dreamFrame(c,'seat_sleep',SX,GY,true,legalpha*k2,sq+bre,SEAT_K)}
           return}
         c.globalAlpha=legalpha;
         if(IMG_SEAT.complete&&IMG_SEAT.naturalWidth){
@@ -1849,7 +1857,11 @@ const ptr=e=>{const r=cv.getBoundingClientRect(),k=Math.min(r.width/DW,r.height/
   return [(e.clientX-ox)/k-OX,(e.clientY-oy)/k]};
 window.addEventListener('resize',resizeDisplay);window.addEventListener('orientationchange',()=>setTimeout(resizeDisplay,200));
 resizeDisplay();
-document.addEventListener('pointerdown',finishText);
+document.addEventListener('pointerdown',e=>{if(e.target.id==='bSkip')return;finishText()});
+const bSkip=document.getElementById('bSkip');
+bSkip.addEventListener('pointerdown',e=>{e.stopPropagation()});
+bSkip.addEventListener('click',e=>{e.stopPropagation();audioInit();if(cur.skip)cur.skip()});
+setInterval(()=>{const v=!!(cur&&cur.canSkip&&cur.canSkip());bSkip.style.display=v?'':'none'},150);
 cv.addEventListener('pointerdown',e=>{e.preventDefault();audioInit();if(CU.id){if(CU.id==='paper'){const [px,py]=ptr(e);paperTap(px,py)}else closeCU();return}cv.setPointerCapture(e.pointerId);const [x,y]=ptr(e);if(cur.down)cur.down(x,y)});
 cv.addEventListener('pointermove',e=>{const [x,y]=ptr(e);if(cur.move)cur.move(x,y)});
 cv.addEventListener('pointerup',e=>{const [x,y]=ptr(e);if(cur.up)cur.up(x,y)});
@@ -1875,7 +1887,7 @@ document.addEventListener('wheel',e=>{if(e.ctrlKey)e.preventDefault()},{passive:
 document.addEventListener('visibilitychange',()=>{if(document.hidden){if(SILENT_EL)SILENT_EL.pause()}else if(AU.ctx)unmuteSilentSwitch();if(AU.ctx){if(document.hidden)AU.ctx.suspend();else AU.ctx.resume()}});
 
 /* aggiornamento automatico: se sul server c'e' una versione piu' nuova di questa, ricarica una volta (cancella anche le copie salvate) */
-const BUILD='7 nov 19:00';
+const BUILD='7 nov 20:00';
 {const ve=document.getElementById('ver');if(ve)ve.textContent='v. '+BUILD;
  if(location.protocol.startsWith('http')){
   fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{
