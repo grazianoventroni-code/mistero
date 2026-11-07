@@ -190,6 +190,7 @@ const Voce={modo:(()=>{try{return localStorage.getItem('mistero-voce')||'blip'}c
     for(const n of pref){const v=vs.find(v=>v.name.includes(n));if(v)return v}return vs[0]},
   disponibile(){return !!window.speechSynthesis&&speechSynthesis.getVoices().some(v=>/^it/i.test(v.lang))},
   imposta(m){this.modo=m;try{localStorage.setItem('mistero-voce',m)}catch(e){}if(window.speechSynthesis&&m!=='voce')speechSynthesis.cancel()}};
+fetch('audio/voci/indice.json').then(r=>r.ok?r.json():null).then(j=>{Voce.clips=j}).catch(()=>{});
 if(window.speechSynthesis){speechSynthesis.getVoices();speechSynthesis.onvoiceschanged=()=>{Voce.voci=speechSynthesis.getVoices()}}
 
 const Dialogo={
@@ -224,7 +225,9 @@ const Dialogo={
     this.el.style.setProperty('--bc',this.col);this.el.style.borderColor=this.col;this.el.style.fontSize=this.fontPx()+'px';
     this.cor.cps=p.cps*(r.opz.vel||1);
     // voce del telefono o clip registrata
-    if(r.opz.clip){const a=new Audio(r.opz.clip);this.cor.clip=a;a.play().catch(()=>{});}
+    const reg=(window.__battute=window.__battute||[]);if(att&&!reg.some(b=>b.pers===att.nome&&b.testo===tx))reg.push({pers:att.nome,testo:tx});   // elenco delle battute dette: serve a genera_voci.py
+    const cf=r.opz.clip||(Voce.modo==='voce'&&Voce.clips&&att&&Voce.clips[att.nome+'|'+tx]?'audio/voci/'+Voce.clips[att.nome+'|'+tx]:null);   // clip registrata (Piper) se esiste per questa battuta
+    if(cf){const a=new Audio(cf);this.cor.clip=a;a.play().catch(()=>{this.cor.clip=null});}
     else if(Voce.modo==='voce'&&window.speechSynthesis){const v=Voce.scegli();const u=new SpeechSynthesisUtterance(tx);u.lang='it-IT';if(v)u.voice=v;u.pitch=clamp(p.tp,.1,2);u.rate=clamp(p.tr*(r.opz.vel||1),.5,1.6);
       u.onboundary=e=>{this.cor&&(this.cor.bi=e.charIndex)};u.onend=()=>{this.cor&&(this.cor.ttsFine=true)};this.cor.tts=u;speechSynthesis.cancel();speechSynthesis.speak(u);
       this.cor.cps=15*u.rate}
@@ -265,7 +268,7 @@ const Dialogo={
       if(c.clip&&c.clip.currentTime>0){/* con la clip la bocca segue l'ampiezza: vedi analizzatore, qui basta il testo */}
       if(c.mouthT>0){c.mouthT-=dt;if(c.mouthT<=0&&c.att)c.att.bocca=1}
       this.disegnaTesto();
-      if(c.n>=c.tx.length&&(!c.tts||c.ttsFine||Voce.modo!=='voce'||c.t>c.tx.length*.12+4)){c.fine=true;c.att2=0;if(c.att){c.att.talking=false;c.att.bocca=1}this.disegnaTesto()}}
+      if(c.n>=c.tx.length&&(!c.tts||c.ttsFine||Voce.modo!=='voce'||c.t>c.tx.length*.12+4)&&(!c.clip||c.clip.ended||c.clip.paused||c.t>c.tx.length*.12+4)){c.fine=true;c.att2=0;if(c.att){c.att.talking=false;c.att.bocca=1}this.disegnaTesto()}}
     else{c.att2+=dt;const lettura=c.r.opz.attesa??(.9+c.tx.length*.05);if(c.r.opz.auto!==false&&c.att2>lettura)this.chiudi()}
     this.posiziona()},
   tocca(){const c=this.cor;if(!c)return false;

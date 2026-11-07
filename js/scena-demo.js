@@ -18,7 +18,7 @@ registraScena({
     [[58,89],[104,89],[104,100],[58,100]],
     [[124,87],[160,87],[160,98],[124,98]],
     [[196,92],[238,92],[238,106],[196,106]]],
-  prof:[95,118,1.5,1.95],                     // scala del personaggio in alto e in basso (profondita')
+  prof:[95,118,1.5,1.95],                     // scala del personaggio in alto e in basso (profondità)
   superficie:'legno',
   superfici:[{poly:[[190,95],[238,95],[238,118],[150,118],[150,108]],tipo:'tappeto'}],
   ambiente:{stanza:1,vento:.25,pioggia:.35,pioggiaDentro:true},
@@ -31,7 +31,7 @@ registraScena({
     {nome:'LA STUFA',rect:[128,50,32,38],guarda:'Una stufa a legna. Prova di un punto toccabile: il personaggio cammina fino a qui e commenta.'},
     {nome:'IL TAVOLO',rect:[60,64,44,26],guarda:'Un tavolo. Si gira intorno senza attraversarlo: il percorso evita gli ostacoli.'},
     {nome:'LA FINESTRA',rect:[70,34,30,28],guarda:'Fuori piove, e il rumore dei passi cambia con il pavimento.'},
-    {nome:'LA LIBRERIA',rect:[164,36,26,54],guarda:'Una libreria. Nessuna storia qui: e\' solo una prova.'},
+    {nome:'LA LIBRERIA',rect:[164,36,26,54],guarda:'Una libreria. Nessuna storia qui: è solo una prova.'},
     {nome:'IL DIVANO',rect:[196,64,42,28],cammina:{x:190,y:110,dir:'E'},usa:async(s,p)=>{
        await s.dici(p,'Vuoi vedere un\'azione?',{});
        const i=await s.scegli(['Raccogli qualcosa da terra','Indica la stufa','Niente, grazie'],p);
@@ -39,16 +39,16 @@ registraScena({
        else if(i===1){p.guardaVerso(144,70);await p.azione('indica')}}}],
   parla:{
     prete:async(s,a,p)=>{
-      await s.dici(a,'Buonasera. Questa e\' una conversazione di prova.');
+      await s.dici(a,'Buonasera. Questa è una conversazione di prova.');
       await s.dici(p,'Sembra funzionare bene.');
       const i=await s.scegli(['Come funzionano le voci?','Cosa sa fare questo motore?','Arrivederci'],p);
       if(i===0)await s.dici(a,'Ogni personaggio ha la sua voce a suoni. Dal pulsante con la nota si passa alla voce italiana del telefono.');
-      else if(i===1)await s.dici(a,'Cammina intorno agli ostacoli, scala con la profondita\' e fa il rumore giusto sul pavimento giusto.');
+      else if(i===1)await s.dici(a,'Cammina intorno agli ostacoli, scala con la profondità e fa il rumore giusto sul pavimento giusto.');
       else await s.dici(a,'Arrivederci.')},
     donna:async(s,a,p)=>{
       await s.dici(a,'Le bocche si muovono con le vocali, e la nuvola segue la testa di chi parla.',{vel:1});
-      await s.dici(p,'E se il testo e\' lungo, la nuvola si allarga e resta dentro lo schermo, senza coprire troppo la scena.')},
-    leonardo:async(s,a,p)=>{await s.dici(a,'Ehi! Anche io ho una voce tutta mia, piu\' acuta e veloce.',{vel:1.1})}}});
+      await s.dici(p,'E se il testo è lungo, la nuvola si allarga e resta dentro lo schermo, senza coprire troppo la scena.')},
+    leonardo:async(s,a,p)=>{await s.dici(a,'Ehi! Anche io ho una voce tutta mia, più acuta e veloce.',{vel:1.1})}}});
 
 /* ---------- 2. il bagno (seconda scena: piastrelle, uscita che torna indietro) ---------- */
 registraScena({
