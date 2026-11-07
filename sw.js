@@ -1,7 +1,7 @@
 // Service worker: il gioco funziona offline.
 // - i file del gioco (immagini, audio, icone) sono salvati alla prima apertura (sempre scaricati freschi: cache reload) e serviti dalla memoria del telefono;
 // - la pagina e questo file si chiedono prima alla rete (cosi' gli aggiornamenti arrivano subito) e, senza rete, si usa la copia salvata.
-const VERSION = "8 nov 02:00";
+const VERSION = "8 nov 03:00";
 const CACHE = "mistero-" + VERSION;
 const FILES = [
   "./",
@@ -226,6 +226,8 @@ const FILES = [
   "js/scena-tutti.js",
   "manifest.webmanifest"
 ];
+// si cerca SOLO nella cache di questa versione: caches.match() senza nome guarda anche le vecchie e serviva immagini superate
+const cerca = (r) => caches.open(CACHE).then((c) => c.match(r, { ignoreSearch: true }));
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => Promise.all(FILES.map((f) => c.add(new Request(f, { cache: "reload" })).catch(() => {}))   // cache: reload = salta la copia del browser (GitHub Pages la tiene 10 minuti) e scarica sempre il file nuovo)));
   self.skipWaiting();
@@ -241,10 +243,10 @@ self.addEventListener("fetch", (e) => {
   const pagina = r.mode === "navigate" || /(\/|index\.html|sw\.js|manifest\.webmanifest)$/.test(u.pathname);
   if (pagina) {
     e.respondWith(fetch(r, { cache: "no-store" }).then((res) => { const cp = res.clone(); caches.open(CACHE).then((c) => c.put(r, cp)); return res; })
-      .catch(() => caches.match(r, { ignoreSearch: true }).then((m) => m || caches.match("index.html"))));
+      .catch(() => cerca(r).then((m) => m || cerca(new Request("index.html")))));
     return;
   }
-  e.respondWith(caches.match(r, { ignoreSearch: true }).then((m) => m || fetch(r).then((res) => {
+  e.respondWith(cerca(r).then((m) => m || fetch(r, { cache: "reload" }).then((res) => {
     if (res.ok) { const cp = res.clone(); caches.open(CACHE).then((c) => c.put(r, cp)); }
     return res;
   })));
