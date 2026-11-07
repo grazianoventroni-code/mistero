@@ -1,7 +1,7 @@
 // Service worker: il gioco funziona offline.
 // - i file del gioco (immagini, audio, icone) sono salvati alla prima apertura (sempre scaricati freschi: cache reload) e serviti dalla memoria del telefono;
 // - la pagina e questo file si chiedono prima alla rete (cosi' gli aggiornamenti arrivano subito) e, senza rete, si usa la copia salvata.
-const VERSION = "8 nov 09:00";
+const VERSION = "8 nov 10:00";
 const CACHE = "mistero-" + VERSION;
 const FILES = [
   "./",
@@ -31,6 +31,8 @@ const FILES = [
   "audio/voci/donna-816c31f8.mp3",
   "audio/voci/gemella-028b36dc.mp3",
   "audio/voci/gemella-214521b9.mp3",
+  "audio/voci/gemella-326f972f.mp3",
+  "audio/voci/gemella-cf3284cf.mp3",
   "audio/voci/graziano-3e4502d1.mp3",
   "audio/voci/graziano-4214e638.mp3",
   "audio/voci/greg-86aa4ee8.mp3",
