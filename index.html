@@ -467,9 +467,9 @@ function drawTree(k,x,by,h,s,fl,seed){
   if(fl>0){const ga=k.globalAlpha,gc=k.globalCompositeOperation;k.globalCompositeOperation='lighter';k.globalAlpha=ga*fl*.3;dr();k.globalAlpha=ga;k.globalCompositeOperation=gc}
 }
 /* nuvole a pixel con bordi a puntini (dithering) */
-function pixClouds(h,fl,time){
+function pixClouds(h,fl,time,off=0){
   for(let j=0;j<6;j++){
-    const w=46+hash(j+3)*56,hh=7+Math.floor(hash(j+8)*7),cx=((hash(j)*(W+120)-time*(1.4+j*.35))%(W+120)+(W+120))%(W+120)-60,cy=4+j*(h/7.2);
+    const w=46+hash(j+3)*56,hh=7+Math.floor(hash(j+8)*7),cx=((hash(j)*(W+120)-time*(1.4+j*.35)-off)%(W+120)+(W+120))%(W+120)-60,cy=4+j*(h/7.2);
     for(let r=0;r<hh;r++){
       const k=r/hh,rw=w*(.35+.65*Math.sin(Math.PI*(.12+k*.78)))*(.82+.18*hash(j*9+r)),y=Math.round(cy+r),x0=cx-rw/2;
       g.globalAlpha=.34+fl*.3;R(x0+2,y,rw-4,1,k<.4?mix('#4a4a66','#a8b4d8',fl*.6):mix('#2c2c42','#7a86a8',fl*.6));
@@ -482,12 +482,43 @@ let FWALL=null;
    SCENA 1 — GUIDA IN POV
    ================================================================ */
 const FL=[{t:3.2,x:150},{t:6.4,x:60},{t:9.1,x:190},{t:11.0,x:110},{t:12.5,x:76},{t:16.0,x:170},{t:16.7,x:90},{t:20.8,x:50},{t:24.3,x:200},{t:27.0,x:120}];
-const CAPS=[[1.6,"Notte. Pioggia. La strada si infila nel bosco fitto, curva dopo curva."],
- [8.6,"La pioggia si fa più fitta. I tergicristalli faticano a starle dietro."],
- [13.2,"Ormai è un temporale. Il cielo si spacca a ogni lampo."],
- [17.8,"Gli alberi si diradano. Il cielo si apre, tra la nebbia e le montagne."],
- [21.2,"Un altro lampo... Più avanti, una sagoma. Un tetto."],
- [26.6,"Una baita abbandonata. Con questo tempo, meglio fermarsi finché non passa."]];
+const CAPS=[[1.6,"Maledizione!"],[4.2,""],
+ [15.6,"Sta arrivando una tempesta! Devo trovare un riparo…"],
+ [26.6,"Una baita abbandonata… meglio cercare un riparo."]];
+/* titoli di testa in sovraimpressione, stile telefilm anni 80: titolo cromato con il riflesso che passa, poi l'autore in neon */
+const TITLE={name:'VORTEX',author:'graven',t0:4.6,ta:8.4,t1:14.2};
+let TITLE_TEX=null;
+function titleTex(){if(TITLE_TEX)return TITLE_TEX;
+  const K=2,c=document.createElement('canvas');c.width=240*K;c.height=70*K;const k=c.getContext('2d');   // 2 px per pixel di gioco: grana anni 80, leggibile
+  const FT='italic 900 '+(30*K)+'px "Avenir Next","Arial Black","Helvetica Neue",Impact,sans-serif',FA='italic 700 '+(11*K)+'px "Avenir Next","Arial Black","Helvetica Neue",sans-serif';
+  k.textAlign='center';k.textBaseline='alphabetic';
+  // titolo: contorno scuro, cromatura (cielo / orizzonte bianco / terra arancio), filo chiaro in alto
+  k.font=FT;const tx=120*K,ty=36*K;
+  k.lineJoin='round';k.lineWidth=4*K;k.strokeStyle='#05040c';k.strokeText(TITLE.name,tx,ty);
+  const gr=k.createLinearGradient(0,ty-24*K,0,ty+2*K);
+  gr.addColorStop(0,'#1c3a8c');gr.addColorStop(.42,'#9fd2ff');gr.addColorStop(.5,'#ffffff');gr.addColorStop(.53,'#4a2a10');gr.addColorStop(.75,'#d07a2a');gr.addColorStop(1,'#ffe0a0');
+  k.fillStyle=gr;k.fillText(TITLE.name,tx,ty);
+  k.lineWidth=1*K;k.strokeStyle='rgba(255,255,255,.55)';k.strokeText(TITLE.name,tx,ty);
+  // autore: neon magenta con alone
+  k.font=FA;const ay=56*K;
+  k.shadowColor='#ff3fbf';k.shadowBlur=6*K;k.fillStyle='#ff6fd2';k.fillText(TITLE.author,tx,ay);k.shadowBlur=0;
+  k.fillStyle='#ffd6f4';k.fillText(TITLE.author,tx,ay);
+  return TITLE_TEX={c,K}}
+function drawTitles(T){
+  if(T<TITLE.t0||T>TITLE.t1)return;const {c,K}=titleTex(),y0=4;
+  const fin=sm((T-TITLE.t0)/1.2),fout=1-sm((T-(TITLE.t1-1.4))/1.4),a=Math.min(fin,fout);if(a<=0)return;
+  const zoom=1.18-.18*sm((T-TITLE.t0)/1.6);   // il titolo arriva da vicino e si assesta
+  g.save();g.imageSmoothingEnabled=false;g.globalAlpha=a;
+  // titolo (parte alta della texture)
+  const tw=240*zoom,th=44*zoom,tx=120-tw/2,ty=y0+22-th/2;
+  g.drawImage(c,0,0,240*K,44*K,tx,ty,tw,th);
+  // riflesso che attraversa le lettere
+  const sw=(T-TITLE.t0-1.4)/1.1;if(sw>0&&sw<1){const sx=50+sw*140;g.globalCompositeOperation='lighter';g.globalAlpha=a*.85*Math.sin(sw*Math.PI);
+    g.fillStyle='#ffffff';g.fillRect(sx-1,ty+th*.25,2,th*.55);g.fillRect(sx-4,ty+th*.48,8,1);   // stellina del riflesso
+    g.globalCompositeOperation='source-over'}
+  // autore (parte bassa), compare dopo
+  const aa=Math.min(sm((T-TITLE.ta)/1),fout);if(aa>0){g.globalAlpha=aa;g.drawImage(c,0,44*K,240*K,26*K,0,y0+36,240,26)}
+  g.restore();g.globalAlpha=1}
 const DRIVE_END=31.5;
 const dist=T=>{if(T<=20)return 2.4*T;const u=Math.min(1,(T-20)/11);return 2.4*(20+11*(u-u*u*u+u*u*u*u/2))};
 const vel=T=>T<20?1:1-sm((T-20)/11);
@@ -498,8 +529,14 @@ const rShape=(u,ph,A)=>A*(Math.sin(u*RK+ph)+.35*Math.sin(u*RK*1.9+ph*1.7+1));
 const roadOff=(u,ph,A)=>{const f0=rShape(0,ph,A),f1=rShape(.03,ph,A);return rShape(u,ph,A)-f0-(f1-f0)/.03*u};
 /* strada nel mondo: la curvatura dipende dalla distanza percorsa (w), non dal tempo.
    Le curve scorrono verso di noi insieme agli alberi; negli ultimi metri la strada e' dritta. */
-const WH=dist(31)+.8,CK=3.2,KX=26;
-const curv=w=>sm((WH-6-w)/10)*CK*(Math.sin(w*.3)+.6*Math.sin(w*.13+2.1)+.25*Math.sin(w*.71));
+/* (9 nov) tutto in metri: camera = occhi del guidatore nella corsia di destra di una strada a due corsie da 3,6 m.
+   PXM = pixel per metro a p=1 (p = ZN/z, z distanza in metri); FY = pixel per radiante di rotazione (sfondo che ruota in curva). */
+const VM=22/2.4,ZN=4.8,PXM=62,FY=PXM*ZN,LANE=3.6,CAMX0=1.4;   // 22 m/s (circa 80 km/h) in crociera
+const CABZ=dist(31)*VM+11,CABX=5.3;                            // la baita: a 11 m dall'auto ferma, 5,3 m a destra del centro strada
+const curv=w=>sm((CABZ-60-w)/90)*.0075*(Math.sin(w*.0327)+.6*Math.sin(w*.0142+2.1)+.25*Math.sin(w*.0775));   // curvatura in 1/m (raggio minimo circa 85 m)
+const headAt=D=>{let s=0;for(let w=1;w<D;w+=2)s+=curv(w)*2;return s};   // direzione dell'auto (radianti) = curvatura sommata lungo la strada
+/* posizione laterale degli occhi rispetto al centro strada: in curva si taglia un po' verso l'interno; alla fine accosta a destra e si ferma */
+const camXAt=(T,D)=>CAMX0+sm((CABZ-60-D)/90)*(.35*clamp(curv(D+8)/.01,-1,1)+.08*Math.sin(T*.45))+1.8*sm((T-24.5)/6);
 let CAB=null;
 
 const GLOVE_MATCH={x:161,y:80,w:21,h:19};
@@ -513,33 +550,35 @@ const drive={T:0,fired:{},cap:0,
   /* arrivo: l'auto si ferma, il protagonista apre il vano portaoggetti (a destra dell'autoradio): dentro, con una lucina, i fiammiferi */
   glovePhase(T){
     if(S.inv.includes('matches')||this.gDone){this.finish();return}
-    if(!this.gT){this.gT=T;say("Meglio mettermi al riparo.");setEng(0,false)}
-    if(!this.gOpen&&T>this.gT+2.6){this.gOpen=T;sfx.take();say("Apro il vano portaoggetti, accanto alla radio. Si accende una lucina: dentro, la scatola dei fiammiferi.")}
+    if(!this.gT){this.gT=T;setEng(0,false)}
+    if(!this.gOpen&&T>this.gT+2.6){this.gOpen=T;sfx.take();say("Prenderò dei fiammiferi, possono essere utili.")}
     if(this.gOpen&&!this.gTaken&&T>this.gOpen+9&&!this.gHint)this.gHint=T},
   down(x,y){
     if(!this.gOpen||this.gTaken||this.leaving)return;
-    if(inR(GLOVE_MATCH,x,y)){this.gTaken=true;giveItem('matches');this.gDone=true;say("Dei fiammiferi, mi potranno servire.");setTimeout(()=>{if(cur===drive)this.finish()},3200)}},
+    if(inR(GLOVE_MATCH,x,y)){this.gTaken=true;giveItem('matches');this.gDone=true;say('');setTimeout(()=>{if(cur===drive)this.finish()},3200)}},
   canSkip(){return this.T<DRIVE_END&&!this.leaving},
   skip(){if(!this.canSkip())return;this.T=DRIVE_END;this.cap=CAPS.length;say('')},
   finish(){if(this.leaving)return;this.leaving=true;musicStop(3);fadeTo(1,1.2,()=>{this.leaving=false;setEng(0,false);setScene('outside');fadeTo(0,1.2)})},
   makeCab(){if(CAB)return;
     if(IMG_CAB.complete&&IMG_CAB.naturalWidth){CAB=mkTex(144,104,k=>{k.imageSmoothingEnabled=false;k.drawImage(IMG_CAB,0,104-IMG_CAB.naturalHeight-3)});return}
     g.globalAlpha=1;g.clearRect(0,0,W,H);outside.cabin(0);CAB=mkTex(144,104,k=>{k.drawImage(scn,92*RS,6*RS,144*RS,104*RS,0,0,144,104)});g.clearRect(0,0,W,H)},
-  mountains(hz,fl){
+  mountains(hz,fl,pan=0){
     const layers=[{base:hz-6,amp:21,f:.024,sd:1.7,col:'#2a3250',snow:true},{base:hz-1,amp:9,f:.05,sd:5.1,col:'#161d30'}];
     for(const L of layers)for(let x=0;x<W;x++){
-      const n=Math.sin(x*L.f+L.sd)*.5+Math.sin(x*L.f*2.3+L.sd*2)*.3+Math.sin(x*L.f*5.1+L.sd*3)*.12;
+      const xx=x+pan,n=Math.sin(xx*L.f+L.sd)*.5+Math.sin(xx*L.f*2.3+L.sd*2)*.3+Math.sin(xx*L.f*5.1+L.sd*3)*.12;
       const h=L.amp*(.55+n*.5),y=L.base-h;
       R(x,y,1,hz+2-y,mix(L.col,'#9ab0d8',fl*.4));
       if(L.snow&&h>L.amp*.82)R(x,y,1,2,mix('#7a84a4','#dce6ff',fl));
     }
   },
-  forest(hz,fl,T,dens){
+  forest(hz,fl,T,dens,pan=0){
     if(dens<=.01)return;
     if(!treesReady())return;
-    if(!FWALL)FWALL=mkTex(W,70,k=>{for(let x=-4;x<W+6;x+=7)drawTree(k,x,66,40+hash(x*.31)*22,.3,0,x*.7);for(let x=-2;x<W+6;x+=6)drawTree(k,x,67,26+hash(x*.17+9)*18,.55,0,x*.9+3)});
-    g.globalAlpha=dens;g.drawImage(FWALL,0,hz-63);
-    if(fl>0){g.globalAlpha=fl*.18*dens;g.drawImage(FWALL,0,hz-63)}g.globalAlpha=1},
+    const TW=462;   // bosco lontano senza giunture, largo il doppio: scorre di lato quando l'auto curva
+    if(!FWALL)FWALL=mkTex(TW,70,k=>{for(const o of [-TW,0,TW])for(let x=0;x<TW;x+=7)drawTree(k,x+o,66,40+hash(x*.31)*22,.3,0,x*.7);for(const o of [-TW,0,TW])for(let x=3;x<TW;x+=6)drawTree(k,x+o,67,26+hash(x*.17+9)*18,.55,0,x*.9+3)});
+    const ox=-(((pan%TW)+TW)%TW);
+    g.globalAlpha=dens;g.drawImage(FWALL,ox,hz-63);g.drawImage(FWALL,ox+TW,hz-63);
+    if(fl>0){g.globalAlpha=fl*.18*dens;g.drawImage(FWALL,ox,hz-63);g.drawImage(FWALL,ox+TW,hz-63)}g.globalAlpha=1},
   canopy(dens,fl,T){
     if(dens<=.01)return;g.globalAlpha=dens*.97;
     const bot=x=>{const dx=Math.abs(x-X0)/124;return 3+22*Math.pow(dx,1.5)+hash(Math.floor(x/5)*1.3)*5+Math.sin(x*.17+T*.4)*.8};
@@ -555,51 +594,54 @@ const drive={T:0,fired:{},cap:0,
     const T=this.T,hz=37,wb=80,rain=rainAt(T);
     let fl=0,bx=0,age=9;
     for(const e of FL){const a=T-e.t,v=envFlash(a/.9);if(v>fl){fl=v;bx=e.x;age=a}}
-    const D=dist(T),op=sm((T-16.5)/6.5),dens=1-op;
-    sky(hz,fl,'#0a0b16','#4a465e');pixClouds(hz,fl,T);bolt(bx,hz-4,fl,age);
-    g.globalAlpha=Math.max(.001,op);this.mountains(hz,fl);g.globalAlpha=1;
-    for(let x=0;x<W;x+=3){const h=2+hash(x)*4+(x>170?3:0);R(x,hz-h+1,3,h,'#070b0a')}
-    this.forest(hz,fl,T,dens);
-    const NR=wb-hz,xc=this.xc||(this.xc=new Float32Array(NR+2));
-    {let lat=0,dl=0,pz=0;for(let i=NR;i>=0;i--){const p=Math.max(i/NR,.025),zz=.35/p;if(i<NR){const dz=zz-pz;dl+=curv(D+pz)*dz;lat+=dl*dz}pz=zz;xc[i]=X0+lat*p*KX}}
-    const cxAt=p=>{const f=clamp(p,0,1)*NR,i=Math.floor(f),a=xc[i],b=xc[Math.min(NR,i+1)];return a+(b-a)*(f-i)};
+    const D=dist(T)*VM,op=sm((T-16.5)/6.5),dens=1-op,cam=camXAt(T,D),pan=headAt(D)*FY;
+    sky(hz,fl,'#0a0b16','#4a465e');pixClouds(hz,fl,T,pan);bolt(bx,hz-4,fl,age);
+    g.globalAlpha=Math.max(.001,op);this.mountains(hz,fl,pan);g.globalAlpha=1;
+    for(let x=0;x<W;x++){const q=Math.floor((x+pan)/3),h=2+hash(q)*4+(Math.sin(q*.06)>.4?3:0);R(x,hz-h+1,1,h,'#070b0a')}
+    this.forest(hz,fl,T,dens,pan);
+    const NR=wb-hz,lt=this.lt||(this.lt=new Float32Array(NR+2));
+    {let lat=0,dl=0,pz=0;for(let i=NR;i>=0;i--){const p=Math.max(i/NR,.025),zz=ZN/p;if(i<NR){const dz=zz-pz;dl+=curv(D+pz)*dz;lat+=dl*dz}pz=zz;lt[i]=lat}}
+    const latAt=p=>{if(p>=1)return 0;const f=clamp(p,0,1)*NR,i=Math.floor(f),a=lt[i],b=lt[Math.min(NR,i+1)];return a+(b-a)*(f-i)};
+    const cxAt=p=>X0+PXM*p*(latAt(p)-cam),hwAt=p=>1+PXM*p*LANE;   // centro strada e mezza carreggiata sullo schermo
+    const dashF=w=>Math.floor(w/12)*4.5+Math.min(((w%12)+12)%12,4.5);   // mezzeria: 4,5 m di striscia ogni 12 m
     for(let y=hz;y<wb;y++){
-      const p=(y-hz)/(wb-hz)+.002,s=.25+.75*Math.pow(p,.7),c=cxAt(p),half=1.5+p*50,w=D+.35/p;
+      const p=(y-hz)/(wb-hz)+.002,s=.25+.75*Math.pow(p,.7),c=cxAt(p),half=hwAt(p),w=D+ZN/p;
       R(0,y,W,1,rgb(mx(mx('#0b110e','#0c1b12',dens),mx('#1f2d24','#14281a',dens),s+fl*.1)));
-      if(hash(y*7)>.4)for(let i=0;i<9;i++){R(hash(y*13+i)*W,y,1+p*2,1,mix('#10180f','#2a3a2a',s))}
-      const hl=Math.pow(p,1.5)*.3*(1-fl),band=Math.floor(w*1.1)%2?1:.75;
+      if(hash(y*7)>.4)for(let i=0;i<9;i++){R(((hash(y*13+i)*W-pan)%W+W)%W,y,1+p*2,1,mix('#10180f','#2a3a2a',s))}
+      const hl=Math.pow(p,1.5)*.3*(1-fl),band=Math.floor(w/4)%2?1:.75;
       R(c-half,y,half*2,1,rgb(mx(mx(mx('#0c0f16','#303646',s),'#8090b0',fl*.25),'#807a60',hl*band)));
       const ew=1+Math.floor(p*1.6);R(c-half,y,ew,1,'#b8bcc8');R(c+half-ew,y,ew,1,'#b8bcc8');
-      if(Math.floor(w*1.25)%3===0){const lw=Math.max(1,p*1.8);R(c-lw/2,y,lw,1,mix('#1a1810','#d8c878',s))}
+      {const wa=D+ZN/(p+1/NR),cov=(dashF(w)-dashF(wa))/Math.max(.01,w-wa);   // quanta striscia cade in questa riga: niente sfarfallio in lontananza
+       if(cov>.02){const lw=Math.max(1,p*PXM*.12);g.globalAlpha=Math.min(1,cov);R(c-lw/2,y,lw,1,mix('#1a1810','#d8c878',s));g.globalAlpha=1}}
     }
-    g.globalAlpha=.1;for(let y=Math.round(hz+14);y<wb;y++){const p=(y-hz)/(wb-hz),c=cxAt(p),half=1.5+p*50;R(c-half*.8,y,half*1.6,1,'#e8dca8')}g.globalAlpha=1;
+    g.globalAlpha=.1;for(let y=Math.round(hz+14);y<wb;y++){const p=(y-hz)/(wb-hz),xa=X0+PXM*p*.4,hw=PXM*p*1.8;R(xa-hw,y,hw*2,1,'#e8dca8')}g.globalAlpha=1;   // luce dei fari: segue l'auto, non la strada
     // riflessi sull'asfalto bagnato
-    g.globalAlpha=.1+fl*.18;for(let y=hz+6;y<wb;y+=2){const p=(y-hz)/(wb-hz),c=cxAt(p),half=1.5+p*50;R(c-half*.7+hash(y*1.7+Math.floor(T*2))*half*1.2,y,2+p*4,1,'#a8b8d0')}g.globalAlpha=1;
+    g.globalAlpha=.1+fl*.18;for(let y=hz+6;y<wb;y+=2){const p=(y-hz)/(wb-hz),c=cxAt(p),half=hwAt(p);R(c-half*.7+hash(y*1.7+Math.floor(T*2))*half*1.2,y,2+p*4,1,'#a8b8d0')}g.globalAlpha=1;
     this.fog(hz,fl,T,dens);
-    const objs=[],N=76,sp=.17,L=N*sp;
+    const objs=[],N=76,sp=2.33,L=N*sp;
     for(let side=-1;side<=1;side+=2){
-      for(let i=0;i<N;i++){if(hash(i*13+side*7)<op*.62)continue;const zi=i*sp+(side===1?.5:0)+hash(i*side+3)*.4,zz=(((zi-D)%L)+L)%L+.12,p=.35/zz;if(p>2.8)continue;objs.push({p,side,i,k:'t'})}
+      for(let i=0;i<N;i++){if(hash(i*13+side*7)<op*.62)continue;const zi=i*sp+(side===1?6.8:0)+hash(i*side+3)*5.5,zz=(((zi-D)%L)+L)%L+1.6,p=ZN/zz;if(p>2.8)continue;objs.push({p,side,i,k:'t'})}
     }
-    for(let i=0;i<5;i++){const zz=((((i*2.4)-D)%12)+12)%12+.12,p=.35/zz;if(p<=2.8)objs.push({p,side:1,i,k:'p'})}
-    if(T>=19){const zc=WH,zz=zc-D;if(zz>.2)objs.push({p:.35/zz,k:'c'})}
+    for(let i=0;i<5;i++){const zz=((((i*33)-D)%165)+165)%165+1.6,p=ZN/zz;if(p<=2.8)objs.push({p,side:1,i,k:'p'})}
+    if(T>=19){const zz=CABZ-D;if(zz>2.7)objs.push({p:ZN/zz,k:'c'})}
     objs.sort((a,b)=>a.p-b.p);
     for(const o of objs){
-      const y=hz+o.p*(wb-hz),c=cxAt(clamp(o.p,0,1)),half=1.5+o.p*50,s=clamp(.2+o.p*1.1,0,1);
+      const y=hz+o.p*(wb-hz),c=cxAt(o.p),half=hwAt(o.p),s=clamp(.2+o.p*1.1,0,1);
       if(o.k==='t'){
-        const hh0=hash(o.i+o.side*50),lat=lerp(10+hh0*170,7+hh0*34,op),x=c+o.side*(half+lat*o.p+3),h=o.p*(50+hash(o.i+7)*30)*lerp(2.6,1,op);
+        const hh0=hash(o.i+o.side*50),lat=lerp(.6+hh0*5,.5+hh0*2.4,op),x=c+o.side*(half+PXM*lat*o.p+3),h=o.p*(50+hash(o.i+7)*30)*lerp(2.6,1,op);
         if(h<2||Math.abs(x-X0)>126+h*.2)continue;
         drawTree(g,x,y,h,s,fl,o.i*7+o.side*3);
       }else if(o.k==='q'){
         const x=c+o.side*(half+3*o.p+1),h=Math.max(1,o.p*9);
         R(x,y-h,Math.max(1,o.p*1.6),h,mix('#202428','#b8bcc4',s+fl*.2));R(x,y-h,Math.max(1,o.p*1.6),Math.max(1,h*.25),'#d8d0a0');
       }else if(o.k==='p'){
-        const x=c+half+(8+3*o.p)*o.p+4,h=o.p*70;if(h<3)continue;
+        const x=c+half+PXM*.8*o.p+4,h=o.p*70;if(h<3)continue;
         R(x,y-h,Math.max(1,o.p*3),h,mix('#0c0a08','#2a2018',s+fl*.3));R(x-o.p*6,y-h+o.p*4,o.p*14,Math.max(1,o.p*1.5),mix('#0c0a08','#2a2018',s));
         R(x-o.p*5,y-h+o.p*9,o.p*12,Math.max(1,o.p*1.2),mix('#0c0a08','#2a2018',s));
       }else{
         // stessa baita della scena esterna, in scala
         const sc=o.p*1.15;if(sc<.03)continue;
-        const x=c+half+8+62*sc;
+        const x=c+PXM*o.p*CABX;
         g.globalAlpha=clamp(.3+s*.8,0,1);g.drawImage(CAB,Math.round(x-68*sc),Math.round(y-101*sc),Math.round(144*sc),Math.round(104*sc));g.globalAlpha=1;
         if(fl>0){g.globalAlpha=fl*.25;g.drawImage(CAB,Math.round(x-68*sc),Math.round(y-101*sc),Math.round(144*sc),Math.round(104*sc));g.globalAlpha=1}
       }
@@ -618,17 +660,19 @@ const drive={T:0,fired:{},cap:0,
     if(IMG_CAR.complete&&IMG_CAR.naturalWidth)g.drawImage(IMG_CAR,0,0);
     this.gloveBox(T);
     this.gauges(T);this.radio(T);
-    const steer=clamp(curv(D+1.2)*.5,-1,1)*.7+.03*Math.sin(T*3);
+    /* volante: angolo dalla curvatura poco piu' avanti (passo 2,7 m x demoltiplica 15), piccole correzioni; alla fine accosta a destra e raddrizza */
+    const pu=clamp((T-24.5)/6,0,1),steer=(clamp(curv(D+5)*40,-.75,.75)+(pu>0&&pu<1?.22*Math.sin(pu*Math.PI*2):0)+.012*Math.sin(T*2.1)*vel(T))/.55;
     if(IMG_WHEEL.complete&&IMG_WHEEL.naturalWidth){const hw=IMG_WHEEL.naturalWidth,hh=IMG_WHEEL.naturalHeight,ws=.62,dw=Math.round(hw*ws),dh=Math.round(hh*ws),cy=Math.round(hh*.47*ws);   // volante con le mani e le maniche: il cerchio del volante e' al 47% dell'altezza
       g.save();g.translate(68,97);g.rotate(steer*.55);const wx0=-Math.round(dw/2),wy0=-cy;g.drawImage(IMG_WHEEL,wx0,wy0,dw,dh);
       g.drawImage(IMG_WHEEL,0,hh-1,hw,1,wx0,wy0+dh,dw,70);   // le maniche continuano verso il basso: niente tagli in curva
       g.restore()}
+    drawTitles(T);   // titoli di testa sopra tutto, come una sigla in sovraimpressione
     if(fl>0){g.globalAlpha=fl*.12;R(0,0,W,wb,'#b4c4e4');g.globalAlpha=1}
     const a0=1-sm((T-1)/2.6);if(a0>0){g.globalAlpha=a0;R(0,0,W,H,'#000');g.globalAlpha=1}
   },
   /* fari: due coni di luce chiara nella pioggia e nella nebbia, con la chiazza luminosa sull'asfalto bagnato */
   headlights(T,fl,D){
-    const hz=37,wb=80,sw=clamp(curv(D+1.2)*.5,-1,1)*6;
+    const hz=37,wb=80,sw=0;   // i fari sono fissati all'auto: la chiazza di luce non segue la strada
     g.globalCompositeOperation='lighter';
     for(const side of [-1,1]){
       const xb=X0+side*40,yb=wb;                         // il faro, in basso
@@ -1195,6 +1239,7 @@ const inside={idle:0,matchT:-1,timers:[],hintUntil:0,ph:0,doorOpen:0,
     for(const k of ['candle','comic','books','tome','shelf','wood','stove','win','lantern','door','rwin','rpic','sofa','table','chair']){if(inR(HS[k],x,y)){
       if(k==='candle'){if(!this.candleOnTable())continue;giveItem('candle');say(S.candleLit?"Prendo la candela accesa: la fiamma è piccola ma ferma. La metto nell'inventario.":"Prendo la candela, spenta, e la metto nell'inventario.");return}
       if(k==='match'){if(S.inv.includes('matches'))continue;giveItem('matches');say("Prendo i fiammiferi. Finiscono nell'inventario: mi serviranno più di una volta.");return}
+      if((k==='comic'||k==='tome')&&!S.stove.lit)continue;   // (9 nov) a stufa spenta libro e fumetto non si toccano
       if(k==='comic'){openCU('comic');return}
       if(k==='tome'){if(S.inv.includes('book'))continue;giveItem('book');openCU('book');return}
       if(k==='wood'){if(S.logsLeft>0){takeLog();say(S.logsLeft>0?"Prendo un ciocco di legna. Ne restano "+S.logsLeft+".":"Prendo l'ultimo ciocco.");}else say("Non c'è altra legna da prendere.");return}
@@ -1362,7 +1407,7 @@ const inside={idle:0,matchT:-1,timers:[],hintUntil:0,ph:0,doorOpen:0,
       if(NOW-S.stove.litAt>14){g.globalAlpha=.45;for(let i=0;i<5;i++){const t2=((T*.7+i*.22)%1);R(139+Math.sin(t2*6+i)*2,20-t2*14,2,2,'#c8d0d8')}g.globalAlpha=1}
     }
     if(NOW<this.hintUntil){for(const k2 of ['stove','wood','match','candle','comic','books','tome','win','lantern','door','rwin','rpic','sofa','table','chair']){
-      if(k2==='match'&&!matchOnShelf)continue;if(k2==='candle'&&!this.candleOnTable())continue;if(k2==='tome'&&S.inv.includes('book'))continue;if(k2==='wood'&&S.logsLeft<=0)continue;outline(HS[k2],'#d8cfb0')}}
+      if(k2==='match'&&!matchOnShelf)continue;if(k2==='candle'&&!this.candleOnTable())continue;if(k2==='tome'&&S.inv.includes('book'))continue;if((k2==='comic'||k2==='tome')&&!S.stove.lit)continue;if(k2==='wood'&&S.logsLeft<=0)continue;outline(HS[k2],'#d8cfb0')}}
   }
 
 };
@@ -1881,7 +1926,7 @@ document.addEventListener('wheel',e=>{if(e.ctrlKey)e.preventDefault()},{passive:
 document.addEventListener('visibilitychange',()=>{if(document.hidden){if(SILENT_EL)SILENT_EL.pause()}else if(AU.ctx)unmuteSilentSwitch();if(AU.ctx){if(document.hidden)AU.ctx.suspend();else AU.ctx.resume()}});
 
 /* aggiornamento automatico: se sul server c'e' una versione piu' nuova di questa, ricarica una volta (cancella anche le copie salvate) */
-const BUILD='8 nov 18:00';
+const BUILD='9 nov 13:00';
 {const ve=document.getElementById('ver');if(ve)ve.textContent='v. '+BUILD;
  if(location.protocol.startsWith('http')){
   fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{
