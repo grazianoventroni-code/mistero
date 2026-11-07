@@ -1717,8 +1717,8 @@ const CHARS={};
 function loadChar(name){
   if(CHARS[name])return CHARS[name].p;
   const c=CHARS[name]={ready:false,fr:{},w:0,h:0,ax:0,img:new Image()};
-  c.p=Promise.all([new Promise(r=>{c.img.addEventListener('load',r);c.img.addEventListener('error',r);c.img.src='img/char/'+name+'.png'}),
-    fetch('img/char/'+name+'.json').then(r=>r.json()).then(j=>{c.w=j.w;c.h=j.h;c.ax=j.ax;c.fr=j.frames})]).then(()=>{c.ready=true;return c}).catch(()=>c);
+  c.p=Promise.all([new Promise(r=>{c.img.addEventListener('load',r);c.img.addEventListener('error',r);c.img.src='img/char-r13/'+name+'.png'}),
+    fetch('img/char-r13/'+name+'.json').then(r=>r.json()).then(j=>{c.w=j.w;c.h=j.h;c.ax=j.ax;c.fr=j.frames})]).then(()=>{c.ready=true;return c}).catch(()=>c);
   return c.p}
 function inPoly(P,x,y){let r=false;for(let i=0,j=P.length-1;i<P.length;j=i++){const [xi,yi]=P[i],[xj,yj]=P[j];if((yi>y)!==(yj>y)&&x<(xj-xi)*(y-yi)/(yj-yi)+xi)r=!r}return r}
 function nearOnPoly(P,x,y){let best=null,bd=1e9;for(let i=0;i<P.length;i++){const [ax,ay]=P[i],[bx,by]=P[(i+1)%P.length],dx=bx-ax,dy=by-ay,t=clamp(((x-ax)*dx+(y-ay)*dy)/(dx*dx+dy*dy),0,1),px=ax+dx*t,py=ay+dy*t,d=Math.hypot(x-px,y-py);if(d<bd){bd=d;best=[px,py]}}
@@ -1880,7 +1880,7 @@ document.addEventListener('wheel',e=>{if(e.ctrlKey)e.preventDefault()},{passive:
 document.addEventListener('visibilitychange',()=>{if(document.hidden){if(SILENT_EL)SILENT_EL.pause()}else if(AU.ctx)unmuteSilentSwitch();if(AU.ctx){if(document.hidden)AU.ctx.suspend();else AU.ctx.resume()}});
 
 /* aggiornamento automatico: se sul server c'e' una versione piu' nuova di questa, ricarica una volta (cancella anche le copie salvate) */
-const BUILD='8 nov 13:00';
+const BUILD='8 nov 13:30';
 {const ve=document.getElementById('ver');if(ve)ve.textContent='v. '+BUILD;
  if(location.protocol.startsWith('http')){
   fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{
