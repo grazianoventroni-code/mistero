@@ -59,7 +59,7 @@ button:active{background:#1a2438;transform:translate(1px,1px)}
       <div id="crt"></div>
       <div id="hint"></div>
       <div id="ios">PER LO SCHERMO INTERO: TOCCA CONDIVIDI, POI «AGGIUNGI ALLA SCHERMATA HOME»</div>
-      <div id="ver">v. 6 nov 23:00</div>
+      <div id="ver">v. 7 nov 11:00</div>
       <div id="menu"></div>
     </div>
     <div id="dlg"><p id="txt"></p></div>
@@ -1514,10 +1514,11 @@ const start={enter(){S.scene='start';{const io=document.getElementById('ios');if
 /* ================================================================
    SCENA: IL SOGNO — il protagonista siede sul divano con il libro, si addormenta, sogna
    ================================================================ */
-const ft=document.createElement('canvas');ft.width=W;ft.height=H;const fx=ft.getContext('2d');
-const fm=document.createElement('canvas');fm.width=W;fm.height=H;const fmx=fm.getContext('2d');
+const ft=document.createElement('canvas');ft.width=W*RS;ft.height=H*RS;const fx=ft.getContext('2d');fx.setTransform(RS,0,0,RS,0,0);   // buffer della figura alla risoluzione piena (960x480)
+const fm=document.createElement('canvas');fm.width=W*RS;fm.height=H*RS;const fmx=fm.getContext('2d');
 const dc=document.createElement('canvas');dc.width=W;dc.height=H;const dx=dc.getContext('2d');
 fx.imageSmoothingEnabled=fmx.imageSmoothingEnabled=dx.imageSmoothingEnabled=false;
+const DREAM_SC=1.75,SEAT_X=206;   // scala del protagonista nel sogno (circa 56 px di altezza) e posizione della testa da seduto
 const SOGNO_T={walk0:1.0,walkSpeed:38,x0:62,x1:200,fy:108,read:0,sleep:0,black:0,dream0:0,vis:6.4,gap:.9};
 SOGNO_T.walkEnd=SOGNO_T.walk0+(SOGNO_T.x1-SOGNO_T.x0)/SOGNO_T.walkSpeed;   // arriva davanti al divano
 SOGNO_T.sitEnd=SOGNO_T.walkEnd+.7;
@@ -1529,10 +1530,11 @@ SOGNO_T.end=SOGNO_T.dream0+4*(SOGNO_T.vis+SOGNO_T.gap)+SOGNO_T.wom+1.2;
 /* disegna la figura su ft (fuori scena), poi la illumina con la mappa luce della stanza e la applica */
 function figureLit(fn){
   fx.clearRect(0,0,W,H);fn(fx);
-  fmx.clearRect(0,0,W,H);fmx.globalCompositeOperation='source-over';fmx.drawImage(ft,0,0);
-  fx.globalCompositeOperation='multiply';fx.drawImage(lc,0,0);
-  fx.globalCompositeOperation='destination-in';fx.drawImage(fm,0,0);fx.globalCompositeOperation='source-over';
-  g.drawImage(ft,0,0)}
+  fmx.clearRect(0,0,W*RS,H*RS);fmx.globalCompositeOperation='source-over';fmx.drawImage(ft,0,0);
+  fx.save();fx.setTransform(1,0,0,1,0,0);
+  fx.globalCompositeOperation='multiply';fx.drawImage(lc,0,0,W*RS,H*RS);
+  fx.globalCompositeOperation='destination-in';fx.drawImage(fm,0,0);fx.globalCompositeOperation='source-over';fx.restore();
+  g.drawImage(ft,0,0,W,H)}
 
 /* persona seduta di profilo, composta dai pezzi del fotogramma di profilo (rivolta a sinistra, verso la stanza) */
 function drawSeat(c,o){
@@ -1605,8 +1607,15 @@ const sogno={t:0,steps:0,lastStep:0,vis:-1,
     // dissolvenza in nero verso il sogno
     if(t>T.sleepEnd&&t<T.dream0){g.globalAlpha=clamp((t-T.sleepEnd)/1.8,0,1);R(0,0,W,H,'#000');g.globalAlpha=1}
     if(t>=T.end-.6){g.globalAlpha=clamp((t-(T.end-.6))/.6,0,1);R(0,0,W,H,'#000');g.globalAlpha=1}},
+  /* disegna un fotogramma dell'atlante del protagonista: x = centro della testa, yb = piedi */
+  dreamFrame(c,name,x,yb,flip,alpha,sy=1){
+    const ch=CHARS['protagonista-interno'],fr=ch&&ch.fr[name];if(!fr)return;
+    const s=DREAM_SC/RS,dw=ch.w*s,dh=ch.h*s,ax=ch.ax*s;
+    c.save();c.globalAlpha=alpha;c.translate(Math.round(x*RS)/RS,yb);c.scale(flip?-1:1,sy);
+    c.drawImage(ch.img,fr.x,fr.y,ch.w,ch.h,-ax,-dh,dw,dh);c.restore()},
   drawRoom(t){
     const T=SOGNO_T;inside.draw();
+    const PN=CHARS['protagonista-interno'],newOK=!!(PN&&PN.ready&&PN.fr.walk_book_1&&PN.fr.seat_read_1);
     const sx=210,legalpha=clamp((t-T.walkEnd)/.5,0,1);
     const wk=t>T.walk0&&t<T.walkEnd,u=clamp((t-T.walk0)/(T.walkEnd-T.walk0),0,1);
     const RM=.1,Du=u<RM?u*u/(2*RM):u<1-RM?RM/2+(u-RM):(1-RM)-(1-u)*(1-u)/(2*RM);   // parte e si ferma gradualmente
@@ -1618,7 +1627,9 @@ const sogno={t:0,steps:0,lastStep:0,vis:-1,
     if(!seated||legalpha<1){
       const a=seated?1-legalpha:Math.min(1,t/.8);
       g.globalAlpha=.6*a;ell(x-2,T.fy+1,12,3,'#05060a');g.globalAlpha=1;
-      figureLit(c=>{c.globalAlpha=a;const FH=56,CX=15,fw=32,W12=IMG_WALK12.complete&&IMG_WALK12.naturalWidth;
+      figureLit(c=>{
+        if(newOK){this.dreamFrame(c,'walk_book_'+(wk?(Math.floor(d/5.5)%6)+1:4),x,T.fy+1,false,a);return}
+        c.globalAlpha=a;const FH=56,CX=15,fw=32,W12=IMG_WALK12.complete&&IMG_WALK12.naturalWidth;
         const by=Math.round(T.fy-FH+bob+1),bx=Math.round(x-CX);
         if(W12)c.drawImage(IMG_WALK12,f*fw,0,fw,FH,bx,by,fw,FH);
         c.globalAlpha=1})}
@@ -1627,7 +1638,14 @@ const sogno={t:0,steps:0,lastStep:0,vis:-1,
       if(t<T.readEnd){ang=.07+Math.sin(t*.9)*.02;dy=.3*Math.sin(t*1.6);arm=-2.15+.04*Math.sin(t*1.3)}
       else{const k=sm((t-T.readEnd-.6)/3.4),k2=sm((t-T.readEnd-1.6)/2.6);ang=.07+.42*k;dy=2.2*k;arm=lerp(-2.15,-1.35,k2);bookMode=k2}
       const flip=(t<T.readEnd)&&((t-T.sitEnd)%1.9<.2);
-      figureLit(c=>{c.globalAlpha=legalpha;
+      figureLit(c=>{
+        if(newOK){   // atlante del motore: legge, gira la pagina, si assopisce, dorme (rivolto verso la stanza, a sinistra)
+          const slp=t-T.readEnd,k=sm(clamp(slp/1.9,0,1)),k2=sm(clamp((slp-1.2)/2.6,0,1)),sg=sm(clamp((slp-.3)/2.6,0,1));
+          const sq=1-.05*sg,bre=slp>3?Math.sin((slp-3)*1.25)*.012:0,SX=SEAT_X,GY=T.fy+1;
+          if(t<T.readEnd)this.dreamFrame(c,flip?'seat_read_2':'seat_read_1',SX,GY,true,legalpha,1);
+          else{this.dreamFrame(c,'seat_read_1',SX,GY,true,legalpha*(1-k),sq+bre);this.dreamFrame(c,'seat_doze',SX,GY,true,legalpha*k*(1-k2),sq+bre);this.dreamFrame(c,'seat_sleep',SX,GY,true,legalpha*k2,sq+bre)}
+          return}
+        c.globalAlpha=legalpha;
         if(IMG_SEAT.complete&&IMG_SEAT.naturalWidth){
           const ax=172,gy=108,slp=t-T.readEnd,k=sm(clamp(slp/1.9,0,1)),sg=sm(clamp((slp-.3)/2.6,0,1));
           const fi=t<T.readEnd?(flip?1:0):2,sq=1-.05*sg,bre=slp>3?Math.sin((slp-3)*1.25)*.012:0;   // sospiro: il busto si abbassa e si affloscia, poi respira piano
@@ -1811,6 +1829,7 @@ const prova={actors:[],sel:0,ready:false,lastTap:0,fps:0,fn:0,ft:0,
     const p=inPoly(PV_AREA,x,y)?[x,y]:nearOnPoly(PV_AREA,x,y);
     this.actors[this.sel].go(p[0],p[1],run)}};
 
+loadChar('protagonista-interno');loadChar('protagonista-esterno');   // servono nel sogno e fuori dalla baita
 const scenes={start,drive,outside,inside,bagno,sogno,prova};
 let cur=start;
 function setScene(n){cur=scenes[n];setHint('');const ve=document.getElementById('ver');if(ve)ve.style.display=n==='start'?'':'none';const io=document.getElementById('ios');if(io)io.style.display=(n==='start'&&IS_IOS&&!navigator.standalone)?'block':'none';cur.enter();refreshInv()}
@@ -1853,7 +1872,7 @@ document.addEventListener('wheel',e=>{if(e.ctrlKey)e.preventDefault()},{passive:
 document.addEventListener('visibilitychange',()=>{if(document.hidden){if(SILENT_EL)SILENT_EL.pause()}else if(AU.ctx)unmuteSilentSwitch();if(AU.ctx){if(document.hidden)AU.ctx.suspend();else AU.ctx.resume()}});
 
 /* aggiornamento automatico: se sul server c'e' una versione piu' nuova di questa, ricarica una volta (cancella anche le copie salvate) */
-const BUILD='6 nov 23:00';
+const BUILD='7 nov 11:00';
 {const ve=document.getElementById('ver');if(ve)ve.textContent='v. '+BUILD;
  if(location.protocol.startsWith('http')){
   fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{
