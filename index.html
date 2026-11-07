@@ -668,9 +668,12 @@ const drive={T:0,fired:{},cap:0,
       const an=a*Math.PI/180;line(cx,cy,cx+Math.cos(an)*(r-1.5),cy-Math.sin(an)*(r-1.5),'#ff9a3a');R(cx,cy,1,1,'#d8cfb0')};
     dial(57,69,7.5,225-v*270,false);
     dial(83,69,7.5,225-(v*.5+.05+.03*Math.sin(T*9))*270,true);
-    // le spie sono dipinte nell'immagine: una sola, quella degli indicatori di direzione, lampeggia
-    const blink=(f,ph=0)=>Math.floor(T*f+ph)%2===0;
-    if(T>20&&blink(1.4)){R(48,75,2,2,'#58b868');R(89,75,2,2,'#58b868')}
+    // spie colorate sopra la fila dipinta: colori della plancia 164, alcune lampeggiano
+    const blink=(f,ph=0)=>Math.floor(T*f+ph)%2===0,turn=T>20&&blink(1.4);
+    const strip=['#d8302a','#d8302a','#e8a020','#e8c820','#40c860','#40c860','#40c0d8','#4a80e8','#e8c820','#e8a020','#d8302a','#d8302a'];
+    strip.forEach((c,i)=>{const on=(i===4||i===5)?(turn?1:.55):(i===11||i===0)?(T<2.5?1:(blink(.8,i)?.9:.45)):(i===7?.85:(T<2.5?1:.8));
+      const x=47+i*3.9;g.globalAlpha=.25*on;R(x-1,74,5,4,c);g.globalAlpha=.55+.45*on;R(x,75,3,2,c)});
+    [[44,80,'#d8302a',T<2.5?1:.6],[50,81,'#e8a020',blink(.7)?1:.3],[88,81,'#e8a020',T<2.5?1:.5],[93,80,'#d8302a',blink(.9)?1:.3],[98,79,'#40c860',turn?1:.15]].forEach(([x,y,c,a])=>{g.globalAlpha=.3*a;R(x-1,y-1,4,4,c);g.globalAlpha=.4+.6*a;R(x,y,2,2,c)});
     g.globalAlpha=1;
   },
   dash(T,wb,fl){
@@ -814,7 +817,7 @@ const outside={chr:{x:84,dir:1,tx:null,walking:false,dist:0,enter:0},idle:0,ripp
     if(x>=98&&y>=14){this.toDoor=true;this.chr.tx=DOORX-1;
       if(Math.abs(this.chr.x-(DOORX-1))<1){this.chr.tx=null;this.toDoor=false;this.enterDoor()}
       else say("Pochi passi nel fango e sono al riparo.");return}
-    if(x<80&&y>70){say("La mia auto. Il motore è ancora caldo, ma con questo temporale non vado da nessuna parte.");return}
+    if(x<70&&y>72){say("La mia auto. Il motore è ancora caldo, ma con questo temporale non vado da nessuna parte.");return}
     if(y>=GROUND-2){this.toDoor=false;this.chr.tx=clamp(x,76,DOORX+8)}
     else say("Solo buio e pioggia. Gli alberi sembrano chiudersi attorno alla baita.")},
   hint(){this.idle=20;say("Tocca la baita per camminare fino alla porta.")},
@@ -828,7 +831,7 @@ const outside={chr:{x:84,dir:1,tx:null,walking:false,dist:0,enter:0},idle:0,ripp
     // porta che si apre
     if(c.enter){const a=clamp((NOW-c.enter)/.5,0,1);R(147,62,10,21,'#06080c');g.globalAlpha=a*.7;R(147,62,10,21,'#c8903c');g.globalAlpha=1;R(147+Math.round(10*a),62,Math.max(0,10-Math.round(10*a)),21,'#3a2616')}
     // auto parcheggiata
-    ell(CAR_X+34,111,36,2.5,'#05060a',.55);
+    ell(CAR_X+30,111,32,2.5,'#05060a',.55);
     if(IMG_CARX.complete&&IMG_CARX.naturalWidth)g.drawImage(IMG_CARX,CAR_X,112-IMG_CARX.naturalHeight);
     if(!(c.enter&&NOW-c.enter>.45)){if(this.act&&this.act.c.ready)this.act.draw(OUT_SC);else drawChar(c.x,110,c.dir,c.walking,c.dist)}
     if(fl>0){g.globalAlpha=fl*.14;R(0,0,W,H,'#b4c4e4');g.globalAlpha=1}
@@ -1876,7 +1879,7 @@ document.addEventListener('wheel',e=>{if(e.ctrlKey)e.preventDefault()},{passive:
 document.addEventListener('visibilitychange',()=>{if(document.hidden){if(SILENT_EL)SILENT_EL.pause()}else if(AU.ctx)unmuteSilentSwitch();if(AU.ctx){if(document.hidden)AU.ctx.suspend();else AU.ctx.resume()}});
 
 /* aggiornamento automatico: se sul server c'e' una versione piu' nuova di questa, ricarica una volta (cancella anche le copie salvate) */
-const BUILD='8 nov 04:30';
+const BUILD='8 nov 05:00';
 {const ve=document.getElementById('ver');if(ve)ve.textContent='v. '+BUILD;
  if(location.protocol.startsWith('http')){
   fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{
