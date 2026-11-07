@@ -1526,7 +1526,7 @@ const ft=document.createElement('canvas');ft.width=W*RS;ft.height=H*RS;const fx=
 const fm=document.createElement('canvas');fm.width=W*RS;fm.height=H*RS;const fmx=fm.getContext('2d');
 const dc=document.createElement('canvas');dc.width=W;dc.height=H;const dx=dc.getContext('2d');
 fx.imageSmoothingEnabled=fmx.imageSmoothingEnabled=dx.imageSmoothingEnabled=false;
-const DREAM_SC=1.85,SEAT_X=205,SEAT_K=.86;   // scala del protagonista nel sogno (circa 56 px di altezza) e posizione della testa da seduto
+const DREAM_SC=2.05,SEAT_X=205,SEAT_K=.78;   // scala del protagonista nel sogno (circa 56 px di altezza) e posizione della testa da seduto
 const SOGNO_T={walk0:1.0,walkSpeed:38,x0:62,x1:200,fy:108,read:0,sleep:0,black:0,dream0:0,vis:6.4,gap:.9};
 SOGNO_T.walkEnd=SOGNO_T.walk0+(SOGNO_T.x1-SOGNO_T.x0)/SOGNO_T.walkSpeed;   // arriva davanti al divano
 SOGNO_T.sitEnd=SOGNO_T.walkEnd+.7;
@@ -1887,7 +1887,7 @@ document.addEventListener('wheel',e=>{if(e.ctrlKey)e.preventDefault()},{passive:
 document.addEventListener('visibilitychange',()=>{if(document.hidden){if(SILENT_EL)SILENT_EL.pause()}else if(AU.ctx)unmuteSilentSwitch();if(AU.ctx){if(document.hidden)AU.ctx.suspend();else AU.ctx.resume()}});
 
 /* aggiornamento automatico: se sul server c'e' una versione piu' nuova di questa, ricarica una volta (cancella anche le copie salvate) */
-const BUILD='7 nov 21:00';
+const BUILD='7 nov 22:00';
 {const ve=document.getElementById('ver');if(ve)ve.textContent='v. '+BUILD;
  if(location.protocol.startsWith('http')){
   fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{
