@@ -161,18 +161,18 @@ class Pers extends Actor{
 
 /* ============================================================ 4. VOCI E DIALOGO */
 const VOCI={ // profilo di voce per personaggio: f0 in Hz, forma d'onda, battute al secondo, variazione, e parametri della sintesi del telefono
-  'protagonista-interno':{f0:150,forma:'triangle',cps:30,mod:.10,tp:.85,tr:.98,col:'#e8dfc0'},
-  'protagonista-esterno':{f0:150,forma:'triangle',cps:30,mod:.10,tp:.85,tr:.98,col:'#e8dfc0'},
-  donna:{f0:300,forma:'triangle',cps:29,mod:.12,tp:1.25,tr:1,col:'#9fd6d0'},
-  prete:{f0:112,forma:'sawtooth',cps:23,mod:.06,tp:.6,tr:.88,col:'#d9b98a'},
-  leonardo:{f0:400,forma:'square',cps:36,mod:.18,tp:1.6,tr:1.15,col:'#f08a7a'},
-  anna:{f0:265,forma:'triangle',cps:31,mod:.14,tp:1.15,tr:1.03,col:'#e0a8d0'},
-  'anna-senza-giacca':{f0:265,forma:'triangle',cps:31,mod:.14,tp:1.15,tr:1.03,col:'#e0a8d0'},
-  lillo:{f0:128,forma:'sawtooth',cps:27,mod:.12,tp:.7,tr:.95,col:'#b8c8a0'},
-  greg:{f0:172,forma:'triangle',cps:30,mod:.08,tp:.95,tr:1,col:'#b8a0d8'},
-  gemella:{f0:360,forma:'sine',cps:27,mod:.08,tp:1.5,tr:.95,col:'#a8c8f0'},
-  'doc-ritorno-al-futuro':{f0:210,forma:'square',cps:34,mod:.30,tp:1.1,tr:1.12,col:'#f0e8d0'},
-  default:{f0:185,forma:'triangle',cps:30,mod:.10,tp:1,tr:1,col:'#e8dfc0'}};
+  'protagonista-interno':{sx:'m',f0:150,forma:'triangle',cps:30,mod:.10,tp:.85,tr:.98,col:'#e8dfc0'},
+  'protagonista-esterno':{sx:'m',f0:150,forma:'triangle',cps:30,mod:.10,tp:.85,tr:.98,col:'#e8dfc0'},
+  donna:{sx:'f',f0:300,forma:'triangle',cps:29,mod:.12,tp:1.25,tr:1,col:'#9fd6d0'},
+  prete:{sx:'m',f0:112,forma:'sawtooth',cps:23,mod:.06,tp:.6,tr:.88,col:'#d9b98a'},
+  leonardo:{sx:'f',f0:400,forma:'square',cps:36,mod:.18,tp:1.6,tr:1.15,col:'#f08a7a'},
+  anna:{sx:'f',f0:265,forma:'triangle',cps:31,mod:.14,tp:1.15,tr:1.03,col:'#e0a8d0'},
+  'anna-senza-giacca':{sx:'f',f0:265,forma:'triangle',cps:31,mod:.14,tp:1.15,tr:1.03,col:'#e0a8d0'},
+  lillo:{sx:'m',f0:128,forma:'sawtooth',cps:27,mod:.12,tp:.7,tr:.95,col:'#b8c8a0'},
+  greg:{sx:'m',f0:172,forma:'triangle',cps:30,mod:.08,tp:.95,tr:1,col:'#b8a0d8'},
+  gemella:{sx:'f',f0:360,forma:'sine',cps:27,mod:.08,tp:1.5,tr:.95,col:'#a8c8f0'},
+  'doc-ritorno-al-futuro':{sx:'m',f0:210,forma:'square',cps:34,mod:.30,tp:1.1,tr:1.12,col:'#f0e8d0'},
+  default:{sx:'m',f0:185,forma:'triangle',cps:30,mod:.10,tp:1,tr:1,col:'#e8dfc0'}};
 const FORM={a:[800,1200],e:[500,1800],i:[320,2300],o:[500,900],u:[320,800]};
 const BOCCA={a:3,e:2,i:2,o:4,u:4}; // forma della bocca: 1 chiusa, 2 poco aperta, 3 molto aperta, 4 a "o"
 function blip(p,ch,altezza,vol){
@@ -184,10 +184,12 @@ function blip(p,ch,altezza,vol){
   if(vo){const o2=c.createOscillator(),g2=c.createGain(),f2=c.createBiquadFilter();o2.type=p.forma;o2.frequency.value=o.frequency.value;f2.type='bandpass';f2.Q.value=3;f2.frequency.value=vo[1];
     g2.gain.setValueAtTime(.0001,t);g2.gain.linearRampToValueAtTime(vol*.5,t+.008);g2.gain.exponentialRampToValueAtTime(.0001,t+d);o2.connect(f2);f2.connect(g2);g2.connect(AU.master);o2.start(t);o2.stop(t+d+.02)}}
 const Voce={modo:(()=>{try{return localStorage.getItem('mistero-voce')||'blip'}catch(e){return'blip'}})(),voci:null,
-  scegli(){ // sceglie la migliore voce italiana disponibile sul telefono / computer
+  scegli(sx){ // sceglie la voce italiana del telefono adatta: maschile o femminile
     if(!window.speechSynthesis)return null;const vs=speechSynthesis.getVoices().filter(v=>/^it/i.test(v.lang));if(!vs.length)return null;
-    const pref=['Google italiano','Federica','Alice','Luca','Paola','Elsa','Cosimo','Giorgio','Emma','Isabella'];
-    for(const n of pref){const v=vs.find(v=>v.name.includes(n));if(v)return v}return vs[0]},
+    const M=['Luca','Cosimo','Giorgio','Diego','Marco','Paolo','Male'],F=['Alice','Federica','Paola','Elsa','Emma','Isabella','Google italiano','Female'];
+    for(const n of (sx==='m'?M:F)){const v=vs.find(v=>v.name.includes(n));if(v)return v}
+    if(sx==='m'){const v=vs.find(v=>!F.some(n=>v.name.includes(n)));if(v)return v}
+    return vs[0]},
   disponibile(){return !!window.speechSynthesis&&speechSynthesis.getVoices().some(v=>/^it/i.test(v.lang))},
   imposta(m){this.modo=m;try{localStorage.setItem('mistero-voce',m)}catch(e){}if(window.speechSynthesis&&m!=='voce')speechSynthesis.cancel()}};
 fetch('audio/voci/indice.json').then(r=>r.ok?r.json():null).then(j=>{Voce.clips=j}).catch(()=>{});
@@ -228,7 +230,7 @@ const Dialogo={
     const reg=(window.__battute=window.__battute||[]);if(att&&!reg.some(b=>b.pers===att.nome&&b.testo===tx))reg.push({pers:att.nome,testo:tx});   // elenco delle battute dette: serve a genera_voci.py
     const cf=r.opz.clip||(Voce.modo==='voce'&&Voce.clips&&att&&Voce.clips[att.nome+'|'+tx]?'audio/voci/'+Voce.clips[att.nome+'|'+tx]:null);   // clip registrata (Piper) se esiste per questa battuta
     if(cf){const a=new Audio(cf);this.cor.clip=a;a.play().catch(()=>{this.cor.clip=null});}
-    else if(Voce.modo==='voce'&&window.speechSynthesis){const v=Voce.scegli();const u=new SpeechSynthesisUtterance(tx);u.lang='it-IT';if(v)u.voice=v;u.pitch=clamp(p.tp,.1,2);u.rate=clamp(p.tr*(r.opz.vel||1),.5,1.6);
+    else if(Voce.modo==='voce'&&window.speechSynthesis){const v=Voce.scegli(p.sx);const u=new SpeechSynthesisUtterance(tx);u.lang='it-IT';if(v)u.voice=v;u.pitch=clamp(p.tp,.1,2);u.rate=clamp(p.tr*(r.opz.vel||1),.5,1.6);
       u.onboundary=e=>{this.cor&&(this.cor.bi=e.charIndex)};u.onend=()=>{this.cor&&(this.cor.ttsFine=true)};this.cor.tts=u;speechSynthesis.cancel();speechSynthesis.speak(u);
       this.cor.cps=15*u.rate}
     this.disegnaTesto()},
@@ -276,7 +278,7 @@ const Dialogo={
     this.chiudi();return true},
   chiudi(){const c=this.cor;if(!c)return;if(c.tts)speechSynthesis.cancel();if(c.clip)c.clip.pause();if(c.att){c.att.talking=false;c.att.bocca=1}
     this.cor=null;this.el.classList.remove('on');c.r.res(true);this.prossima()},
-  azzera(){while(this.coda.length)this.coda.pop().res(false);if(this.cor){const c=this.cor;if(c.att){c.att.talking=false}c.r.res(false);this.cor=null}if(this.el)this.el.classList.remove('on');if(this.scelteEl){this.scelteEl.remove();this.scelteEl=null}if(window.speechSynthesis)speechSynthesis.cancel()}};
+  azzera(){while(this.coda.length)this.coda.pop().res(false);if(this.cor){const c=this.cor;if(c.att){c.att.talking=false;c.att.bocca=1}if(c.clip)c.clip.pause();c.r.res(false);this.cor=null}if(this.el)this.el.classList.remove('on');if(this.scelteEl){this.scelteEl.remove();this.scelteEl=null}if(window.speechSynthesis)speechSynthesis.cancel()}};
 
 /* pulsante voce: BLIP (voci a suoni), VOCE (sintesi italiana del telefono), MUTO (solo testo) */
 (function(){const bar=document.getElementById('bar');if(!bar||document.getElementById('bVoce'))return;
@@ -361,10 +363,10 @@ class Scena{
   async interagisci(t,corri=false){
     const p=this.giocatore;this.hover=null;
     if(t.tipo==='attore'){const a=t.o,dx=a.x>p.x?-1:1,ax=a.x+dx*Math.max(14,a.altezza()*.34),ay=a.y+(a.y<p.y?2:-2);
-      if(Math.hypot(p.x-a.x,p.y-a.y)>26)await p.vaiA(ax,ay,corri);p.guardaVerso(a.x,a.y);a.guardaVerso(p.x,p.y);
+      if(Math.hypot(p.x-a.x,p.y-a.y)>26){if(!(await p.vaiA(ax,ay,corri)))return}p.guardaVerso(a.x,a.y);a.guardaVerso(p.x,p.y);
       const f=this.cfg.parla&&(this.cfg.parla[a.nome]||this.cfg.parla[a.id]);if(f)await this.sequenza(()=>f(this,a,p));else await this.dici(p,'Non ho niente da dire.');return}
     const o=t.o,c=o.cammina||{x:(o.rect[0]+o.rect[2]/2),y:Math.min(115,o.rect[1]+o.rect[3]+4),dir:'N'};
-    await p.vaiA(c.x,c.y,corri,c.dir);if(c.dir)p.dir=c.dir;
+    if(!(await p.vaiA(c.x,c.y,corri,c.dir)))return;if(c.dir)p.dir=c.dir;
     if(t.tipo==='uscita'){const pien=!o.chiusa||!o.chiusa(this);
       if(!pien){sfx.portaChiusa();await this.dici(p,o.testoChiusa||'È chiusa.');return}
       sfx.portaApre();this.vaiScena(o.verso,o.arrivo);return}

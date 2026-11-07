@@ -1,7 +1,7 @@
 // Service worker: il gioco funziona offline.
 // - i file del gioco (immagini, audio, icone) sono salvati alla prima apertura (sempre scaricati freschi: cache reload) e serviti dalla memoria del telefono;
 // - la pagina e questo file si chiedono prima alla rete (cosi' gli aggiornamenti arrivano subito) e, senza rete, si usa la copia salvata.
-const VERSION = "8 nov 00:00";
+const VERSION = "8 nov 01:00";
 const CACHE = "mistero-" + VERSION;
 const FILES = [
   "./",
@@ -15,8 +15,15 @@ const FILES = [
   "audio/voci/prete-3347fd42.mp3",
   "audio/voci/prete-620cfdd9.mp3",
   "audio/voci/prete-bdb7f71c.mp3",
+  "audio/voci/protagonista-interno-22685d47.mp3",
+  "audio/voci/protagonista-interno-2a37ab86.mp3",
+  "audio/voci/protagonista-interno-31a87cf3.mp3",
+  "audio/voci/protagonista-interno-3b33ac4d.mp3",
+  "audio/voci/protagonista-interno-491b4494.mp3",
   "audio/voci/protagonista-interno-760c50d8.mp3",
+  "audio/voci/protagonista-interno-90d7a9d8.mp3",
   "audio/voci/protagonista-interno-bb9afa20.mp3",
+  "audio/voci/protagonista-interno-c4ecf67b.mp3",
   "audio/voci/protagonista-interno-e80dd064.mp3",
   "audio/voci/protagonista-interno-f130d025.mp3",
   "icon-192.png",

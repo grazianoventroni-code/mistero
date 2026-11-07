@@ -617,9 +617,9 @@ const drive={T:0,fired:{},cap:0,
     this.gloveBox(T);
     this.gauges(T);this.radio(T);
     const steer=clamp(curv(D+1.2)*.5,-1,1)*.7+.03*Math.sin(T*3);
-    if(IMG_WHEEL.complete&&IMG_WHEEL.naturalWidth){const hw=IMG_WHEEL.naturalWidth,hh=IMG_WHEEL.naturalHeight,ws=.76,dw=Math.round(hw*ws),dh=Math.round(hh*ws);
-      g.save();g.translate(70,96);g.rotate(steer*.55);const wx0=-Math.round(dw/2),wy0=-Math.round(dw/2);g.drawImage(IMG_WHEEL,wx0,wy0,dw,dh);
-      g.drawImage(IMG_WHEEL,0,hh-1,hw,1,wx0,wy0+dh,dw,70);   // la colonna continua verso il basso: niente tagli in curva
+    if(IMG_WHEEL.complete&&IMG_WHEEL.naturalWidth){const hw=IMG_WHEEL.naturalWidth,hh=IMG_WHEEL.naturalHeight,ws=.62,dw=Math.round(hw*ws),dh=Math.round(hh*ws),cy=Math.round(hh*.47*ws);   // volante con le mani e le maniche: il cerchio del volante e' al 47% dell'altezza
+      g.save();g.translate(68,97);g.rotate(steer*.55);const wx0=-Math.round(dw/2),wy0=-cy;g.drawImage(IMG_WHEEL,wx0,wy0,dw,dh);
+      g.drawImage(IMG_WHEEL,0,hh-1,hw,1,wx0,wy0+dh,dw,70);   // le maniche continuano verso il basso: niente tagli in curva
       g.restore()}
     if(fl>0){g.globalAlpha=fl*.12;R(0,0,W,wb,'#b4c4e4');g.globalAlpha=1}
     const a0=1-sm((T-1)/2.6);if(a0>0){g.globalAlpha=a0;R(0,0,W,H,'#000');g.globalAlpha=1}
@@ -644,11 +644,13 @@ const drive={T:0,fired:{},cap:0,
     g.globalCompositeOperation='source-over';g.globalAlpha=1},
   /* autoradio acceso sopra il cruscotto dipinto: display verde neon, frequenza 66.6 e barra del volume a rettangoli crescenti */
   radio(T){
-    const NEON='#4dff80',DIM='#17592e',x0=110,y0=82,w=22,h=8,fk=.9+.1*Math.sin(T*21);
-    for(let i=0;i<4;i++)ell(x0+11,y0+4,16-i*3,8-i*1.6,'#39ff6a',.03*fk);   // alone verde sulla plancia
+    const NEON='#4dff80',DIM='#17592e',x0=110,y0=81,w=22,h=12,fk=.9+.1*Math.sin(T*21);
+    for(let i=0;i<4;i++)ell(x0+11,y0+6,16-i*3,9-i*1.6,'#39ff6a',.03*fk);   // alone verde sulla plancia
     R(x0-1,y0-1,w+2,h+2,'#020a05');R(x0,y0,w,h,'#052410');
-    g.globalAlpha=.4*fk;txt('66.6',x0+1,y0,'#39ff6a');g.globalAlpha=1;
-    txt('66.6',x0+2,y0+1,NEON);
+    g.globalAlpha=.4*fk;txt('66.6',x0+1,y0,'#39ff6a');g.globalAlpha=1;txt('66.6',x0+2,y0+1,NEON);
+    for(let i=0;i<8;i++){const bh=1+Math.floor(i/3),on=i<6,bx=x0+2+i*2.5,by=y0+h-1-bh;   // scala del volume a rettangoli crescenti
+      if(on){g.globalAlpha=.3*fk;R(bx-1,by-1,3,bh+2,'#39ff6a');g.globalAlpha=1}
+      R(bx,by,1.5,bh,on?NEON:DIM)}
   },
   gloveBox(T){
     if(!this.gOpen)return;
@@ -811,7 +813,7 @@ const outside={chr:{x:84,dir:1,tx:null,walking:false,dist:0,enter:0},idle:0,ripp
     if(x>=98&&y>=14){this.toDoor=true;this.chr.tx=DOORX-1;
       if(Math.abs(this.chr.x-(DOORX-1))<1){this.chr.tx=null;this.toDoor=false;this.enterDoor()}
       else say("Pochi passi nel fango e sono al riparo.");return}
-    if(x<72&&y>66){say("La mia auto. Il motore è ancora caldo, ma con questo temporale non vado da nessuna parte.");return}
+    if(x<106&&y>62){say("La mia auto. Il motore è ancora caldo, ma con questo temporale non vado da nessuna parte.");return}
     if(y>=GROUND-2){this.toDoor=false;this.chr.tx=clamp(x,76,DOORX+8)}
     else say("Solo buio e pioggia. Gli alberi sembrano chiudersi attorno alla baita.")},
   hint(){this.idle=20;say("Tocca la baita per camminare fino alla porta.")},
@@ -825,7 +827,7 @@ const outside={chr:{x:84,dir:1,tx:null,walking:false,dist:0,enter:0},idle:0,ripp
     // porta che si apre
     if(c.enter){const a=clamp((NOW-c.enter)/.5,0,1);R(147,62,10,21,'#06080c');g.globalAlpha=a*.7;R(147,62,10,21,'#c8903c');g.globalAlpha=1;R(147+Math.round(10*a),62,Math.max(0,10-Math.round(10*a)),21,'#3a2616')}
     // auto parcheggiata
-    ell(CAR_X+32,110,34,2,'#05060a',.55);
+    ell(CAR_X+48,110,50,2.5,'#05060a',.55);
     if(IMG_CARX.complete&&IMG_CARX.naturalWidth)g.drawImage(IMG_CARX,CAR_X,110-IMG_CARX.naturalHeight);
     if(!(c.enter&&NOW-c.enter>.45)){if(this.act&&this.act.c.ready)this.act.draw(OUT_SC);else drawChar(c.x,110,c.dir,c.walking,c.dist)}
     if(fl>0){g.globalAlpha=fl*.14;R(0,0,W,H,'#b4c4e4');g.globalAlpha=1}
@@ -1873,7 +1875,7 @@ document.addEventListener('wheel',e=>{if(e.ctrlKey)e.preventDefault()},{passive:
 document.addEventListener('visibilitychange',()=>{if(document.hidden){if(SILENT_EL)SILENT_EL.pause()}else if(AU.ctx)unmuteSilentSwitch();if(AU.ctx){if(document.hidden)AU.ctx.suspend();else AU.ctx.resume()}});
 
 /* aggiornamento automatico: se sul server c'e' una versione piu' nuova di questa, ricarica una volta (cancella anche le copie salvate) */
-const BUILD='8 nov 00:00';
+const BUILD='8 nov 01:00';
 {const ve=document.getElementById('ver');if(ve)ve.textContent='v. '+BUILD;
  if(location.protocol.startsWith('http')){
   fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{
