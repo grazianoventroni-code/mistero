@@ -192,7 +192,8 @@ const Voce={modo:(()=>{try{return localStorage.getItem('mistero-voce')||'blip'}c
     return vs[0]},
   disponibile(){return !!window.speechSynthesis&&speechSynthesis.getVoices().some(v=>/^it/i.test(v.lang))},
   imposta(m){this.modo=m;try{localStorage.setItem('mistero-voce',m)}catch(e){}if(window.speechSynthesis&&m!=='voce')speechSynthesis.cancel()}};
-fetch('audio/voci/indice.json').then(r=>r.ok?r.json():null).then(j=>{Voce.clips=j}).catch(()=>{});
+const VD=/[?&]voci=2/.test(location.search)?'audio/voci2/':'audio/voci/';   // ?voci=2 = clip "pulite" (prova)
+fetch(VD+'indice.json').then(r=>r.ok?r.json():null).then(j=>{Voce.clips=j}).catch(()=>{});
 if(window.speechSynthesis){speechSynthesis.getVoices();speechSynthesis.onvoiceschanged=()=>{Voce.voci=speechSynthesis.getVoices()}}
 
 const Dialogo={
@@ -228,7 +229,7 @@ const Dialogo={
     this.cor.cps=p.cps*(r.opz.vel||1);
     // voce del telefono o clip registrata
     const reg=(window.__battute=window.__battute||[]);if(att&&!reg.some(b=>b.pers===att.nome&&b.testo===tx))reg.push({pers:att.nome,testo:tx});   // elenco delle battute dette: serve a genera_voci.py
-    const cf=r.opz.clip||(Voce.modo==='voce'&&Voce.clips&&att&&Voce.clips[att.nome+'|'+tx]?'audio/voci/'+Voce.clips[att.nome+'|'+tx]:null);   // clip registrata (Piper) se esiste per questa battuta
+    const cf=r.opz.clip||(Voce.modo==='voce'&&Voce.clips&&att&&Voce.clips[att.nome+'|'+tx]?VD+Voce.clips[att.nome+'|'+tx]:null);   // clip registrata (Piper) se esiste per questa battuta
     if(cf){const a=new Audio(cf);this.cor.clip=a;a.play().catch(()=>{this.cor.clip=null});}
     else if(Voce.modo==='voce'&&window.speechSynthesis&&!r.opz.animale){const v=Voce.scegli(p.sx);const u=new SpeechSynthesisUtterance(tx);u.lang='it-IT';if(v)u.voice=v;u.pitch=clamp(p.tp,.1,2);u.rate=clamp(p.tr*(r.opz.vel||1),.5,1.6);
       u.onboundary=e=>{this.cor&&(this.cor.bi=e.charIndex)};u.onend=()=>{this.cor&&(this.cor.ttsFine=true)};this.cor.tts=u;speechSynthesis.cancel();speechSynthesis.speak(u);
