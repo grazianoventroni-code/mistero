@@ -59,7 +59,7 @@ button:active{background:#1a2438;transform:translate(1px,1px)}
       <div id="crt"></div>
       <div id="hint"></div>
       <div id="ios">PER LO SCHERMO INTERO: TOCCA CONDIVIDI, POI «AGGIUNGI ALLA SCHERMATA HOME»</div>
-      <div id="ver">v. 7 nov 17:00</div>
+      <div id="ver">v. 7 nov 18:00</div>
       <div id="menu"></div>
     </div>
     <div id="dlg"><p id="txt"></p></div>
@@ -72,6 +72,8 @@ button:active{background:#1a2438;transform:translate(1px,1px)}
 <div id="probe" style="position:fixed;visibility:hidden;pointer-events:none;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)"></div>
 <div id="rot"><i></i><div>RUOTA IL TELEFONO<br>IN ORIZZONTALE</div></div>
 
+<script src="js/motore.js"></script>
+<script src="js/scena-demo.js"></script>
 <script>
 (()=>{
 "use strict";
@@ -1518,7 +1520,7 @@ const ft=document.createElement('canvas');ft.width=W*RS;ft.height=H*RS;const fx=
 const fm=document.createElement('canvas');fm.width=W*RS;fm.height=H*RS;const fmx=fm.getContext('2d');
 const dc=document.createElement('canvas');dc.width=W;dc.height=H;const dx=dc.getContext('2d');
 fx.imageSmoothingEnabled=fmx.imageSmoothingEnabled=dx.imageSmoothingEnabled=false;
-const DREAM_SC=1.75,SEAT_X=206;   // scala del protagonista nel sogno (circa 56 px di altezza) e posizione della testa da seduto
+const DREAM_SC=1.95,SEAT_X=214;   // scala del protagonista nel sogno (circa 56 px di altezza) e posizione della testa da seduto
 const SOGNO_T={walk0:1.0,walkSpeed:38,x0:62,x1:200,fy:108,read:0,sleep:0,black:0,dream0:0,vis:6.4,gap:.9};
 SOGNO_T.walkEnd=SOGNO_T.walk0+(SOGNO_T.x1-SOGNO_T.x0)/SOGNO_T.walkSpeed;   // arriva davanti al divano
 SOGNO_T.sitEnd=SOGNO_T.walkEnd+.7;
@@ -1873,7 +1875,7 @@ document.addEventListener('wheel',e=>{if(e.ctrlKey)e.preventDefault()},{passive:
 document.addEventListener('visibilitychange',()=>{if(document.hidden){if(SILENT_EL)SILENT_EL.pause()}else if(AU.ctx)unmuteSilentSwitch();if(AU.ctx){if(document.hidden)AU.ctx.suspend();else AU.ctx.resume()}});
 
 /* aggiornamento automatico: se sul server c'e' una versione piu' nuova di questa, ricarica una volta (cancella anche le copie salvate) */
-const BUILD='7 nov 17:00';
+const BUILD='7 nov 19:00';
 {const ve=document.getElementById('ver');if(ve)ve.textContent='v. '+BUILD;
  if(location.protocol.startsWith('http')){
   fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{
@@ -1887,7 +1889,12 @@ if('serviceWorker' in navigator&&location.protocol.startsWith('http')&&!['localh
   navigator.serviceWorker.addEventListener('controllerchange',()=>{if(!had||window.__rl)return;window.__rl=1;if(cur===start)location.reload();else window.__pendingReload=true})}
 
 window.__dbg={prova,CHARS,storm,SOGNO_T,AU,thunder,setRain,sprTex,itemTex,bagno,openCU,giveItem,combine,refreshInv,takeLog,ITEMS,IDR,CU,AU,MU,S,drive,outside,inside,sogno,startDream,setScene,fade,go:n=>{fade.a=0;fade.to=0;setScene(n)},scenes};
-const boot=()=>{fade.a=1;fade.to=1;if(/[?&]prova/.test(location.search)){cur=prova;prova.enter()}else{cur=start;start.enter()}fadeTo(0,2);requestAnimationFrame(frame)};
+/* estensioni (js/*.js): ricevono le funzioni del gioco e possono registrare nuove scene */
+{const wrapEl=document.getElementById('wrap');
+ const API={g,W,H,RS,R,txt,ell,clamp,lerp,hash,inPoly,nearOnPoly,Actor,loadChar,CHARS,say,setHint,fade,fadeTo,setScene,scenes,mkImg,AU,tone,nburst,sfx,setRain,setFire,musicStart,musicStop,cv,wrap:wrapEl,
+   view:()=>{const r=cv.getBoundingClientRect();return {k:Math.min(r.width/DW,r.height/H),DW,OX}},now:()=>NOW};
+ for(const f of (window.__ext||[])){try{f(API)}catch(e){console.error('estensione',e)}}}
+const boot=()=>{fade.a=1;fade.to=1;const dm=/[?&]demo/.test(location.search)&&scenes.demo;if(dm){cur=scenes.demo;scenes.demo.enter()}else if(/[?&]prova/.test(location.search)){cur=prova;prova.enter()}else{cur=start;start.enter()}fadeTo(0,2);requestAnimationFrame(frame)};
 Promise.all(IMGS).then(boot);
 })();
 </script>
