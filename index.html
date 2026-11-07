@@ -741,7 +741,7 @@ let OUT=null;const FAR=[],MID=[];
 for(let x=-6;x<W+10;x+=8)FAR.push([x,34+hash(x)*24]);
 for(let x=-8;x<W+10;x+=14)MID.push([x+hash(x+1)*5,48+hash(x+4)*26]);
 const GROUND=92,BY=102,DOORX=152,CAR_X=6;
-const BG_OUT=mkImg('img/emb/bg_out.png'),IMG_CARX=mkImg('img/emb/auto164_34retro.png');
+const BG_OUT=mkImg('img/emb/bg_out.png'),IMG_CARX=mkImg('img/emb/auto164_34retro_b58.png');
 function drawCar(x,y){
   const body='#3c4650',hi='#5a6874',dk='#222a32';
   ell(x+30,y+1,34,3,'#05060a',.6);
@@ -1880,7 +1880,7 @@ document.addEventListener('wheel',e=>{if(e.ctrlKey)e.preventDefault()},{passive:
 document.addEventListener('visibilitychange',()=>{if(document.hidden){if(SILENT_EL)SILENT_EL.pause()}else if(AU.ctx)unmuteSilentSwitch();if(AU.ctx){if(document.hidden)AU.ctx.suspend();else AU.ctx.resume()}});
 
 /* aggiornamento automatico: se sul server c'e' una versione piu' nuova di questa, ricarica una volta (cancella anche le copie salvate) */
-const BUILD='8 nov 07:30';
+const BUILD='8 nov 08:00';
 {const ve=document.getElementById('ver');if(ve)ve.textContent='v. '+BUILD;
  if(location.protocol.startsWith('http')){
   fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{
