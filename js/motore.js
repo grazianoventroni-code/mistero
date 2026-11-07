@@ -139,7 +139,7 @@ class Pers extends Actor{
     if(horiz?Math.abs(dy)>Math.abs(dx)*1.5:Math.abs(dx)>Math.abs(dy)*.8)this.dir=Math.abs(dx)>=Math.abs(dy)*(horiz?1.5:.8)?(dx>0?'E':'W'):(dy>0?'S':'N');
     else if(horiz)this.dir=dx>0?'E':'W';else this.dir=dy>0?'S':'N';
     // passo: la fase del ciclo avanza con la distanza percorsa (niente piedi che scivolano) e a ogni mezzo ciclo scatta il suono
-    const ciclo=Math.max(14,this.altezza()*.78);
+    const ciclo=Math.max(14,this.altezza()*.78)*(this.corsa?.62:1);
     const f0=this.fase;this.fase+=step/ciclo;
     if(Math.floor(this.fase*2)!==Math.floor(f0*2)){this.piede^=1;if(this.scena)this.scena.passo(this)}}
   pose(){
@@ -149,8 +149,8 @@ class Pers extends Actor{
     if(this.state==='walk'){
       const key=E?'walk_E_':'walk_'+d+'_',a=[];for(let i=1;f[key+i];i++)a.push(key+i);
       if(!a.length&&E)for(let i=1;f['walk'+i];i++)a.push('walk'+i);
-      if(this.corsa&&E&&f.run&&this.v>.85&&(this.lastD||0)>8)return {n:'run',flip,dy:-Math.abs(Math.sin(this.fase*Math.PI*2))*1.3};
-      if(a.length)return {n:a[Math.floor((this.fase%1)*a.length)%a.length],flip,dy:this.corsa?-Math.abs(Math.sin(this.fase*Math.PI*2))*.7:0};
+      if(a.length){const r=this.corsa;   // la corsa e' lo stesso ciclo della camminata, piu' veloce, con rimbalzo e busto inclinato in avanti
+        return {n:a[Math.floor((this.fase%1)*a.length)%a.length],flip,dy:r?-Math.abs(Math.sin(this.fase*Math.PI*2))*1.5*this.v:0,rot:r&&E?.11*this.v:0}}
       return {n:stat,flip:false,dy:-Math.abs(Math.sin(this.fase*Math.PI*2))*.9}}
     if(d==='S'&&this.talking&&f.talk_S_1)return {n:'talk_S_'+clamp(this.bocca||1,1,4),flip:false,dy:0};
     if(d==='S'&&f.idle_S_1){

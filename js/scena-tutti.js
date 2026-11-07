@@ -56,6 +56,14 @@ function verso(tipo,f0){
   gn.gain.setValueAtTime(.0001,t);gn.gain.linearRampToValueAtTime(.45,t+.08);gn.gain.setValueAtTime(.45,t+d*.7);gn.gain.exponentialRampToValueAtTime(.0001,t+d);
   o.connect(f1);f1.connect(gn);gn.connect(AU.master);o.start(t);lfo.start(t);o.stop(t+d+.05);lfo.stop(t+d+.05);return d}
 
+/* versi veri (registrazioni libere di Wikimedia Commons, in audio/versi); se non si caricano resta il verso sintetizzato */
+const VERSI={khora:['miao_khora'],mia:['miao_mia'],capra:['bela_1','bela_2']};
+function versoReale(nome){
+  const l=VERSI[nome];if(!l||AU.muted)return Promise.resolve(null);
+  const a=new Audio('audio/versi/'+l[Math.floor(Math.random()*l.length)]+'.mp3');a.volume=1;
+  return new Promise(res=>{let ok=false;const fine=d=>{if(!ok){ok=true;res(d)}};
+    a.addEventListener('loadedmetadata',()=>{a.play().then(()=>fine(a.duration||1)).catch(()=>fine(null))});
+    a.addEventListener('error',()=>fine(null));setTimeout(()=>fine(null),2500)})}
 let SCN=null;
 function hintSel(a,sopra){const p=a&&SCN&&SCN.parlante(a);A.setHint(sopra?sopra:(p?'SELEZIONATO: '+p[1]+' · TOCCA IL PAVIMENTO PER MUOVERLO, UN PERSONAGGIO PER SCEGLIERLO':'TOCCA UN PERSONAGGIO'))}
 
@@ -67,7 +75,7 @@ class ScenaTutti extends Scena{
     const p=this.parlante(a);if(!p)return;
     a.dir='S';
     if(p[2]==='a'){   // gatta o capra: verso, bocca che si muove, nuvoletta senza voce a suoni
-      const capra=a.nome==='capra',d=verso(capra?'bela':'miao',capra?300:(a.nome==='mia'?640:520));
+      const capra=a.nome==='capra';let d=await versoReale(a.nome);if(d==null)d=verso(capra?'bela':'miao',capra?300:(a.nome==='mia'?640:520));
       a.talking=true;const iv=setInterval(()=>{a.bocca=1+Math.floor(Math.random()*4)},110);
       await Dialogo.parla(a,capra?'Beeeh!':'Miaaao!',{animale:true,attesa:Math.max(.4,d-.3),nome:p[1]});
       clearInterval(iv);a.talking=false;a.bocca=1;return}
