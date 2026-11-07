@@ -12,7 +12,7 @@ const {Scena,VOCI,Dialogo}=A.motore,{R,ell,txt,AU,clamp}=A,fade=A.fade;
 const PERS=[
  ['protagonista-interno','PROTAGONISTA','u'],['protagonista-esterno','PROTAGONISTA ESTERNO','u'],['prete','IL PRETE','u'],['lillo','LILLO','u'],['greg','GREG','u'],
  ['graziano','GRAZIANO','u'],['igor','IGOR','u'],['doc-ritorno-al-futuro','DOC','u'],['marty-mcfly-ritorno-al-futuro','MARTY','u'],['blues-brothers-alto','BLUES BROTHER ALTO','u'],
- ['blues-brothers-basso','BLUES BROTHER BASSO','u'],['macgyver','MACGYVER','u'],['mark-knopfler','MARK','u'],['kurt-cobain','KURT','u'],['controllore-del-treno','IL CONTROLLORE','u'],
+ ['blues-brothers-basso','BLUES BROTHER BASSO','u'],['macgyver','MACGYVER','u'],['mark-knopfler','MARK','u'],['kurt-cobain','KURT','u'],['controllore-del-treno','IL CONTROLLORE','u'],['neo','NEO','u'],['michael-jackson','MICHAEL JACKSON','u'],
  ['donna','LA DONNA','d'],['anna','ANNA','d'],['anna-senza-giacca','ANNA (SENZA GIACCA)','d'],['poliziotta','LA POLIZIOTTA','d'],['lara-croft','LARA','d'],['carmen-san-diego','CARMEN','d'],
  ['leonardo','LEONARDO','b'],['gemella','LE GEMELLE','b'],
  ['khora','KHORA (GATTA)','a'],['mia','MIA (GATTA)','a'],['capra','LA CAPRA','a']];
@@ -22,6 +22,8 @@ Object.assign(VOCI,{
  graziano:{sx:'m',f0:120,forma:'sawtooth',cps:26,mod:.08,tp:.75,tr:.95,col:'#c0b090'},
  igor:{sx:'m',f0:90,forma:'sawtooth',cps:20,mod:.2,tp:.4,tr:.8,col:'#9aa890'},
  'marty-mcfly-ritorno-al-futuro':{sx:'m',f0:190,forma:'triangle',cps:33,mod:.14,tp:1.1,tr:1.1,col:'#f0a070'},
+ neo:{sx:'m',f0:95,forma:'sawtooth',cps:22,mod:.05,tp:.5,tr:.85,col:'#7a8a9a'},
+ 'michael-jackson':{sx:'m',f0:240,forma:'triangle',cps:34,mod:.14,tp:1.5,tr:1.1,col:'#e8e0c0'},
  'blues-brothers-alto':{sx:'m',f0:130,forma:'sawtooth',cps:24,mod:.05,tp:.7,tr:.9,col:'#c8c8d0'},
  'blues-brothers-basso':{sx:'m',f0:100,forma:'sawtooth',cps:23,mod:.05,tp:.55,tr:.88,col:'#b8b8c4'},
  macgyver:{sx:'m',f0:160,forma:'triangle',cps:30,mod:.1,tp:.95,tr:1.02,col:'#e0b070'},
@@ -39,11 +41,11 @@ const DESC={ // descrizione guida di ogni voce (la stessa con cui sono costruite
  'blues-brothers-alto':'adulto, voce bassa e profonda','blues-brothers-basso':'adulto, voce più squillante','controllore-del-treno':'voce neutra',
  'doc-ritorno-al-futuro':'anziano, squillante e vivace','graziano':'adulto, bassa e sensuale','igor':'adulto, gracchiante e vivace','kurt-cobain':'adulto, voce calda',
  'lillo':'adulto, più squillante e vivace','greg':'adulto, bassa e profonda','macgyver':'adulto, voce calda','mark-knopfler':'adulto, voce calda',
- 'marty-mcfly-ritorno-al-futuro':'ragazzo, squillante e vivace','leonardo':'bambino, vivace e intelligente','gemella':'due voci uguali in coro, robotiche e inquietanti','anna':'adulta, vivace e simpatica','anna-senza-giacca':'adulta, vivace e simpatica','carmen-san-diego':'adulta, bassa e rauca','donna':'adulta, bassa e sensuale','lara-croft':'adulta, bassa e decisa','poliziotta':'adulta, ferma e decisa','prete':'anziano, bassa, profonda, rauca','khora':'miagolio dolce','mia':'miagolio dolce','capra':'belato','protagonista-interno':'adulto, bassa e intensa','protagonista-esterno':'adulto, bassa e intensa'};
+ 'marty-mcfly-ritorno-al-futuro':'ragazzo, squillante e vivace','leonardo':'bambino, vivace e intelligente','gemella':'due voci uguali in coro, robotiche e inquietanti','anna':'adulta, vivace e simpatica','anna-senza-giacca':'adulta, vivace e simpatica','carmen-san-diego':'adulta, bassa e rauca','donna':'adulta, bassa e sensuale','lara-croft':'adulta, bassa e decisa','poliziotta':'adulta, ferma e decisa','prete':'anziano, bassa, profonda, rauca','neo':'adulto, profonda e misteriosa','michael-jackson':'ragazzo, vivace e sottile','khora':'miagolio dolce','mia':'miagolio dolce','capra':'belato','protagonista-interno':'adulto, bassa e intensa','protagonista-esterno':'adulto, bassa e intensa'};
 function frasi(et,nome){
   if(et==='LE GEMELLE')return ['Ciao, siamo le gemelle. Questa è la nostra voce.',"Stanotte non si dorme: c'è troppo da fare.",'Hai sentito anche tu quel rumore?'];
   const gruppo=(PERS.find(p=>p[0]===nome)||[])[2];
-  const n=(nome==='protagonista-interno'||nome==='protagonista-esterno')?'io':nome==='donna'?'la donna':nome==='poliziotta'?'la poliziotta':et.replace(/\s*\(.*\)/,'').replace(/^(IL|LA|LO)\s+/,'').toLowerCase().replace(/^./,c=>c.toUpperCase());
+  const n=(nome==='protagonista-interno'||nome==='protagonista-esterno')?'io':nome==='neo'?'Neo':nome==='michael-jackson'?'Michael Jackson':nome==='donna'?'la donna':nome==='poliziotta'?'la poliziotta':et.replace(/\s*\(.*\)/,'').replace(/^(IL|LA|LO)\s+/,'').toLowerCase().replace(/^./,c=>c.toUpperCase());
   const L=['Ciao, sono '+n+'. Questa è la mia voce.'];
   if(gruppo==='u'||gruppo==='d'||gruppo==='b')L.push("Stanotte non si dorme: c'è troppo da fare.",'Hai sentito anche tu quel rumore?');
   else L.push('Tocca il pavimento e mi metto in cammino.');
@@ -141,7 +143,7 @@ function crea(id,titolo,attori,opz={}){
  gr('a').forEach((p,i)=>at.push({nome:p[0],etichetta:p[1],x:168+i*30,y:117,dir:'S'}));
  crea('tutti','PROVA DI TUTTI I PERSONAGGI',at,{primo:'protagonista-interno',etichette:[['UOMINI',62,42],['DONNE',158,42],['BAMBINI',198,56],['ANIMALI',160,107]]})}
 // UOMINI: 14 voci (il protagonista esterno ha la stessa voce dell'interno e non e' ripetuto)
-{const l=gr('u').filter(p=>p[0]!=='protagonista-esterno'),at=l.map((p,i)=>({nome:p[0],etichetta:p[1],x:22+(i%7)*31+(i>=7?15:0),y:i<7?96:112,dir:'S'}));
+{const l=gr('u').filter(p=>p[0]!=='protagonista-esterno'),at=l.map((p,i)=>({nome:p[0],etichetta:p[1],x:16+(i%8)*28+(i>=8?14:0),y:i<8?96:112,dir:'S'}));
  crea('uomini','UOMINI',at,{primo:'protagonista-interno',prof:[78,118,.95,1.4]})}
 // gli altri gruppi si completano quando si lavora sulle loro voci
 {const l=gr('d'),at=l.map((p,i)=>({nome:p[0],etichetta:p[1],x:(i<3?44:84)+(i%3)*76,y:i<3?96:112,dir:'S'}));crea('donne','DONNE',at,{primo:'donna',prof:[78,118,.95,1.4]})}

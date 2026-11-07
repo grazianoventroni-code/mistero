@@ -1,7 +1,7 @@
 // Service worker: il gioco funziona offline.
 // - i file del gioco (immagini, audio, icone) sono salvati alla prima apertura (sempre scaricati freschi: cache reload) e serviti dalla memoria del telefono;
 // - la pagina e questo file si chiedono prima alla rete (cosi' gli aggiornamenti arrivano subito) e, senza rete, si usa la copia salvata.
-const VERSION = "8 nov 14:30";
+const VERSION = "8 nov 15:00";
 const CACHE = "mistero-" + VERSION;
 const FILES = [
   "./",
@@ -95,6 +95,12 @@ const FILES = [
   "audio/voci/marty-mcfly-ritorno-al-futuro-6a8f4215.mp3",
   "audio/voci/marty-mcfly-ritorno-al-futuro-71bc0c59.mp3",
   "audio/voci/marty-mcfly-ritorno-al-futuro-dbab66fe.mp3",
+  "audio/voci/michael-jackson-820874c2.mp3",
+  "audio/voci/michael-jackson-98c1f65d.mp3",
+  "audio/voci/michael-jackson-eb70c282.mp3",
+  "audio/voci/neo-2c2deab6.mp3",
+  "audio/voci/neo-6a092430.mp3",
+  "audio/voci/neo-7b262f42.mp3",
   "audio/voci/poliziotta-753f43af.mp3",
   "audio/voci/poliziotta-8012aec6.mp3",
   "audio/voci/poliziotta-a12d5997.mp3",
@@ -296,6 +302,10 @@ const FILES = [
   "img/char-r14/marty-mcfly-ritorno-al-futuro.png",
   "img/char-r14/mia.json",
   "img/char-r14/mia.png",
+  "img/char-r14/michael-jackson.json",
+  "img/char-r14/michael-jackson.png",
+  "img/char-r14/neo.json",
+  "img/char-r14/neo.png",
   "img/char-r14/poliziotta.json",
   "img/char-r14/poliziotta.png",
   "img/char-r14/prete.json",
