@@ -11,8 +11,8 @@ const {Scena,VOCI,Dialogo}=A.motore,{R,ell,txt,AU,clamp}=A,fade=A.fade;
 /* nome file, etichetta, gruppo: u = uomini, d = donne, b = bambini, a = animali */
 const PERS=[
  ['protagonista-interno','PROTAGONISTA','u'],['protagonista-esterno','PROTAGONISTA ESTERNO','u'],['prete','IL PRETE','u'],['lillo','LILLO','u'],['greg','GREG','u'],
- ['graziano','GRAZIANO','u'],['igor','IGOR','u'],['doc-ritorno-al-futuro','DOC','u'],['marty-mcfly-ritorno-al-futuro','MARTY','u'],['blues-brothers-alto','BLUES ALTO','u'],
- ['blues-brothers-basso','BLUES BASSO','u'],['macgyver','MACGYVER','u'],['mark-knopfler','MARK','u'],['kurt-cobain','KURT','u'],['controllore-del-treno','IL CONTROLLORE','u'],
+ ['graziano','GRAZIANO','u'],['igor','IGOR','u'],['doc-ritorno-al-futuro','DOC','u'],['marty-mcfly-ritorno-al-futuro','MARTY','u'],['blues-brothers-alto','BLUES BROTHER ALTO','u'],
+ ['blues-brothers-basso','BLUES BROTHER BASSO','u'],['macgyver','MACGYVER','u'],['mark-knopfler','MARK','u'],['kurt-cobain','KURT','u'],['controllore-del-treno','IL CONTROLLORE','u'],
  ['donna','LA DONNA','d'],['anna','ANNA','d'],['anna-senza-giacca','ANNA (SENZA GIACCA)','d'],['poliziotta','LA POLIZIOTTA','d'],['lara-croft','LARA','d'],['carmen-san-diego','CARMEN','d'],
  ['leonardo','LEONARDO','b'],['gemella','LE GEMELLE','b'],
  ['khora','KHORA (GATTA)','a'],['mia','MIA (GATTA)','a'],['capra','LA CAPRA','a']];
@@ -35,10 +35,19 @@ Object.assign(VOCI,{
  capra:{sx:'m',f0:330,forma:'sawtooth',cps:10,mod:.2,tp:1.2,tr:1,col:'#e0d8c0'}});
 
 /* le frasi di prova (le stesse devono stare in _strumenti/battute.json per avere la voce di Piper) */
-function frasi(et){
+const DESC={ // descrizione guida di ogni voce (la stessa con cui sono costruite le voci in genera_voci.py)
+ 'blues-brothers-alto':'adulto, voce bassa e profonda','blues-brothers-basso':'adulto, voce più squillante','controllore-del-treno':'voce neutra',
+ 'doc-ritorno-al-futuro':'anziano, squillante e vivace','graziano':'adulto, bassa e sensuale','igor':'adulto, gracchiante e vivace','kurt-cobain':'adulto, voce calda',
+ 'lillo':'adulto, più squillante e vivace','greg':'adulto, bassa e profonda','macgyver':'adulto, voce calda','mark-knopfler':'adulto, voce calda',
+ 'marty-mcfly-ritorno-al-futuro':'ragazzo, squillante e vivace','prete':'anziano, bassa, profonda, rauca','protagonista-interno':'adulto, bassa e intensa','protagonista-esterno':'adulto, bassa e intensa'};
+function frasi(et,nome){
   if(et==='LE GEMELLE')return ['Ciao, siamo le gemelle. Questa è la nostra voce.','Camminiamo sempre insieme, tenendoci per mano.'];
-  const n=et.replace(/\s*\(.*\)/,'').replace(/^(IL|LA|LO)\s+/,'');
-  return ['Ciao, sono '+n.charAt(0)+n.slice(1).toLowerCase()+'. Questa è la mia voce.','Tocca il pavimento e mi metto in cammino.']}
+  const gruppo=(PERS.find(p=>p[0]===nome)||[])[2];
+  const n=(nome==='protagonista-interno'||nome==='protagonista-esterno')?'io':et.replace(/\s*\(.*\)/,'').replace(/^(IL|LA|LO)\s+/,'').toLowerCase().replace(/^./,c=>c.toUpperCase());
+  const L=['Ciao, sono '+n+'. Questa è la mia voce.'];
+  if(gruppo==='u')L.push("Stanotte non si dorme: c'è troppo da fare.",'Hai sentito anche tu quel rumore?');
+  else L.push('Tocca il pavimento e mi metto in cammino.');
+  return L}
 
 /* ---- versi degli animali (sintetizzati, nessun file) ---- */
 function verso(tipo,f0){
@@ -65,8 +74,7 @@ function versoReale(nome){
   return new Promise(res=>{let ok=false;const fine=d=>{if(!ok){ok=true;res(d)}};
     a.addEventListener('loadedmetadata',()=>{a.play().then(()=>fine(a.duration||1)).catch(()=>fine(null))});
     a.addEventListener('error',()=>fine(null));setTimeout(()=>fine(null),2500)})}
-let SCN=null;
-function hintSel(a,sopra){const p=a&&SCN&&SCN.parlante(a);A.setHint(sopra?sopra:(p?'SELEZIONATO: '+p[1]+' · TOCCA IL PAVIMENTO PER MUOVERLO, UN PERSONAGGIO PER SCEGLIERLO':'TOCCA UN PERSONAGGIO'))}
+function hintSel(a,sopra){const p=a&&PERS.find(q=>q[0]===a.nome);A.setHint(sopra?sopra:(p?p[1]+(DESC[p[0]]?' — '+DESC[p[0]].toUpperCase():'')+' · TOCCA IL PAVIMENTO PER MUOVERLO':'TOCCA UN PERSONAGGIO'))}
 
 class ScenaTutti extends Scena{
   constructor(cfg){super(cfg);this.sel=null;this.n={}}
@@ -86,7 +94,7 @@ class ScenaTutti extends Scena{
       a.talking=true;const iv=setInterval(()=>{a.bocca=1+Math.floor(Math.random()*4)},110);
       await Dialogo.parla(a,capra?'Beeeh!':'Miaaao!',{animale:true,attesa:Math.max(.4,d-.3),nome:p[1]});
       clearInterval(iv);a.talking=false;a.bocca=1;return}
-    const L=frasi(p[1]),k=(this.n[a.nome]=(this.n[a.nome]||0)+1)-1;
+    const L=frasi(p[1],p[0]),k=(this.n[a.nome]=(this.n[a.nome]||0)+1)-1;
     if(this.gemellaSel(a)){   // le gemelle parlano all'unisono: stessa frase, stessa voce, due bocche, e un'eco della clip a 18 ms per l'effetto "due voci"
       const [l,r]=this.gemelle();l.dir=r.dir='S';const pr=Dialogo.parla(l,L[k%L.length],{nome:p[1]}),c=Dialogo.cor;
       if(c&&c.clip){const e=new Audio(c.clip.src);e.volume=.8;setTimeout(()=>e.play().catch(()=>{}),18);c.eco=e}
@@ -104,30 +112,38 @@ class ScenaTutti extends Scena{
     this.muovi(a,pt[0],pt[1],doppio)}
   move(x,y){if(!this.pronto)return;const t=this.trova(x,y);this.hover=t&&t.tipo==='attore'?t:null;hintSel(this.sel,t&&t.nome)}}
 
-/* disposizione per gruppi: UOMINI a sinistra (3 file), DONNE al centro, BAMBINI a destra, ANIMALI davanti */
-const attori=[],gr=g=>PERS.filter(p=>p[2]===g);
-gr('u').forEach((p,i)=>attori.push({nome:p[0],etichetta:p[1],x:14+(i%5)*26+(Math.floor(i/5)%2?13:0),y:[86,98,110][Math.floor(i/5)],dir:'S'}));
-gr('d').forEach((p,i)=>attori.push({nome:p[0],etichetta:p[1],x:152+(i%3)*18+(Math.floor(i/3)?9:0),y:[89,101][Math.floor(i/3)],dir:'S'}));
-attori.push({nome:'leonardo',etichetta:'LEONARDO',x:214,y:90,dir:'S'});
-attori.push({nome:'gemella',id:'gemella',etichetta:'LE GEMELLE',x:210,y:106,dir:'S'});
-attori.push({nome:'gemella',id:'gemella2',etichetta:'LE GEMELLE',x:218,y:106,dir:'S'});   // la copia identica, con le braccia che si toccano
-gr('a').forEach((p,i)=>attori.push({nome:p[0],etichetta:p[1],x:168+i*30,y:117,dir:'S'}));
+/* ---- le scene: una con tutti, e una per ogni gruppo (?tutti, ?uomini, ?donne, ?bambini, ?animali) ---- */
+const gr=g=>PERS.filter(p=>p[2]===g);
+function sfondoBase(titolo,etichette){return function(){   // palcoscenico neutro
+  R(0,0,240,120,'#12141c');for(let y=0;y<70;y+=6)R(0,y,240,1,'#171a24');
+  R(0,70,240,8,'#1c2030');R(0,78,240,42,'#232838');
+  for(let y=82;y<120;y+=6)R(0,y,240,1,'#2a3044');
+  txt(titolo,Math.max(4,120-titolo.length*2),6,'#6a7490');for(const e of etichette||[])txt(e[0],e[1],e[2],'#7a88a8')}}
+function crea(id,titolo,attori,opz={}){
+  const sc=new ScenaTutti({
+    id,giocatore:null,area:[[4,78],[236,78],[238,119],[2,119]],ostacoli:[],
+    prof:opz.prof||[78,118,.8,1.3],superficie:'legno',ambiente:{stanza:1,vento:0,pioggia:0},attori,
+    suggerimento:'TOCCA UN PERSONAGGIO PER SCEGLIERLO E FARLO PARLARE · TOCCA IL PAVIMENTO PER MUOVERLO',
+    disegnaSfondo:sfondoBase(titolo,opz.etichette),
+    sotto(g,s){const a=s.sel;if(!a)return;const L=s.gemellaSel(a)?s.gemelle():[a];for(const q of L){const w=7*q.scala();g.globalAlpha=.55+.25*Math.sin(A.now()*6);ell(q.x,q.y,w,2.2,'#e0a040');g.globalAlpha=1;ell(q.x,q.y,w-1.5,1.2,'#6a4a18')}},
+    aggiorna(s){const l=s.attori.gemella,r=s.attori.gemella2;if(l&&r){r.talking=l.talking;r.bocca=l.bocca;if(l.dir!==r.dir&&!l.path.length)r.dir=l.dir}},
+    entra(s){const a=s.attori[opz.primo]||Object.values(s.attori)[0];if(a)s.seleziona(a)}});
+  sc.id=id;A.scenes[id]=sc;return sc}
 
-SCN=new ScenaTutti({
-  id:'tutti',giocatore:null,
-  area:[[4,78],[236,78],[238,119],[2,119]],ostacoli:[],
-  prof:[78,118,.8,1.3],superficie:'legno',
-  ambiente:{stanza:1,vento:0,pioggia:0},
-  attori,
-  suggerimento:'TOCCA UN PERSONAGGIO PER SCEGLIERLO E FARLO PARLARE · TOCCA IL PAVIMENTO PER MUOVERLO',
-  disegnaSfondo(){   // palcoscenico neutro
-    R(0,0,240,120,'#12141c');for(let y=0;y<70;y+=6)R(0,y,240,1,'#171a24');
-    R(0,70,240,8,'#1c2030');R(0,78,240,42,'#232838');
-    for(let y=82;y<120;y+=6)R(0,y,240,1,'#2a3044');
-    txt('PROVA DI TUTTI I PERSONAGGI',50,6,'#6a7490');
-    txt('UOMINI',62,42,'#7a88a8');txt('DONNE',158,42,'#7a88a8');txt('BAMBINI',198,56,'#7a88a8');txt('ANIMALI',160,107,'#7a88a8')},
-  sotto(g,s){const a=s.sel;if(!a)return;const L=s.gemellaSel(a)?s.gemelle():[a];for(const q of L){const w=7*q.scala();g.globalAlpha=.55+.25*Math.sin(A.now()*6);ell(q.x,q.y,w,2.2,'#e0a040');g.globalAlpha=1;ell(q.x,q.y,w-1.5,1.2,'#6a4a18')}},
-  aggiorna(s){const l=s.attori.gemella,r=s.attori.gemella2;if(l&&r){r.talking=l.talking;r.bocca=l.bocca;if(l.dir!==r.dir&&!l.path.length)r.dir=l.dir}},
-  entra(s){const a=s.attori['protagonista-interno'];if(a)s.seleziona(a)}});
-SCN.id='tutti';A.scenes.tutti=SCN;
+// TUTTI
+{const at=[];
+ gr('u').forEach((p,i)=>at.push({nome:p[0],etichetta:p[1],x:14+(i%5)*26+(Math.floor(i/5)%2?13:0),y:[86,98,110][Math.floor(i/5)],dir:'S'}));
+ gr('d').forEach((p,i)=>at.push({nome:p[0],etichetta:p[1],x:152+(i%3)*18+(Math.floor(i/3)?9:0),y:[89,101][Math.floor(i/3)],dir:'S'}));
+ at.push({nome:'leonardo',etichetta:'LEONARDO',x:214,y:90,dir:'S'});
+ at.push({nome:'gemella',id:'gemella',etichetta:'LE GEMELLE',x:210,y:106,dir:'S'});at.push({nome:'gemella',id:'gemella2',etichetta:'LE GEMELLE',x:218,y:106,dir:'S'});
+ gr('a').forEach((p,i)=>at.push({nome:p[0],etichetta:p[1],x:168+i*30,y:117,dir:'S'}));
+ crea('tutti','PROVA DI TUTTI I PERSONAGGI',at,{primo:'protagonista-interno',etichette:[['UOMINI',62,42],['DONNE',158,42],['BAMBINI',198,56],['ANIMALI',160,107]]})}
+// UOMINI: 14 voci (il protagonista esterno ha la stessa voce dell'interno e non e' ripetuto)
+{const l=gr('u').filter(p=>p[0]!=='protagonista-esterno'),at=l.map((p,i)=>({nome:p[0],etichetta:p[1],x:22+(i%7)*31+(i>=7?15:0),y:i<7?96:112,dir:'S'}));
+ crea('uomini','UOMINI',at,{primo:'protagonista-interno',prof:[78,118,.95,1.4]})}
+// gli altri gruppi si completano quando si lavora sulle loro voci
+{const l=gr('d'),at=l.map((p,i)=>({nome:p[0],etichetta:p[1],x:30+(i%3)*60,y:i<3?94:112,dir:'S'}));crea('donne','DONNE',at,{primo:'donna',prof:[78,118,.95,1.4]})}
+{const at=[{nome:'leonardo',etichetta:'LEONARDO',x:70,y:104,dir:'S'},{nome:'gemella',id:'gemella',etichetta:'LE GEMELLE',x:150,y:104,dir:'S'},{nome:'gemella',id:'gemella2',etichetta:'LE GEMELLE',x:160,y:104,dir:'S'}];
+ crea('bambini','BAMBINI',at,{primo:'leonardo',prof:[78,118,1,1.5]})}
+{const l=gr('a'),at=l.map((p,i)=>({nome:p[0],etichetta:p[1],x:50+i*70,y:108,dir:'S'}));crea('animali','ANIMALI',at,{primo:'khora',prof:[78,118,1.1,1.6]})}
 });
