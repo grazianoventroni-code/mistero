@@ -75,6 +75,7 @@ button:active{background:#1a2438;transform:translate(1px,1px)}
 
 <script src="js/motore.js"></script>
 <script src="js/scena-demo.js"></script>
+<script src="js/scena-tutti.js"></script>
 <script>
 (()=>{
 "use strict";
@@ -1875,7 +1876,7 @@ document.addEventListener('wheel',e=>{if(e.ctrlKey)e.preventDefault()},{passive:
 document.addEventListener('visibilitychange',()=>{if(document.hidden){if(SILENT_EL)SILENT_EL.pause()}else if(AU.ctx)unmuteSilentSwitch();if(AU.ctx){if(document.hidden)AU.ctx.suspend();else AU.ctx.resume()}});
 
 /* aggiornamento automatico: se sul server c'e' una versione piu' nuova di questa, ricarica una volta (cancella anche le copie salvate) */
-const BUILD='8 nov 01:00';
+const BUILD='8 nov 02:00';
 {const ve=document.getElementById('ver');if(ve)ve.textContent='v. '+BUILD;
  if(location.protocol.startsWith('http')){
   fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{
@@ -1894,7 +1895,7 @@ window.__dbg={prova,CHARS,storm,SOGNO_T,AU,thunder,setRain,sprTex,itemTex,bagno,
  const API={g,W,H,RS,R,txt,ell,clamp,lerp,hash,inPoly,nearOnPoly,Actor,loadChar,CHARS,say,setHint,fade,fadeTo,setScene,scenes,mkImg,AU,tone,nburst,sfx,setRain,setFire,musicStart,musicStop,cv,wrap:wrapEl,
    view:()=>{const r=cv.getBoundingClientRect();return {k:Math.min(r.width/DW,r.height/H),DW,OX}},now:()=>NOW};
  for(const f of (window.__ext||[])){try{f(API)}catch(e){console.error('estensione',e)}}}
-const boot=()=>{fade.a=1;fade.to=1;const dm=/[?&]demo/.test(location.search)&&scenes.demo;if(dm){cur=scenes.demo;scenes.demo.enter()}else if(/[?&]prova/.test(location.search)){cur=prova;prova.enter()}else{cur=start;start.enter()}fadeTo(0,2);requestAnimationFrame(frame)};
+const boot=()=>{fade.a=1;fade.to=1;const dm=/[?&]demo/.test(location.search)&&scenes.demo,tt=/[?&]tutti/.test(location.search)&&scenes.tutti;if(tt){cur=scenes.tutti;scenes.tutti.enter()}else if(dm){cur=scenes.demo;scenes.demo.enter()}else if(/[?&]prova/.test(location.search)){cur=prova;prova.enter()}else{cur=start;start.enter()}fadeTo(0,2);requestAnimationFrame(frame)};
 Promise.all(IMGS).then(boot);
 })();
 </script>

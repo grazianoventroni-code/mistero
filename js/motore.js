@@ -230,7 +230,7 @@ const Dialogo={
     const reg=(window.__battute=window.__battute||[]);if(att&&!reg.some(b=>b.pers===att.nome&&b.testo===tx))reg.push({pers:att.nome,testo:tx});   // elenco delle battute dette: serve a genera_voci.py
     const cf=r.opz.clip||(Voce.modo==='voce'&&Voce.clips&&att&&Voce.clips[att.nome+'|'+tx]?'audio/voci/'+Voce.clips[att.nome+'|'+tx]:null);   // clip registrata (Piper) se esiste per questa battuta
     if(cf){const a=new Audio(cf);this.cor.clip=a;a.play().catch(()=>{this.cor.clip=null});}
-    else if(Voce.modo==='voce'&&window.speechSynthesis){const v=Voce.scegli(p.sx);const u=new SpeechSynthesisUtterance(tx);u.lang='it-IT';if(v)u.voice=v;u.pitch=clamp(p.tp,.1,2);u.rate=clamp(p.tr*(r.opz.vel||1),.5,1.6);
+    else if(Voce.modo==='voce'&&window.speechSynthesis&&!r.opz.animale){const v=Voce.scegli(p.sx);const u=new SpeechSynthesisUtterance(tx);u.lang='it-IT';if(v)u.voice=v;u.pitch=clamp(p.tp,.1,2);u.rate=clamp(p.tr*(r.opz.vel||1),.5,1.6);
       u.onboundary=e=>{this.cor&&(this.cor.bi=e.charIndex)};u.onend=()=>{this.cor&&(this.cor.ttsFine=true)};this.cor.tts=u;speechSynthesis.cancel();speechSynthesis.speak(u);
       this.cor.cps=15*u.rate}
     this.disegnaTesto()},
@@ -263,7 +263,7 @@ const Dialogo={
         if('.!?:;'.includes(ch))c.pausa=.22;else if(ch===',')c.pausa=.11;
         if(/[a-z]/.test(f)){
           const mo=BOCCA[f]||1;if(c.att)c.att.bocca=mo;c.mouthT=.09;
-          if(Voce.modo!=='muto'&&!c.tts&&!c.clip){const fine=c.tx.length-i<=Math.max(4,c.tx.length*.2);const q=/\?\s*$/.test(c.tx)&&fine?1+.35*(1-(c.tx.length-i)/Math.max(4,c.tx.length*.2)):1;
+          if(Voce.modo!=='muto'&&!c.tts&&!c.clip&&!c.r.opz.animale){const fine=c.tx.length-i<=Math.max(4,c.tx.length*.2);const q=/\?\s*$/.test(c.tx)&&fine?1+.35*(1-(c.tx.length-i)/Math.max(4,c.tx.length*.2)):1;
             const decl=1-.1*(i/Math.max(1,c.tx.length));
             if(FORM[f]||(i%2===0&&'bdgptkmnlrsfvc'.includes(f)))blip(c.p,FORM[f]?f:'',decl*q*(/!\s*$/.test(c.tx)?1.08:1),.045)}}
         else if(ch===' '){if(c.att)c.att.bocca=1}}
@@ -325,8 +325,9 @@ class Scena{
   /* ---- disegno ---- */
   draw(){
     g.globalAlpha=1;g.globalCompositeOperation='source-over';
-    if(this.sfondo&&this.sfondo.complete&&this.sfondo.naturalWidth)g.drawImage(this.sfondo,0,0,W,H);else R(0,0,W,H,'#111');
+    if(this.cfg.disegnaSfondo)this.cfg.disegnaSfondo(g,this);else if(this.sfondo&&this.sfondo.complete&&this.sfondo.naturalWidth)g.drawImage(this.sfondo,0,0,W,H);else R(0,0,W,H,'#111');
     if(!this.pronto){txt('CARICO...',90,56,'#d8cfb0');return}
+    if(this.cfg.sotto)this.cfg.sotto(g,this);
     const lista=[];
     for(const k in this.attori){const a=this.attori[k];if(a.visibile!==false)lista.push({y:a.y,f:()=>a.draw(a.scala())})}
     for(const o of this.oggetti){if(o.visibile&&!o.visibile(this))continue;lista.push({y:o.baseY??(o.y||0),f:()=>{if(o.img&&o.img.complete&&o.img.naturalWidth)g.drawImage(o.img,o.x,o.y,o.w||o.img.naturalWidth,o.h||o.img.naturalHeight);if(o.disegna)o.disegna(g,this)}})}
