@@ -434,8 +434,8 @@ const IMGS=[];const mkImg=p=>{const i=new Image();IMGS.push(new Promise(r=>{i.ad
 const IMG_CAR=mkImg('img/emb/img_car_164.png'),IMG_WHEEL=mkImg('img/emb/img_wheel_164.png'),IMG_GLOVE=mkImg('img/emb/img_glove_164.png'),IMG_GLOVE0=mkImg('img/emb/img_glove0_164.png');
 const IMG_PROT=mkImg('img/emb/img_prot.png');   // protagonista con cappello e impermeabile: 5 pose (ferma + 4 passi), 16x32 ciascuna
 const IMG_COAT_CH=mkImg('img/emb/img_cappotto_sedia_r2.png'),IMG_HAT_CH=mkImg('img/emb/img_cappello_sedia_r1.png'),COAT_CH={x:37,y:61,hx:54.5,hy:73.8};   // sedia del tavolo (_strumenti/costruisci_cappotto_sedia.py)
-const IMG_WB12=mkImg('img/emb/img_walkbook12_r1.png');   // (9 nov) camminata col libro a 12 pose: scheletro (_strumenti/rig_camminata_libro.py) + busto del personaggio nuovo
-const WB12_STEP=4.36,WB12_POS=[0,5.1,6.76,13.3,14.89,20.37,26.16,31.26,32.92,39.46,41.05,46.53],WB12_CYC=52.32;   // px dell'atlante percorsi all'inizio di ogni posa (dallo scheletro): il piede d'appoggio resta fermo a terra
+const IMG_WB12=mkImg('img/emb/img_walkbook12_r2.png');   // (9 nov) camminata col libro a 12 pose: scheletro (_strumenti/rig_camminata_libro.py) + busto del personaggio nuovo
+const WB12_STEP=4.44,WB12_POS=[0,5.71,7.13,13.6,15.03,20.47,26.67,32.37,33.8,40.26,41.69,47.14],WB12_CYC=53.33;   // px dell'atlante percorsi all'inizio di ogni posa (dallo scheletro): il piede d'appoggio resta fermo a terra
 const IMG_WALK12=mkImg('img/emb/img_walk12.png');   // camminata realistica a 12 pose 32x56; il libro e' sotto il braccio e spunta solo dietro la schiena
 const IMG_WALK8=mkImg('img/emb/img_walk8.png');   // camminata a 8 fotogrammi 28x56 (ciclo: contatto, discesa, passaggio, salita, ripetuto per l'altra gamba)
 const IMG_SEAT=mkImg('img/emb/img_seat.png');   // uomo seduto che legge: 3 pose 40x54 (legge, gira la pagina, si addormenta), rivolto a destra
@@ -487,7 +487,7 @@ let FWALL=null;
 const FL=[{t:3.2,x:150},{t:6.4,x:60},{t:9.1,x:190},{t:11.0,x:110},{t:12.5,x:76},{t:16.0,x:170},{t:16.7,x:90},{t:20.8,x:50},{t:24.3,x:200},{t:27.0,x:120}];
 const CAPS=[[1.6,"Maledizione!"],[4.2,""],
  [15.6,"Sta arrivando una tempesta! Devo trovare un riparo…"],
- [26.6,"Una baita abbandonata… meglio cercare un riparo."]];
+ [26.6,"Una baita abbandonata… che fortuna!"]];
 /* titoli di testa in sovraimpressione, stile telefilm anni 80: titolo cromato con il riflesso che passa, poi l'autore in neon */
 /* titoli di testa in sovraimpressione, alla maniera della sigla di un telefilm anni 90 (verde con alone, dissolvenze lente):
    prima solo il titolo, poi solo l'autore, mai insieme */
@@ -938,7 +938,7 @@ function sprS(k,x,y,sc,a=1){const t=sprTex(k);g.globalAlpha=a;g.drawImage(t,Math
    si trascina uno slot su un altro slot (es. fiammiferi sulla candela) o su un punto della scena (es. legna sulla stufa). */
 const ITEMS={
   comic:{name:'Fumetto',spr:()=>'comic',zoom:1,frame:true,
-    text:"«Dylan Dog», numero 1: «L'alba dei morti viventi». In copertina, un uomo con la pistola e mani di morti che escono dalla terra, sotto una luna gialla. Non serve a niente, ma è bello."},
+    text:"Il primo numero di Dylan Dog. Non serve a nulla, ma è bello."},
   matches:{name:'Fiammiferi',spr:()=>'matchbox',zoom:2,
     text:()=>"Una scatola di fiammiferi. Ne restano abbastanza. Li trascino su ciò che voglio accendere."},
   log:{name:'Legna',spr:()=>'LOG',zoom:5,
@@ -953,7 +953,7 @@ const ITEMS={
   key:{name:'Chiave',spr:()=>'key',zoom:2,
     text:()=>"Una piccola chiave d'ottone. Il suo dente è fine: potrebbe aprire un lucchetto."}
 };
-const CU={id:null,t0:0};
+const CU={id:null,t0:0},CU_BOOK={x:56,y:12,w:128,h:86};   // area del libro in primo piano (110x70 al centro, con margine)
 /* cestino: palla di carta in primo piano -> si apre e svela la chiave -> la chiave va nell'inventario */
 function paintPaper(){
   if(S.paperStage===0){const cx=120,cy=58;
@@ -1015,7 +1015,7 @@ function refreshInv(){
   const show=S.inv.length>0&&(cur===inside||cur===outside||cur===bagno);
   el.style.display=show?'grid':'none';document.getElementById('wrap').classList.toggle('hasInv',show)}
 function slotDown(e,id){
-  e.preventDefault();e.stopPropagation();audioInit();if(CU.id){closeCU()}
+  e.preventDefault();e.stopPropagation();audioInit();
   IDR.id=id;IDR.sx=e.clientX;IDR.sy=e.clientY;IDR.moved=false;const [x,y]=ptr(e);IDR.x=x;IDR.y=y;
   window.addEventListener('pointermove',slotMove);window.addEventListener('pointerup',slotUp,{once:true});window.addEventListener('pointercancel',slotCancel,{once:true})}
 function markTargets(on){document.querySelectorAll('#inv .slot').forEach(s=>{
@@ -1026,7 +1026,10 @@ function slotMove(e){if(!IDR.id)return;
 function slotCancel(){window.removeEventListener('pointermove',slotMove);markTargets(false);IDR.id=null}
 function slotUp(e){
   window.removeEventListener('pointermove',slotMove);const id=IDR.id,moved=IDR.moved;markTargets(false);IDR.id=null;if(!id)return;
-  if(!moved){openCU(id);return}
+  if(!moved){if(CU.id)closeCU();openCU(id);return}
+  // (9 nov) chiave trascinata sul libro in primo piano: il lucchetto si apre lì
+  if(CU.id==='book'&&id==='key'){const r0=cv.getBoundingClientRect();if(e.clientX>=r0.left&&e.clientX<=r0.right&&e.clientY>=r0.top&&e.clientY<=r0.bottom){const [x,y]=ptr(e);if(inR(CU_BOOK,x,y)){combine('book','key');return}}}
+  if(CU.id)closeCU();
   const el=document.elementFromPoint(e.clientX,e.clientY),slot=el&&el.closest?el.closest('.slot'):null;
   if(slot&&slot.dataset.id&&slot.dataset.id!==id){combine(id,slot.dataset.id);return}
   const r=cv.getBoundingClientRect();
@@ -1886,7 +1889,7 @@ let lastWR='';
 function frame(ms){const t=ms/1000;
   {const b=document.getElementById('wrap').getBoundingClientRect(),k=Math.round(b.width)+'x'+Math.round(b.height);if(k!==lastWR){lastWR=k;resizeDisplay()}}
   DT=Math.min(.05,t-(frame.last||t));frame.last=t;NOW=t;
-  try{updateFade(DT);cur.update(DT);cur.draw();drawIDrag();drawCU()}catch(e){console.error(e);g.globalCompositeOperation='source-over';g.globalAlpha=1}
+  try{updateFade(DT);cur.update(DT);cur.draw();drawCU();drawIDrag()}catch(e){console.error(e);g.globalCompositeOperation='source-over';g.globalAlpha=1}
   if(fade.a>0){g.globalAlpha=fade.a;R(0,0,W,H,'#000');g.globalAlpha=1}
   present();requestAnimationFrame(frame)}
 
@@ -1925,7 +1928,7 @@ document.addEventListener('wheel',e=>{if(e.ctrlKey)e.preventDefault()},{passive:
 document.addEventListener('visibilitychange',()=>{if(document.hidden){if(SILENT_EL)SILENT_EL.pause()}else if(AU.ctx)unmuteSilentSwitch();if(AU.ctx){if(document.hidden)AU.ctx.suspend();else AU.ctx.resume()}});
 
 /* aggiornamento automatico: se sul server c'e' una versione piu' nuova di questa, ricarica una volta (cancella anche le copie salvate) */
-const BUILD='9 nov 18:00';
+const BUILD='9 nov 19:00';
 {const ve=document.getElementById('ver');if(ve)ve.textContent='v. '+BUILD;
  if(location.protocol.startsWith('http')){
   fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{
