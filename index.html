@@ -1561,14 +1561,15 @@ const fm=document.createElement('canvas');fm.width=W*RS;fm.height=H*RS;const fmx
 const dc=document.createElement('canvas');dc.width=W;dc.height=H;const dx=dc.getContext('2d');
 fx.imageSmoothingEnabled=fmx.imageSmoothingEnabled=dx.imageSmoothingEnabled=false;
 const DREAM_SC=2.05,SEAT_X=196,SEAT_K=.78;   // scala del protagonista nel sogno (circa 56 px di altezza) e posizione della testa da seduto
-const SOGNO_T={walk0:1.0,walkSpeed:30,x0:62,x1:200,fy:108,read:0,sleep:0,black:0,dream0:0,vis:6.4,gap:.9};
+const SOGNO_T={walk0:1.0,walkSpeed:30,x0:62,x1:200,fy:108,read:0,sleep:0,black:0,dream0:0,vis:6.4,gap:0,xf:1.4};   // (9 nov) visioni in dissolvenza incrociata, senza pause nere: ognuna entra mentre la precedente finisce (xf secondi)
 SOGNO_T.walkEnd=SOGNO_T.walk0+(SOGNO_T.x1-SOGNO_T.x0)/SOGNO_T.walkSpeed;   // arriva davanti al divano
 SOGNO_T.sitEnd=SOGNO_T.walkEnd+.7;
 SOGNO_T.readEnd=SOGNO_T.sitEnd+5.5;
 SOGNO_T.sleepEnd=SOGNO_T.readEnd+5.5;
 SOGNO_T.dream0=SOGNO_T.sleepEnd+2.4;
 SOGNO_T.wom=10.5;   // finale: la donna, zoom sulla pupilla
-SOGNO_T.end=SOGNO_T.dream0+4*(SOGNO_T.vis+SOGNO_T.gap)+SOGNO_T.wom+1.2;
+SOGNO_T.per=SOGNO_T.vis-SOGNO_T.xf;SOGNO_T.womStart=3*SOGNO_T.per+SOGNO_T.vis-SOGNO_T.xf;   // la donna entra sopra l'ultima visione
+SOGNO_T.end=SOGNO_T.dream0+SOGNO_T.womStart+SOGNO_T.wom+1.2;
 /* disegna la figura su ft (fuori scena), poi la illumina con la mappa luce della stanza e la applica */
 function figureLit(fn){
   fx.clearRect(0,0,W,H);fn(fx);
@@ -1627,7 +1628,7 @@ const sogno={t:0,steps:0,lastStep:0,vis:-1,
     if(t>T.sleepEnd-.2&&MU.name!=='sogno')musicStart('sogno',5);
     this.heart(t);
     if(t>T.dream0){
-      const v=Math.floor((t-T.dream0)/(T.vis+T.gap));if(v!==this.vis&&v<4){this.vis=v}}
+      const v=Math.floor((t-T.dream0)/T.per);if(v!==this.vis&&v<4){this.vis=v}}
     if(t>=T.end&&!this.done){this.done=true;S.dreamSeen=true;save();musicStop(2.5);setRain(0,true);setFire(0)}
     if(this.done)setHint('FINE DEL PRIMO CAPITOLO',true)},
   canSkip(){return this.t>=SOGNO_T.dream0&&this.t<SOGNO_T.end-.6},
@@ -1723,11 +1724,15 @@ const sogno={t:0,steps:0,lastStep:0,vis:-1,
     g.globalAlpha=.3*fin;for(let n=0;n<110;n++)R(Math.random()*W,Math.random()*H,1,1,Math.random()<.5?'#000':'#6a7090');   // grana
     g.globalAlpha=1},
   drawDream(dt){
-    const T=SOGNO_T,per=T.vis+T.gap,i=Math.floor(dt/per);if(dt>=4*per){this.drawWoman(dt-4*per);return}if(i<0||i>3)return;
-    const age=dt-i*per;if(age>T.vis)return;
-    const env=clamp(Math.min(age/1.3,(T.vis-age)/1.3),0,1),img=IMG_DREAM[i];
-    if(!img.complete||!img.naturalWidth)return;
-    // immagine con zoom lento, rotazione e deriva (instabile come un ricordo)
+    const T=SOGNO_T,per=T.per;if(dt<0)return;
+    const wt=dt-T.womStart,last=3*per+T.vis;
+    if(dt<last){const i=Math.min(3,Math.floor(dt/per)),a=dt-i*per;
+      if(i>0&&a<T.xf)this.drawVis(i-1,a+per,1,false);                       // la visione precedente resta sotto finche' la nuova non e' entrata
+      this.drawVis(i,a,i===0?clamp(a/1.3,0,1):sm(a/T.xf),true)}
+    if(wt>=0)this.drawWoman(wt)},
+  /* una visione: k = opacita' di ingresso; vig = vignettatura e grana (una sola volta, sopra) */
+  drawVis(i,age,k,vig){
+    const T=SOGNO_T,img=IMG_DREAM[i];if(!img.complete||!img.naturalWidth)return;const env=k;
     const z=1.02+.05*age/T.vis,rot=Math.sin(age*1.3+i)*.014,cx=120+Math.sin(age*.9+i*2)*3,cy=60+Math.cos(age*1.1+i)*2;
     dx.setTransform(1,0,0,1,0,0);dx.clearRect(0,0,W,H);dx.globalAlpha=1;
     dx.save();dx.translate(cx,cy);dx.rotate(rot);dx.scale(z,z);dx.translate(-120,-60);dx.drawImage(img,0,0);
@@ -1748,8 +1753,7 @@ const sogno={t:0,steps:0,lastStep:0,vis:-1,
     gr.addColorStop(0,'rgba(0,0,0,0)');gr.addColorStop(.72,'rgba(0,0,0,.5)');gr.addColorStop(1,'rgba(0,0,0,1)');
     g.globalAlpha=1;g.fillStyle=gr;g.fillRect(-130,-62,260,124);
     g.beginPath();g.rect(-130,-62,260,124);g.arc(0,0,rr,0,Math.PI*2,true);g.clip('evenodd');g.fillStyle='#000';g.fillRect(-130,-62,260,124);g.restore();
-    // dissolvenza di ingresso/uscita attraverso il nero
-    g.globalAlpha=1-env;R(0,0,W,H,'#000');g.globalAlpha=1}
+    g.globalAlpha=1}
 };
 function thunderSoft(){if(AU.ctx)nburst(90,1,1.6,.09,'lowpass')}
 function startDream(){if(S.dreamSeen||(cur!==inside&&cur!==bagno))return;fadeTo(1,1.3,()=>{setScene('sogno');fadeTo(0,1.3)})}
@@ -1928,7 +1932,7 @@ document.addEventListener('wheel',e=>{if(e.ctrlKey)e.preventDefault()},{passive:
 document.addEventListener('visibilitychange',()=>{if(document.hidden){if(SILENT_EL)SILENT_EL.pause()}else if(AU.ctx)unmuteSilentSwitch();if(AU.ctx){if(document.hidden)AU.ctx.suspend();else AU.ctx.resume()}});
 
 /* aggiornamento automatico: se sul server c'e' una versione piu' nuova di questa, ricarica una volta (cancella anche le copie salvate) */
-const BUILD='9 nov 20:00';
+const BUILD='9 nov 21:00';
 {const ve=document.getElementById('ver');if(ve)ve.textContent='v. '+BUILD;
  if(location.protocol.startsWith('http')){
   fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{
