@@ -433,6 +433,9 @@ function fpine(x,by,h,pal,seed,k=g){
 const IMGS=[];const mkImg=p=>{const i=new Image();IMGS.push(new Promise(r=>{i.addEventListener('load',r);i.addEventListener('error',r)}));i.src=p;return i};
 const IMG_CAR=mkImg('img/emb/img_car_164.png'),IMG_WHEEL=mkImg('img/emb/img_wheel_164.png'),IMG_GLOVE=mkImg('img/emb/img_glove_164.png'),IMG_GLOVE0=mkImg('img/emb/img_glove0_164.png');
 const IMG_PROT=mkImg('img/emb/img_prot.png');   // protagonista con cappello e impermeabile: 5 pose (ferma + 4 passi), 16x32 ciascuna
+const IMG_COAT_CH=mkImg('img/emb/img_cappotto_sedia_r2.png'),IMG_HAT_CH=mkImg('img/emb/img_cappello_sedia_r1.png'),COAT_CH={x:37,y:61,hx:54.5,hy:73.8};   // sedia del tavolo (_strumenti/costruisci_cappotto_sedia.py)
+const IMG_WB12=mkImg('img/emb/img_walkbook12_r1.png');   // (9 nov) camminata col libro a 12 pose: scheletro (_strumenti/rig_camminata_libro.py) + busto del personaggio nuovo
+const WB12_STEP=4.36,WB12_POS=[0,5.1,6.76,13.3,14.89,20.37,26.16,31.26,32.92,39.46,41.05,46.53],WB12_CYC=52.32;   // px dell'atlante percorsi all'inizio di ogni posa (dallo scheletro): il piede d'appoggio resta fermo a terra
 const IMG_WALK12=mkImg('img/emb/img_walk12.png');   // camminata realistica a 12 pose 32x56; il libro e' sotto il braccio e spunta solo dietro la schiena
 const IMG_WALK8=mkImg('img/emb/img_walk8.png');   // camminata a 8 fotogrammi 28x56 (ciclo: contatto, discesa, passaggio, salita, ripetuto per l'altra gamba)
 const IMG_SEAT=mkImg('img/emb/img_seat.png');   // uomo seduto che legge: 3 pose 40x54 (legge, gira la pagina, si addormenta), rivolto a destra
@@ -488,7 +491,7 @@ const CAPS=[[1.6,"Maledizione!"],[4.2,""],
 /* titoli di testa in sovraimpressione, stile telefilm anni 80: titolo cromato con il riflesso che passa, poi l'autore in neon */
 /* titoli di testa in sovraimpressione, alla maniera della sigla di un telefilm anni 90 (verde con alone, dissolvenze lente):
    prima solo il titolo, poi solo l'autore, mai insieme */
-const TITLE={name:'VORTEX',author:'graven',a:[4.6,9.8],b:[10.4,14.8],fade:1.6};
+const TITLE={name:'VORTEX',author:'by graven',a:[4.6,9.8],b:[10.4,14.8],fade:1.6};
 let TITLE_TEX=null;
 function titleTex(){if(TITLE_TEX)return TITLE_TEX;
   const K=RS,mk=(txt,font,size,sx,sp)=>{
@@ -502,11 +505,11 @@ function titleTex(){if(TITLE_TEX)return TITLE_TEX;
   return TITLE_TEX={K,
     title:mk(TITLE.name,'400 '+(26*K)+'px "Didot","Bodoni 72","Times New Roman",Georgia,serif',26,.78,3.2),
     author:mk(TITLE.author,'400 '+(10*K)+'px "Avenir Next","Helvetica Neue",Arial,sans-serif',10,1,2.4)}}
-function drawTitles(T){
+function drawTitles(T){   // centro del parabrezza (y 42): tra lo specchietto (fino a y 27) e il cruscotto (da y 58)
   const tt=titleTex(),one=(c,[t0,t1],y)=>{if(T<t0||T>t1)return;
     const a=Math.min(sm((T-t0)/TITLE.fade),1-sm((T-(t1-TITLE.fade))/TITLE.fade));if(a<=0)return;
     g.save();g.imageSmoothingEnabled=true;g.globalAlpha=a;g.drawImage(c,0,y,240,40);g.restore()};
-  one(tt.title,TITLE.a,8);one(tt.author,TITLE.b,8);g.globalAlpha=1}
+  one(tt.title,TITLE.a,22);one(tt.author,TITLE.b,22);g.globalAlpha=1}
 const DRIVE_END=31.5;
 const dist=T=>{if(T<=20)return 2.4*T;const u=Math.min(1,(T-20)/11);return 2.4*(20+11*(u-u*u*u+u*u*u*u/2))};
 const vel=T=>T<20?1:1-sm((T-20)/11);
@@ -1359,6 +1362,8 @@ const inside={idle:0,matchT:-1,timers:[],hintUntil:0,ph:0,doorOpen:0,
     const matchOnShelf=false;   // i fiammiferi sono nel vano portaoggetti dell'auto
     if(S.logsLeft>0){ell(96,101,20,2,'#0c0604',.4);for(const [x,y,f] of PILE.slice(0,S.logsLeft))drawLog(x,y,f,false)}
     if(this.candleOnTable()){if(S.candleLit)sprS('candle_lit',82,56.5,.7);else this.candleDim(83,60,.7,k)}
+    // (9 nov) dopo il bagno: impermeabile appeso allo schienale e cappello sulla sedia (stesso disegno del personaggio in esterno)
+    if(S.bathSeen){for(const [im,x,y] of [[IMG_COAT_CH,COAT_CH.x,COAT_CH.y],[IMG_HAT_CH,COAT_CH.hx,COAT_CH.hy]])if(im.complete&&im.naturalWidth)g.drawImage(im,x,y,im.naturalWidth/RS,im.naturalHeight/RS)}
     if(matchOnShelf)matchbox(MBX,MBY,(Math.floor(T*1.3+1.5)%5===0&&!lit)?.5:0);
     if(!S.inv.includes('book')){   // il libro antico: una costola blu piu' luminosa tra gli altri libri
       const gl=.5+.5*Math.sin(NOW*3);R(176,59,5,11,'#1c3f9a');R(176,59,1,11,'#5a86e8');R(177,59,2,11,'#3a66d0');R(180,59,1,11,'#12286a');
@@ -1553,7 +1558,7 @@ const fm=document.createElement('canvas');fm.width=W*RS;fm.height=H*RS;const fmx
 const dc=document.createElement('canvas');dc.width=W;dc.height=H;const dx=dc.getContext('2d');
 fx.imageSmoothingEnabled=fmx.imageSmoothingEnabled=dx.imageSmoothingEnabled=false;
 const DREAM_SC=2.05,SEAT_X=196,SEAT_K=.78;   // scala del protagonista nel sogno (circa 56 px di altezza) e posizione della testa da seduto
-const SOGNO_T={walk0:1.0,walkSpeed:38,x0:62,x1:200,fy:108,read:0,sleep:0,black:0,dream0:0,vis:6.4,gap:.9};
+const SOGNO_T={walk0:1.0,walkSpeed:30,x0:62,x1:200,fy:108,read:0,sleep:0,black:0,dream0:0,vis:6.4,gap:.9};
 SOGNO_T.walkEnd=SOGNO_T.walk0+(SOGNO_T.x1-SOGNO_T.x0)/SOGNO_T.walkSpeed;   // arriva davanti al divano
 SOGNO_T.sitEnd=SOGNO_T.walkEnd+.7;
 SOGNO_T.readEnd=SOGNO_T.sitEnd+5.5;
@@ -1609,7 +1614,7 @@ const sogno={t:0,steps:0,lastStep:0,vis:-1,
     const ph=Math.floor(NOW/.9);if(ph!==this.ph){this.ph=ph;if(Math.random()<.9&&t<T.sleepEnd-1.6)setTimeout(sfx.plic,260)}
     if(t>T.sleepEnd-.8&&!this.quiet){this.quiet=true;setRain(0,true);setFire(0);setEng(0,false)}   // restano solo la musica e il battito
     // passi
-    if(t>T.walk0&&t<T.walkEnd){const d=(t-T.walk0)*T.walkSpeed,n=Math.floor(d/20);if(n!==this.steps){this.steps=n;nburst(210,1,.07,.16,'lowpass')}}
+    if(t>T.walk0&&t<T.walkEnd){const d=(t-T.walk0)*T.walkSpeed,n=Math.floor(d/(WB12_STEP*DREAM_SC/RS*6));if(n!==this.steps){this.steps=n;nburst(210,1,.07,.16,'lowpass')}}
     // il sospiro quando si addormenta
     if(t>T.readEnd+.4&&!this.sighed){this.sighed=true;nburst(900,.8,1.6,.07,'bandpass');nburst(380,.8,1.9,.05,'lowpass')}
     // sfogliare
@@ -1644,6 +1649,9 @@ const sogno={t:0,steps:0,lastStep:0,vis:-1,
     if(t>T.sleepEnd&&t<T.dream0){g.globalAlpha=clamp((t-T.sleepEnd)/1.8,0,1);R(0,0,W,H,'#000');g.globalAlpha=1}
     if(t>=T.end-.6){g.globalAlpha=clamp((t-(T.end-.6))/.6,0,1);R(0,0,W,H,'#000');g.globalAlpha=1}},
   /* disegna un fotogramma dell'atlante del protagonista: x = centro della testa, yb = piedi */
+  dreamCell(c,i,x,yb,alpha){const im=IMG_WB12;if(!(im.complete&&im.naturalWidth))return false;
+    const s=DREAM_SC/RS,dw=155*s,dh=131*s,ax=66.5*s;
+    c.save();c.globalAlpha=alpha;c.translate(Math.round(x*RS)/RS,yb);c.drawImage(im,i*155,0,155,131,-ax,-dh,dw,dh);c.restore();return true},
   dreamFrame(c,name,x,yb,flip,alpha,sy=1,kk=1){
     const ch=CHARS['protagonista-interno'],fr=ch&&ch.fr[name];if(!fr)return;
     const s=DREAM_SC*kk/RS,dw=ch.w*s,dh=ch.h*s,ax=ch.ax*s;
@@ -1664,7 +1672,10 @@ const sogno={t:0,steps:0,lastStep:0,vis:-1,
       const a=seated?1-walkFade:Math.min(1,t/.8);
       g.globalAlpha=.6*a;ell(x-2,T.fy+1,12,3,'#05060a');g.globalAlpha=1;
       figureLit(c=>{
-        if(newOK){this.dreamFrame(c,'walk_book_'+(wk?(Math.floor(d/5.5)%6)+1:4),x,T.fy+1,false,a);return}
+        if(newOK){   // camminata a 12 pose: la posa dipende dai px percorsi
+          let pi12=4;if(wk){const q=((d/(DREAM_SC/RS))%WB12_CYC+WB12_CYC)%WB12_CYC;pi12=0;while(pi12<11&&WB12_POS[pi12+1]<=q)pi12++}
+          if(this.dreamCell(c,pi12,x,T.fy+1,a))return;
+          this.dreamFrame(c,'walk_book_'+(wk?(Math.floor(d/5.5)%6)+1:4),x,T.fy+1,false,a);return}
         c.globalAlpha=a;const FH=56,CX=15,fw=32,W12=IMG_WALK12.complete&&IMG_WALK12.naturalWidth;
         const by=Math.round(T.fy-FH+bob+1),bx=Math.round(x-CX);
         if(W12)c.drawImage(IMG_WALK12,f*fw,0,fw,FH,bx,by,fw,FH);
@@ -1914,7 +1925,7 @@ document.addEventListener('wheel',e=>{if(e.ctrlKey)e.preventDefault()},{passive:
 document.addEventListener('visibilitychange',()=>{if(document.hidden){if(SILENT_EL)SILENT_EL.pause()}else if(AU.ctx)unmuteSilentSwitch();if(AU.ctx){if(document.hidden)AU.ctx.suspend();else AU.ctx.resume()}});
 
 /* aggiornamento automatico: se sul server c'e' una versione piu' nuova di questa, ricarica una volta (cancella anche le copie salvate) */
-const BUILD='9 nov 15:00';
+const BUILD='9 nov 18:00';
 {const ve=document.getElementById('ver');if(ve)ve.textContent='v. '+BUILD;
  if(location.protocol.startsWith('http')){
   fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{
