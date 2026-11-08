@@ -434,8 +434,8 @@ const IMGS=[];const mkImg=p=>{const i=new Image();IMGS.push(new Promise(r=>{i.ad
 const IMG_CAR=mkImg('img/emb/img_car_164.png'),IMG_WHEEL=mkImg('img/emb/img_wheel_164.png'),IMG_GLOVE=mkImg('img/emb/img_glove_164.png'),IMG_GLOVE0=mkImg('img/emb/img_glove0_164.png');
 const IMG_PROT=mkImg('img/emb/img_prot.png');   // protagonista con cappello e impermeabile: 5 pose (ferma + 4 passi), 16x32 ciascuna
 const IMG_COAT_CH=mkImg('img/emb/img_cappotto_sedia_r2.png'),IMG_HAT_CH=mkImg('img/emb/img_cappello_sedia_r1.png'),COAT_CH={x:37,y:61,hx:54.5,hy:73.8};   // sedia del tavolo (_strumenti/costruisci_cappotto_sedia.py)
-const IMG_WB12=mkImg('img/emb/img_walkbook12_r2.png');   // (9 nov) camminata col libro a 12 pose: scheletro (_strumenti/rig_camminata_libro.py) + busto del personaggio nuovo
-const WB12_STEP=4.44,WB12_POS=[0,5.71,7.13,13.6,15.03,20.47,26.67,32.37,33.8,40.26,41.69,47.14],WB12_CYC=53.33;   // px dell'atlante percorsi all'inizio di ogni posa (dallo scheletro): il piede d'appoggio resta fermo a terra
+const IMG_WB12=mkImg('img/emb/img_walkbook24_r1.png');   // (9 nov) camminata col libro a 12 pose: scheletro (_strumenti/rig_camminata_libro.py) + busto del personaggio nuovo
+const WB12_N=24,WB12_POS=[0,2.47,5.08,6.18,8.01,10.77,13.47,15.18,16.4,18.56,21.35,24.56,26.67,29.13,31.74,32.85,34.68,37.44,40.13,41.85,43.07,45.23,48.01,51.23],WB12_CYC=53.33;   // 24 pose: media tra cadenza regolare e piede fermo (scorrimento < 0,7 px)   // px dell'atlante percorsi all'inizio di ogni posa (dallo scheletro): il piede d'appoggio resta fermo a terra
 const IMG_WALK12=mkImg('img/emb/img_walk12.png');   // camminata realistica a 12 pose 32x56; il libro e' sotto il braccio e spunta solo dietro la schiena
 const IMG_WALK8=mkImg('img/emb/img_walk8.png');   // camminata a 8 fotogrammi 28x56 (ciclo: contatto, discesa, passaggio, salita, ripetuto per l'altra gamba)
 const IMG_SEAT=mkImg('img/emb/img_seat.png');   // uomo seduto che legge: 3 pose 40x54 (legge, gira la pagina, si addormenta), rivolto a destra
@@ -605,7 +605,7 @@ const drive={T:0,fired:{},cap:0,
       {const wa=D+ZN/(p+1/NR),cov=(dashF(w)-dashF(wa))/Math.max(.01,w-wa);   // quanta striscia cade in questa riga: niente sfarfallio in lontananza
        if(cov>.02){const lw=Math.max(1,p*PXM*.12);g.globalAlpha=Math.min(1,cov);R(c-lw/2,y,lw,1,mix('#1a1810','#d8c878',s));g.globalAlpha=1}}
     }
-    g.globalAlpha=.1;for(let y=Math.round(hz+14);y<wb;y++){const p=(y-hz)/(wb-hz),xa=X0+PXM*p*.4,hw=PXM*p*1.8;R(xa-hw,y,hw*2,1,'#e8dca8')}g.globalAlpha=1;   // luce dei fari: segue l'auto, non la strada
+    // (9 nov) tolta la fascia di luce rettangolare sull'asfalto: restano solo i coni e le chiazze dei fari
     // riflessi sull'asfalto bagnato
     g.globalAlpha=.1+fl*.18;for(let y=hz+6;y<wb;y+=2){const p=(y-hz)/(wb-hz),c=cxAt(p),half=hwAt(p);R(c-half*.7+hash(y*1.7+Math.floor(T*2))*half*1.2,y,2+p*4,1,'#a8b8d0')}g.globalAlpha=1;
     this.fog(hz,fl,T,dens);
@@ -1617,7 +1617,7 @@ const sogno={t:0,steps:0,lastStep:0,vis:-1,
     const ph=Math.floor(NOW/.9);if(ph!==this.ph){this.ph=ph;if(Math.random()<.9&&t<T.sleepEnd-1.6)setTimeout(sfx.plic,260)}
     if(t>T.sleepEnd-.8&&!this.quiet){this.quiet=true;setRain(0,true);setFire(0);setEng(0,false)}   // restano solo la musica e il battito
     // passi
-    if(t>T.walk0&&t<T.walkEnd){const d=(t-T.walk0)*T.walkSpeed,n=Math.floor(d/(WB12_STEP*DREAM_SC/RS*6));if(n!==this.steps){this.steps=n;nburst(210,1,.07,.16,'lowpass')}}
+    if(t>T.walk0&&t<T.walkEnd){const d=(t-T.walk0)*T.walkSpeed,n=Math.floor(d/(WB12_CYC/2*DREAM_SC/RS));if(n!==this.steps){this.steps=n;nburst(210,1,.07,.16,'lowpass')}}
     // il sospiro quando si addormenta
     if(t>T.readEnd+.4&&!this.sighed){this.sighed=true;nburst(900,.8,1.6,.07,'bandpass');nburst(380,.8,1.9,.05,'lowpass')}
     // sfogliare
@@ -1676,7 +1676,7 @@ const sogno={t:0,steps:0,lastStep:0,vis:-1,
       g.globalAlpha=.6*a;ell(x-2,T.fy+1,12,3,'#05060a');g.globalAlpha=1;
       figureLit(c=>{
         if(newOK){   // camminata a 12 pose: la posa dipende dai px percorsi
-          let pi12=4;if(wk){const q=((d/(DREAM_SC/RS))%WB12_CYC+WB12_CYC)%WB12_CYC;pi12=0;while(pi12<11&&WB12_POS[pi12+1]<=q)pi12++}
+          let pi12=8;if(wk){const q=((d/(DREAM_SC/RS))%WB12_CYC+WB12_CYC)%WB12_CYC;pi12=0;while(pi12<WB12_N-1&&WB12_POS[pi12+1]<=q)pi12++}
           if(this.dreamCell(c,pi12,x,T.fy+1,a))return;
           this.dreamFrame(c,'walk_book_'+(wk?(Math.floor(d/5.5)%6)+1:4),x,T.fy+1,false,a);return}
         c.globalAlpha=a;const FH=56,CX=15,fw=32,W12=IMG_WALK12.complete&&IMG_WALK12.naturalWidth;
@@ -1928,7 +1928,7 @@ document.addEventListener('wheel',e=>{if(e.ctrlKey)e.preventDefault()},{passive:
 document.addEventListener('visibilitychange',()=>{if(document.hidden){if(SILENT_EL)SILENT_EL.pause()}else if(AU.ctx)unmuteSilentSwitch();if(AU.ctx){if(document.hidden)AU.ctx.suspend();else AU.ctx.resume()}});
 
 /* aggiornamento automatico: se sul server c'e' una versione piu' nuova di questa, ricarica una volta (cancella anche le copie salvate) */
-const BUILD='9 nov 19:00';
+const BUILD='9 nov 20:00';
 {const ve=document.getElementById('ver');if(ve)ve.textContent='v. '+BUILD;
  if(location.protocol.startsWith('http')){
   fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{

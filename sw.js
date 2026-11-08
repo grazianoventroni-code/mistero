@@ -1,7 +1,7 @@
 // Service worker: il gioco funziona offline.
 // - i file del gioco (immagini, audio, icone) sono salvati alla prima apertura (sempre scaricati freschi: cache reload) e serviti dalla memoria del telefono;
 // - la pagina e questo file si chiedono prima alla rete (cosi' gli aggiornamenti arrivano subito) e, senza rete, si usa la copia salvata.
-const VERSION = "9 nov 19:00";
+const VERSION = "9 nov 20:00";
 const CACHE = "mistero-" + VERSION;
 const FILES = [
   "./",
@@ -366,7 +366,7 @@ const FILES = [
   "img/emb/img_trees_4.png",
   "img/emb/img_walk12.png",
   "img/emb/img_walk8.png",
-  "img/emb/img_walkbook12_r2.png",
+  "img/emb/img_walkbook24_r1.png",
   "img/emb/img_wheel_164.png",
   "img/emb/img_woman.png",
   "img/emb/spr_book_locked.png",
