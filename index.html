@@ -486,39 +486,27 @@ const CAPS=[[1.6,"Maledizione!"],[4.2,""],
  [15.6,"Sta arrivando una tempesta! Devo trovare un riparo…"],
  [26.6,"Una baita abbandonata… meglio cercare un riparo."]];
 /* titoli di testa in sovraimpressione, stile telefilm anni 80: titolo cromato con il riflesso che passa, poi l'autore in neon */
-const TITLE={name:'VORTEX',author:'graven',t0:4.6,ta:8.4,t1:14.2};
+/* titoli di testa in sovraimpressione, alla maniera della sigla di un telefilm anni 90 (verde con alone, dissolvenze lente):
+   prima solo il titolo, poi solo l'autore, mai insieme */
+const TITLE={name:'VORTEX',author:'graven',a:[4.6,9.8],b:[10.4,14.8],fade:1.6};
 let TITLE_TEX=null;
 function titleTex(){if(TITLE_TEX)return TITLE_TEX;
-  const K=2,c=document.createElement('canvas');c.width=240*K;c.height=70*K;const k=c.getContext('2d');   // 2 px per pixel di gioco: grana anni 80, leggibile
-  const FT='italic 900 '+(30*K)+'px "Avenir Next","Arial Black","Helvetica Neue",Impact,sans-serif',FA='italic 700 '+(11*K)+'px "Avenir Next","Arial Black","Helvetica Neue",sans-serif';
-  k.textAlign='center';k.textBaseline='alphabetic';
-  // titolo: contorno scuro, cromatura (cielo / orizzonte bianco / terra arancio), filo chiaro in alto
-  k.font=FT;const tx=120*K,ty=36*K;
-  k.lineJoin='round';k.lineWidth=4*K;k.strokeStyle='#05040c';k.strokeText(TITLE.name,tx,ty);
-  const gr=k.createLinearGradient(0,ty-24*K,0,ty+2*K);
-  gr.addColorStop(0,'#1c3a8c');gr.addColorStop(.42,'#9fd2ff');gr.addColorStop(.5,'#ffffff');gr.addColorStop(.53,'#4a2a10');gr.addColorStop(.75,'#d07a2a');gr.addColorStop(1,'#ffe0a0');
-  k.fillStyle=gr;k.fillText(TITLE.name,tx,ty);
-  k.lineWidth=1*K;k.strokeStyle='rgba(255,255,255,.55)';k.strokeText(TITLE.name,tx,ty);
-  // autore: neon magenta con alone
-  k.font=FA;const ay=56*K;
-  k.shadowColor='#ff3fbf';k.shadowBlur=6*K;k.fillStyle='#ff6fd2';k.fillText(TITLE.author,tx,ay);k.shadowBlur=0;
-  k.fillStyle='#ffd6f4';k.fillText(TITLE.author,tx,ay);
-  return TITLE_TEX={c,K}}
+  const K=RS,mk=(txt,font,size,sx,sp)=>{
+    const c=document.createElement('canvas');c.width=240*K;c.height=40*K;const k=c.getContext('2d');
+    k.font=font;k.textBaseline='middle';
+    const ws=[...txt].map(ch=>k.measureText(ch).width*sx),tot=ws.reduce((a,b)=>a+b,0)+sp*K*(txt.length-1);
+    const draw=(col,blur,glow)=>{let x=(240*K-tot)/2;k.save();k.shadowColor=glow;k.shadowBlur=blur*K;k.fillStyle=col;
+      [...txt].forEach((ch,i)=>{k.save();k.translate(x,20*K);k.scale(sx,1);k.fillText(ch,0,0);k.restore();x+=ws[i]+sp*K});k.restore()};
+    draw('rgba(40,200,90,.55)',9,'#1fd45e');draw('#4fe07c',4,'#2ee06a');draw('#b8ffd0',0,'transparent');   // alone largo, alone stretto, cuore chiaro
+    return c};
+  return TITLE_TEX={K,
+    title:mk(TITLE.name,'400 '+(26*K)+'px "Didot","Bodoni 72","Times New Roman",Georgia,serif',26,.78,3.2),
+    author:mk(TITLE.author,'400 '+(10*K)+'px "Avenir Next","Helvetica Neue",Arial,sans-serif',10,1,2.4)}}
 function drawTitles(T){
-  if(T<TITLE.t0||T>TITLE.t1)return;const {c,K}=titleTex(),y0=4;
-  const fin=sm((T-TITLE.t0)/1.2),fout=1-sm((T-(TITLE.t1-1.4))/1.4),a=Math.min(fin,fout);if(a<=0)return;
-  const zoom=1.18-.18*sm((T-TITLE.t0)/1.6);   // il titolo arriva da vicino e si assesta
-  g.save();g.imageSmoothingEnabled=false;g.globalAlpha=a;
-  // titolo (parte alta della texture)
-  const tw=240*zoom,th=44*zoom,tx=120-tw/2,ty=y0+22-th/2;
-  g.drawImage(c,0,0,240*K,44*K,tx,ty,tw,th);
-  // riflesso che attraversa le lettere
-  const sw=(T-TITLE.t0-1.4)/1.1;if(sw>0&&sw<1){const sx=50+sw*140;g.globalCompositeOperation='lighter';g.globalAlpha=a*.85*Math.sin(sw*Math.PI);
-    g.fillStyle='#ffffff';g.fillRect(sx-1,ty+th*.25,2,th*.55);g.fillRect(sx-4,ty+th*.48,8,1);   // stellina del riflesso
-    g.globalCompositeOperation='source-over'}
-  // autore (parte bassa), compare dopo
-  const aa=Math.min(sm((T-TITLE.ta)/1),fout);if(aa>0){g.globalAlpha=aa;g.drawImage(c,0,44*K,240*K,26*K,0,y0+36,240,26)}
-  g.restore();g.globalAlpha=1}
+  const tt=titleTex(),one=(c,[t0,t1],y)=>{if(T<t0||T>t1)return;
+    const a=Math.min(sm((T-t0)/TITLE.fade),1-sm((T-(t1-TITLE.fade))/TITLE.fade));if(a<=0)return;
+    g.save();g.imageSmoothingEnabled=true;g.globalAlpha=a;g.drawImage(c,0,y,240,40);g.restore()};
+  one(tt.title,TITLE.a,8);one(tt.author,TITLE.b,8);g.globalAlpha=1}
 const DRIVE_END=31.5;
 const dist=T=>{if(T<=20)return 2.4*T;const u=Math.min(1,(T-20)/11);return 2.4*(20+11*(u-u*u*u+u*u*u*u/2))};
 const vel=T=>T<20?1:1-sm((T-20)/11);
@@ -1926,7 +1914,7 @@ document.addEventListener('wheel',e=>{if(e.ctrlKey)e.preventDefault()},{passive:
 document.addEventListener('visibilitychange',()=>{if(document.hidden){if(SILENT_EL)SILENT_EL.pause()}else if(AU.ctx)unmuteSilentSwitch();if(AU.ctx){if(document.hidden)AU.ctx.suspend();else AU.ctx.resume()}});
 
 /* aggiornamento automatico: se sul server c'e' una versione piu' nuova di questa, ricarica una volta (cancella anche le copie salvate) */
-const BUILD='9 nov 13:00';
+const BUILD='9 nov 15:00';
 {const ve=document.getElementById('ver');if(ve)ve.textContent='v. '+BUILD;
  if(location.protocol.startsWith('http')){
   fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{
