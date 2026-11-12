@@ -1561,7 +1561,10 @@ const fm=document.createElement('canvas');fm.width=W*RS;fm.height=H*RS;const fmx
 const dc=document.createElement('canvas');dc.width=W;dc.height=H;const dx=dc.getContext('2d');
 fx.imageSmoothingEnabled=fmx.imageSmoothingEnabled=dx.imageSmoothingEnabled=false;
 const DREAM_SC=2.05,SEAT_X=196,SEAT_K=.78;   // scala del protagonista nel sogno (circa 56 px di altezza) e posizione della testa da seduto
-const SOGNO_T={walk0:1.0,walkSpeed:30,x0:62,x1:200,fy:108,read:0,sleep:0,black:0,dream0:0,vis:6.4,gap:0,xf:1.4};   // (9 nov) visioni in dissolvenza incrociata, senza pause nere: ognuna entra mentre la precedente finisce (xf secondi)
+// (12 nov) camminata col libro (atlante char-r15): 4 pose distinte per passo, misurate sul piede d'appoggio (px dell'atlante): contatto walk_book_1=0, appoggio walk_book_2=12, passaggio walk_book_3=32, spinta walk_book_4=36; passo=58. Ogni posa resta a schermo intorno alla sua posizione (limiti a metà strada). Parte e arriva sulla posa di passaggio (gambe vicine): 5 passi esatti.
+const WBK_STEP=58,WBK_PH0=28,WBK_P=[0,12,32,36],WBK_LIM=[6,22,34,47];
+function wbkPose(da){const q=((WBK_PH0+da)%WBK_STEP+WBK_STEP)%WBK_STEP;let k=0;while(k<3&&q>=WBK_LIM[k])k++;if(q>=WBK_LIM[3])k=0;let e=q-WBK_P[k];if(e>WBK_STEP/2)e-=WBK_STEP;return{k,e}}
+const SOGNO_T={walk0:1.0,walkSpeed:50,x0:200-5*58*DREAM_SC/RS,x1:200,fy:108,read:0,sleep:0,black:0,dream0:0,vis:6.4,gap:0,xf:1.4};   // (9 nov) visioni in dissolvenza incrociata, senza pause nere: ognuna entra mentre la precedente finisce (xf secondi)
 SOGNO_T.walkEnd=SOGNO_T.walk0+(SOGNO_T.x1-SOGNO_T.x0)/SOGNO_T.walkSpeed;   // arriva davanti al divano
 SOGNO_T.sitEnd=SOGNO_T.walkEnd+.7;
 SOGNO_T.readEnd=SOGNO_T.sitEnd+5.5;
@@ -1618,7 +1621,7 @@ const sogno={t:0,steps:0,lastStep:0,vis:-1,
     const ph=Math.floor(NOW/.9);if(ph!==this.ph){this.ph=ph;if(Math.random()<.9&&t<T.sleepEnd-1.6)setTimeout(sfx.plic,260)}
     if(t>T.sleepEnd-.8&&!this.quiet){this.quiet=true;setRain(0,true);setFire(0);setEng(0,false)}   // restano solo la musica e il battito
     // passi
-    if(t>T.walk0&&t<T.walkEnd){const d=(t-T.walk0)*T.walkSpeed,n=Math.floor(d/33);if(n!==this.steps){this.steps=n;nburst(210,1,.07,.16,'lowpass')}}
+    if(t>T.walk0&&t<T.walkEnd){const d=(t-T.walk0)*T.walkSpeed,n=Math.floor((d/(DREAM_SC/RS)+WBK_PH0-WBK_LIM[3])/WBK_STEP);if(n!==this.steps){this.steps=n;nburst(210,1,.07,.16,'lowpass')}}
     // il sospiro quando si addormenta
     if(t>T.readEnd+.4&&!this.sighed){this.sighed=true;nburst(900,.8,1.6,.07,'bandpass');nburst(380,.8,1.9,.05,'lowpass')}
     // sfogliare
@@ -1676,8 +1679,9 @@ const sogno={t:0,steps:0,lastStep:0,vis:-1,
       const a=seated?1-walkFade:Math.min(1,t/.8);
       g.globalAlpha=.6*a;ell(x-2,T.fy+1,12,3,'#05060a');g.globalAlpha=1;
       figureLit(c=>{
-        if(newOK){   // (12 nov) camminata col libro dall'atlante char-r15 (walk_book_1..6, un passo ogni 33 px), come il personaggio seduto
-          this.dreamFrame(c,'walk_book_'+(wk?(Math.floor(d/5.5)%6)+1:4),x,T.fy+1,false,a);return}
+        if(newOK){   // (12 nov) posa scelta dalla distanza percorsa; metà dello scarto dalla posizione di appoggio viene compensata, così il piede scivola poco e il corpo non va a scatti
+          const da=d/(DREAM_SC/RS),P=wbkPose(da);
+          this.dreamFrame(c,'walk_book_'+(P.k+1),x-.5*P.e*DREAM_SC/RS,T.fy+1,false,a);return}
         c.globalAlpha=a;const FH=56,CX=15,fw=32,W12=IMG_WALK12.complete&&IMG_WALK12.naturalWidth;
         const by=Math.round(T.fy-FH+bob+1),bx=Math.round(x-CX);
         if(W12)c.drawImage(IMG_WALK12,f*fw,0,fw,FH,bx,by,fw,FH);
@@ -1930,7 +1934,7 @@ document.addEventListener('wheel',e=>{if(e.ctrlKey)e.preventDefault()},{passive:
 document.addEventListener('visibilitychange',()=>{if(document.hidden){if(SILENT_EL)SILENT_EL.pause()}else if(AU.ctx)unmuteSilentSwitch();if(AU.ctx){if(document.hidden)AU.ctx.suspend();else AU.ctx.resume()}});
 
 /* aggiornamento automatico: se sul server c'e' una versione piu' nuova di questa, ricarica una volta (cancella anche le copie salvate) */
-const BUILD='12 nov 14:00';
+const BUILD='12 nov 15:00';
 {const ve=document.getElementById('ver');if(ve)ve.textContent='v. '+BUILD;
  if(location.protocol.startsWith('http')){
   fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{
