@@ -1618,7 +1618,7 @@ const sogno={t:0,steps:0,lastStep:0,vis:-1,
     const ph=Math.floor(NOW/.9);if(ph!==this.ph){this.ph=ph;if(Math.random()<.9&&t<T.sleepEnd-1.6)setTimeout(sfx.plic,260)}
     if(t>T.sleepEnd-.8&&!this.quiet){this.quiet=true;setRain(0,true);setFire(0);setEng(0,false)}   // restano solo la musica e il battito
     // passi
-    if(t>T.walk0&&t<T.walkEnd){const d=(t-T.walk0)*T.walkSpeed,n=Math.floor(d/(WB12_CYC/2*DREAM_SC/RS));if(n!==this.steps){this.steps=n;nburst(210,1,.07,.16,'lowpass')}}
+    if(t>T.walk0&&t<T.walkEnd){const d=(t-T.walk0)*T.walkSpeed,n=Math.floor(d/33);if(n!==this.steps){this.steps=n;nburst(210,1,.07,.16,'lowpass')}}
     // il sospiro quando si addormenta
     if(t>T.readEnd+.4&&!this.sighed){this.sighed=true;nburst(900,.8,1.6,.07,'bandpass');nburst(380,.8,1.9,.05,'lowpass')}
     // sfogliare
@@ -1676,9 +1676,7 @@ const sogno={t:0,steps:0,lastStep:0,vis:-1,
       const a=seated?1-walkFade:Math.min(1,t/.8);
       g.globalAlpha=.6*a;ell(x-2,T.fy+1,12,3,'#05060a');g.globalAlpha=1;
       figureLit(c=>{
-        if(newOK){   // camminata a 12 pose: la posa dipende dai px percorsi
-          let pi12=8;if(wk){const q=((d/(DREAM_SC/RS))%WB12_CYC+WB12_CYC)%WB12_CYC;pi12=0;while(pi12<WB12_N-1&&WB12_POS[pi12+1]<=q)pi12++}
-          if(this.dreamCell(c,pi12,x,T.fy+1,a))return;
+        if(newOK){   // (12 nov) camminata col libro dall'atlante char-r15 (walk_book_1..6, un passo ogni 33 px), come il personaggio seduto
           this.dreamFrame(c,'walk_book_'+(wk?(Math.floor(d/5.5)%6)+1:4),x,T.fy+1,false,a);return}
         c.globalAlpha=a;const FH=56,CX=15,fw=32,W12=IMG_WALK12.complete&&IMG_WALK12.naturalWidth;
         const by=Math.round(T.fy-FH+bob+1),bx=Math.round(x-CX);
@@ -1932,7 +1930,7 @@ document.addEventListener('wheel',e=>{if(e.ctrlKey)e.preventDefault()},{passive:
 document.addEventListener('visibilitychange',()=>{if(document.hidden){if(SILENT_EL)SILENT_EL.pause()}else if(AU.ctx)unmuteSilentSwitch();if(AU.ctx){if(document.hidden)AU.ctx.suspend();else AU.ctx.resume()}});
 
 /* aggiornamento automatico: se sul server c'e' una versione piu' nuova di questa, ricarica una volta (cancella anche le copie salvate) */
-const BUILD='12 nov 13:00';
+const BUILD='12 nov 14:00';
 {const ve=document.getElementById('ver');if(ve)ve.textContent='v. '+BUILD;
  if(location.protocol.startsWith('http')){
   fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{
