@@ -1,10 +1,10 @@
 /* ============================================================================================
    CAPITOLO 2 — prima parte (storia di Graziano, 12 nov):
-   Nick si sveglia di giorno sul divano col libro, stordito. Va in bagno, si specchia e pensa al sogno.
-   Torna nella stanza della stufa: dialogo interiore, decide di partire. Esterno: cerca le chiavi
+   Nick si sveglia di giorno seduto sul divano (il libro e' nell'inventario), stordito. Ripensa al sogno
+   (dialogo interiore) e decide di partire. Esterno: cerca le chiavi
    nelle tasche dell'impermeabile, le vede luccicare nel fango di una pozzanghera, prende l'ascia
    dal ceppo e smuove la terra per recuperarle. Poi la scena passa dentro l'auto (per ora si ferma li').
-   Scene: capitolo2 (salotto) -> c2-bagno -> capitolo2 -> c2-esterno -> c2-auto.  Prova: ?capitolo2
+   Scene: capitolo2 (salotto: risveglio e dialogo interiore) -> c2-esterno -> c2-auto. (Il bagno e' stato tolto dalla storia il 12 nov.)  Prova: ?capitolo2
    ============================================================================================ */
 (window.__ext=window.__ext||[]).push(function(A){
 "use strict";
@@ -29,7 +29,7 @@ function frameNick(c,name,x,yb,flip,alpha){   // disegna una posa dell'atlante d
 const SAL={t0:0,seduto:1,posa:'seat_sleep',posa2:null,mix:0};   // figura seduta disegnata a mano finche' Nick non si alza
 
 registraScena({
-  id:'capitolo2',sfondo:'img/scene/giorno-baita-salotto.png',
+  id:'capitolo2',inventario:true,sfondo:'img/scene/giorno-baita-salotto.png',
   giocatore:'protagonista-interno',nomeGiocatore:'NICK',
   partenza:{x:186,y:110,dir:'W'},
   area:[[6,97],[234,97],[238,118],[2,118]],
@@ -37,62 +37,32 @@ registraScena({
   scala:()=>SC,
   superficie:'legno',superfici:[{poly:[[150,108],[190,104],[238,108],[238,118],[150,118]],tipo:'tappeto'}],
   ambiente:{stanza:1,vento:.08,pioggia:0,fuoco:0},
-  suggerimento:'TOCCA PER CAMMINARE · TOCCA LA PORTA DEL BAGNO',
-  uscite:[{nome:'LA PORTA DEL BAGNO',rect:[14,24,24,86],cammina:{x:30,y:104,dir:'W'},verso:'c2-bagno',arrivo:{x:200,y:110,dir:'W'}}],
+  suggerimento:'',
   sotto(gg){   // impermeabile e cappello sulla sedia, come la sera prima
     for(const [im,x,y] of [[IMG_COAT,COAT.x,COAT.y],[IMG_HAT,COAT.hx,COAT.hy]])if(im.complete&&im.naturalWidth)gg.drawImage(im,x,y,im.naturalWidth/RS,im.naturalHeight/RS)},
   sopra(gg,s){
     if(SAL.seduto>0){
-      const br=SAL.posa==='seat_sleep'?Math.sin(s.t*1.25)*.012:0;
       frameNick(gg,SAL.posa,SEAT_X,SEAT_Y,true,SAL.seduto*(1-SAL.mix));
       if(SAL.posa2)frameNick(gg,SAL.posa2,SEAT_X,SEAT_Y,true,SAL.seduto*SAL.mix)}
     const a=1-sm(s.t/2.4);if(a>0&&!C2.sveglio){gg.globalAlpha=a;R(0,0,W,H,'#000');gg.globalAlpha=1}},
-  entra(s){
+  entra(s){   // (12 nov, seconda versione) niente bagno: si sveglia seduto sul divano, ripensa al sogno, si alza e si va fuori
     const p=s.giocatore;
-    if(!C2.sveglio){   // risveglio: dorme, si assopisce, apre gli occhi, poi si alza
-      p.visibile=false;p.x=186;p.y=110;p.dir='W';SAL.seduto=1;SAL.posa='seat_sleep';SAL.posa2=null;SAL.mix=0;
-      s.sequenza(async()=>{
-        await pausa(3.2);
-        for(const [a,b] of [['seat_sleep','seat_doze'],['seat_doze','seat_read_1']]){SAL.posa=a;SAL.posa2=b;
-          for(let k=0;k<=20;k++){SAL.mix=k/20;await pausa(.05)}SAL.posa=b;SAL.posa2=null;SAL.mix=0;await pausa(.6)}
-        p.x=SEAT_X-6;p.y=SEAT_Y-1;   // la nuvoletta parte dalla testa di Nick seduto
-        await dn(s,p,'Che sonno… Dove sono?… Ah, la baita.',{frontale:false});
-        await pausa(.4);sfx.alza();
-        p.x=186;p.y=110;p.dir='W';p.visibile=true;
-        for(let k=0;k<=12;k++){SAL.seduto=1-k/12;await pausa(.03)}
-        SAL.seduto=0;C2.sveglio=true;s.hint()});
-      return}
-    SAL.seduto=0;p.visibile=true;
-    if(C2.specchio&&!C2.pensato){   // di ritorno dal bagno: dialogo interiore, poi si va fuori
-      s.sequenza(async()=>{
-        await pausa(1.6);
-        await dn(s,p,'Cos\'erano quei posti?');
-        await dn(s,p,'Quel ponte… l\'ho riconosciuto. Era il Ponte del Diavolo.');
-        await dn(s,p,'Che significato ha?');
-        await dn(s,p,'Devo capirlo. Mi metto in viaggio.');
-        C2.pensato=true;s.vaiScena('c2-esterno',{x:152,y:98,dir:'S'})})}}
-});
-
-/* ---------------- 2. bagno (specchio) ---------------- */
-registraScena({
-  id:'c2-bagno',sfondo:'img/emb/bg_bagno.png',
-  giocatore:'protagonista-interno',nomeGiocatore:'NICK',
-  partenza:{x:200,y:110,dir:'W'},
-  area:[[10,96],[232,96],[238,118],[4,118]],
-  ostacoli:[[[58,88],[92,88],[92,102],[58,102]],[[104,90],[138,90],[138,104],[104,104]]],
-  prof:[96,118,2.0,2.25],superficie:'piastrelle',
-  ambiente:{stanza:1,vento:0,pioggia:0,fuoco:0},
-  suggerimento:'TOCCA LO SPECCHIO',
-  uscite:[{nome:'USCITA',get rect(){return C2.specchio?[186,103,48,15]:[-99,-99,0,0]},cammina:{x:214,y:112,dir:'E'},verso:'capitolo2',arrivo:{x:30,y:106,dir:'E',cammina:{x:52,y:107,dir:'E'}}}],   // l'uscita compare dopo lo specchio
-  punti:[{nome:'LO SPECCHIO',rect:[105,35,30,26],cammina:{x:121,y:107,dir:'N'},usa:async(s,p)=>{
-    p.dir='N';
-    await dn(s,p,'Che sogno strano… Era tutto così confuso.',{frontale:false});
-    C2.specchio=true;s.hint()}}],
-  sopra(gg,s){   // uscita, come nel bagno del capitolo 1
-    if(!C2.specchio)return;const pu=Math.floor(s.t*1.6)%2;
-    R(186,104,48,13,'#0b0d12');R(186,104,48,1,'#4a5a70');R(186,116,48,1,'#4a5a70');R(186,104,1,13,'#4a5a70');R(233,104,1,13,'#4a5a70');
-    A.txt('USCITA',201,108,pu?'#e0a850':'#d99a45');
-    for(let i=0;i<4;i++){R(190+i,107+i,7-i*2,1,'#d99a45');R(223+i,107+i,7-i*2,1,'#d99a45')}}
+    if(A.S&&A.refreshInv){A.S.inv=['book'];A.S.bookOpen=true;A.refreshInv()}   // il libro e' nell'inventario
+    p.visibile=false;p.x=SEAT_X-6;p.y=SEAT_Y-1;p.dir='W';SAL.seduto=1;SAL.posa='seat_sleep';SAL.posa2=null;SAL.mix=0;   // la nuvoletta parte dalla testa di Nick seduto
+    s.sequenza(async()=>{
+      await pausa(3.2);
+      for(const [a,b] of [['seat_sleep','seat_doze'],['seat_doze','seat_read_1']]){SAL.posa=a;SAL.posa2=b;
+        for(let k=0;k<=20;k++){SAL.mix=k/20;await pausa(.05)}SAL.posa=b;SAL.posa2=null;SAL.mix=0;await pausa(.6)}
+      C2.sveglio=true;
+      for(const t of ['Che sonno… Dove sono?… Ah, la baita.','Che sogno strano… Era tutto così confuso.','Cos\'erano quei posti?',
+        'Quel ponte… l\'ho riconosciuto. Era il Ponte del Diavolo.','Che significato ha?','E quel simbolo? Cosa significa?',
+        'E cos\'è Settimo?','E quella donna? Chi è?','Non capisco…','Devo capirlo. Mi metto in viaggio.'])
+        await dn(s,p,t,{frontale:false});
+      await pausa(.4);sfx.alza();
+      p.x=186;p.y=110;p.dir='W';p.visibile=true;
+      for(let k=0;k<=12;k++){SAL.seduto=1-k/12;await pausa(.03)}
+      SAL.seduto=0;C2.pensato=true;await pausa(.8);
+      s.vaiScena('c2-esterno',{x:152,y:98,dir:'S'})})}
 });
 
 /* ---------------- 3. esterno di giorno: le chiavi nella pozzanghera ---------------- */
@@ -108,12 +78,12 @@ function stella(gg,x,y,k){   // luccichio: croce di luce che pulsa
 const FANGO=[];   // schizzi di fango durante lo scavo
 
 registraScena({
-  id:'c2-esterno',
+  id:'c2-esterno',inventario:true,
   giocatore:'protagonista-esterno',nomeGiocatore:'NICK',
   partenza:{x:152,y:98,dir:'S'},
   area:[[2,96],[238,96],[238,119],[2,119]],
   ostacoli:[[[2,99],[78,99],[78,114],[2,114]],[[204,96],[232,96],[232,101],[204,101]]],
-  prof:[96,119,.98,1.12],
+  prof:[96,119,.98,1.12],audioPassi:false,   // (12 nov) fuori dalla baita i passi non fanno rumore
   superficie:'fango',superfici:[{poly:[[138,104],[186,104],[186,111],[138,111]],tipo:'pozzanghera'},{poly:[[78,96],[112,96],[112,101],[78,101]],tipo:'pozzanghera'}],
   ambiente:{stanza:0,vento:.18,pioggia:0,fuoco:0},
   suggerimento:'TOCCA PER CAMMINARE',

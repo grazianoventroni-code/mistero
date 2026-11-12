@@ -194,6 +194,20 @@ const Voce={modo:(()=>{try{return localStorage.getItem('mistero-voce')||'blip'}c
   imposta(m){this.modo=m;try{localStorage.setItem('mistero-voce',m)}catch(e){}if(window.speechSynthesis&&m!=='voce')speechSynthesis.cancel()}};
 const VD=/[?&]voci=2/.test(location.search)?'audio/voci2/':'audio/voci/';   // ?voci=2 = clip "pulite" (prova)
 fetch(VD+'indice.json').then(r=>r.ok?r.json():null).then(j=>{Voce.clips=j}).catch(()=>{});
+/* (12 nov) clip vocali con Web Audio, non con <audio>: su iPhone un <audio> avviato da un timer (non dal tocco) resta muto,
+   mentre il contesto Web Audio, sbloccato dal primo tocco, suona anche con il telefono in modalita' silenziosa. Stessa interfaccia minima di <audio>. */
+const CLIPBUF={};
+function caricaClip(u){if(!AU.ctx)return Promise.resolve(null);if(!CLIPBUF[u])CLIPBUF[u]=fetch(u).then(r=>r.arrayBuffer()).then(ab=>new Promise((ok,ko)=>AU.ctx.decodeAudioData(ab,ok,ko))).catch(()=>{delete CLIPBUF[u];return null});return CLIPBUF[u]}
+function suonaClip(u,vol=1){
+  if(!AU.ctx){const a=new Audio(u);a.play().catch(()=>{});return a}
+  const c=AU.ctx,o={duration:0,ended:false,paused:false,t0:0,src:null,
+    get currentTime(){return this.src?Math.max(0,c.currentTime-this.t0):0},
+    pause(){this.paused=true;try{this.src&&this.src.stop()}catch(e){}},play(){return Promise.resolve()}};
+  if(c.state==='suspended')c.resume();
+  caricaClip(u).then(b=>{if(!b){o.ended=true;return}if(o.paused)return;
+    const s=c.createBufferSource(),gn=c.createGain();s.buffer=b;gn.gain.value=vol;s.connect(gn);gn.connect(AU.master);
+    s.onended=()=>{o.ended=true};o.duration=b.duration;o.t0=c.currentTime+.02;o.src=s;s.start(o.t0)});
+  return o}
 if(window.speechSynthesis){speechSynthesis.getVoices();speechSynthesis.onvoiceschanged=()=>{Voce.voci=speechSynthesis.getVoices()}}
 
 const Dialogo={
@@ -230,7 +244,7 @@ const Dialogo={
     // voce del telefono o clip registrata
     const reg=(window.__battute=window.__battute||[]);if(att&&!reg.some(b=>b.pers===att.nome&&b.testo===tx))reg.push({pers:att.nome,testo:tx});   // elenco delle battute dette: serve a genera_voci.py
     const cf=r.opz.clip||(Voce.modo==='voce'&&Voce.clips&&att&&Voce.clips[att.nome+'|'+tx]?VD+Voce.clips[att.nome+'|'+tx]:null);   // clip registrata (Piper) se esiste per questa battuta
-    if(cf){const a=new Audio(cf);this.cor.clip=a;a.play().catch(()=>{this.cor.clip=null});}
+    if(cf){this.cor.clip=suonaClip(cf)}
     else if(Voce.modo==='voce'&&window.speechSynthesis&&!r.opz.animale){const v=Voce.scegli(p.sx);const u=new SpeechSynthesisUtterance(tx);u.lang='it-IT';if(v)u.voice=v;u.pitch=clamp(p.tp,.1,2);u.rate=clamp(p.tr*(r.opz.vel||1),.5,1.6);
       u.onboundary=e=>{this.cor&&(this.cor.bi=e.charIndex)};u.onend=()=>{this.cor&&(this.cor.ttsFine=true)};this.cor.tts=u;speechSynthesis.cancel();speechSynthesis.speak(u);
       this.cor.cps=15*u.rate}
@@ -385,6 +399,6 @@ Scena.arrivo=null;
 function line2(x0,y0,x1,y1){const n=Math.max(1,Math.ceil(Math.hypot(x1-x0,y1-y0)));for(let i=0;i<=n;i++)R(x0+(x1-x0)*i/n,y0+(y1-y0)*i/n,1,1,'#ffff40')}
 
 function registraScena(cfg){const s=new Scena(cfg);scenes[cfg.id]=s;return s}
-A.motore={Scena,Pers,Mappa,Dialogo,Voce,VOCI,sfx,ambiente,registraScena,blip};
+A.motore={Scena,Pers,Mappa,Dialogo,Voce,VOCI,sfx,ambiente,registraScena,blip,suonaClip,caricaClip};
 window.__motore=A.motore;
 });

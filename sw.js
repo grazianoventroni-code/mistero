@@ -1,7 +1,7 @@
 // Service worker: il gioco funziona offline.
 // - i file del gioco (immagini, audio, icone) sono salvati alla prima apertura (sempre scaricati freschi: cache reload) e serviti dalla memoria del telefono;
 // - la pagina e questo file si chiedono prima alla rete (cosi' gli aggiornamenti arrivano subito) e, senza rete, si usa la copia salvata.
-const VERSION = "12 nov 19:00";
+const VERSION = "12 nov 20:00";
 const CACHE = "mistero-" + VERSION;
 const FILES = [
   "./",
@@ -123,13 +123,16 @@ const FILES = [
   "audio/voci/protagonista-esterno-c545369a.mp3",
   "audio/voci/protagonista-esterno-c5f40066.mp3",
   "audio/voci/protagonista-esterno-fb5c8fef.mp3",
+  "audio/voci/protagonista-interno-09d164f6.mp3",
   "audio/voci/protagonista-interno-123d4168.mp3",
   "audio/voci/protagonista-interno-22685d47.mp3",
   "audio/voci/protagonista-interno-24222703.mp3",
   "audio/voci/protagonista-interno-290f7ed2.mp3",
   "audio/voci/protagonista-interno-2a37ab86.mp3",
   "audio/voci/protagonista-interno-31a87cf3.mp3",
+  "audio/voci/protagonista-interno-36723ca3.mp3",
   "audio/voci/protagonista-interno-3b33ac4d.mp3",
+  "audio/voci/protagonista-interno-3faca7c0.mp3",
   "audio/voci/protagonista-interno-4446b2c7.mp3",
   "audio/voci/protagonista-interno-491b4494.mp3",
   "audio/voci/protagonista-interno-548cd532.mp3",
@@ -141,6 +144,7 @@ const FILES = [
   "audio/voci/protagonista-interno-90d7a9d8.mp3",
   "audio/voci/protagonista-interno-a58c3e3a.mp3",
   "audio/voci/protagonista-interno-bb9afa20.mp3",
+  "audio/voci/protagonista-interno-bdab2723.mp3",
   "audio/voci/protagonista-interno-c4ecf67b.mp3",
   "audio/voci/protagonista-interno-e80dd064.mp3",
   "audio/voci/protagonista-interno-f130d025.mp3",
