@@ -193,7 +193,7 @@ const Voce={modo:(()=>{try{return localStorage.getItem('mistero-voce')||'blip'}c
   disponibile(){return !!window.speechSynthesis&&speechSynthesis.getVoices().some(v=>/^it/i.test(v.lang))},
   imposta(m){this.modo=m;try{localStorage.setItem('mistero-voce',m)}catch(e){}if(window.speechSynthesis&&m!=='voce')speechSynthesis.cancel()}};
 const VD=/[?&]voci=2/.test(location.search)?'audio/voci2/':'audio/voci-r2/';   // ?voci=2 = clip "pulite" (prova). (12 nov) voci-r2: le stesse clip in MP3 a 44,1 kHz (quelle a 16 kHz su iPhone non si sentivano)
-fetch(VD+'indice.json').then(r=>r.ok?r.json():null).then(j=>{Voce.clips=j}).catch(()=>{});
+fetch(VD+'indice.json',{cache:'no-cache'}).then(r=>r.ok?r.json():null).then(j=>{Voce.clips=j}).catch(()=>{});
 /* (12 nov) clip vocali con Web Audio, non con <audio>: su iPhone un <audio> avviato da un timer (non dal tocco) resta muto,
    mentre il contesto Web Audio, sbloccato dal primo tocco, suona anche con il telefono in modalita' silenziosa. Stessa interfaccia minima di <audio>. */
 const CLIPBUF={};
