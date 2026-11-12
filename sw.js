@@ -1,7 +1,7 @@
 // Service worker: il gioco funziona offline.
 // - i file del gioco (immagini, audio, icone) sono salvati alla prima apertura (sempre scaricati freschi: cache reload) e serviti dalla memoria del telefono;
 // - la pagina e questo file si chiedono prima alla rete (cosi' gli aggiornamenti arrivano subito) e, senza rete, si usa la copia salvata.
-const VERSION = "12 nov 15:00";
+const VERSION = "12 nov 19:00";
 const CACHE = "mistero-" + VERSION;
 const FILES = [
   "./",
@@ -116,18 +116,27 @@ const FILES = [
   "audio/voci/prete-e4ec3b38.mp3",
   "audio/voci/protagonista-esterno-294420ca.mp3",
   "audio/voci/protagonista-esterno-3b127433.mp3",
+  "audio/voci/protagonista-esterno-79d30776.mp3",
+  "audio/voci/protagonista-esterno-9b5e14d6.mp3",
+  "audio/voci/protagonista-esterno-a3df4590.mp3",
   "audio/voci/protagonista-esterno-b453d5c8.mp3",
   "audio/voci/protagonista-esterno-c545369a.mp3",
+  "audio/voci/protagonista-esterno-c5f40066.mp3",
   "audio/voci/protagonista-esterno-fb5c8fef.mp3",
+  "audio/voci/protagonista-interno-123d4168.mp3",
   "audio/voci/protagonista-interno-22685d47.mp3",
   "audio/voci/protagonista-interno-24222703.mp3",
+  "audio/voci/protagonista-interno-290f7ed2.mp3",
   "audio/voci/protagonista-interno-2a37ab86.mp3",
   "audio/voci/protagonista-interno-31a87cf3.mp3",
   "audio/voci/protagonista-interno-3b33ac4d.mp3",
   "audio/voci/protagonista-interno-4446b2c7.mp3",
   "audio/voci/protagonista-interno-491b4494.mp3",
   "audio/voci/protagonista-interno-548cd532.mp3",
+  "audio/voci/protagonista-interno-54dcc675.mp3",
+  "audio/voci/protagonista-interno-6e77c2d9.mp3",
   "audio/voci/protagonista-interno-6eec32ee.mp3",
+  "audio/voci/protagonista-interno-709a067b.mp3",
   "audio/voci/protagonista-interno-760c50d8.mp3",
   "audio/voci/protagonista-interno-90d7a9d8.mp3",
   "audio/voci/protagonista-interno-a58c3e3a.mp3",
@@ -135,6 +144,7 @@ const FILES = [
   "audio/voci/protagonista-interno-c4ecf67b.mp3",
   "audio/voci/protagonista-interno-e80dd064.mp3",
   "audio/voci/protagonista-interno-f130d025.mp3",
+  "audio/voci/protagonista-interno-fb6ee89d.mp3",
   "audio/voci/ramone-1-057be5bb.mp3",
   "audio/voci/ramone-1-3e2102d6.mp3",
   "audio/voci/ramone-1-bcbd2ee6.mp3",
@@ -334,6 +344,7 @@ const FILES = [
   "img/char-r15/ramone-3.png",
   "img/char-r15/ramone-4.json",
   "img/char-r15/ramone-4.png",
+  "img/emb/ascia_r1.png",
   "img/emb/auto164_34fronte.png",
   "img/emb/auto164_34retro_d69.png",
   "img/emb/auto164_fronte.png",
@@ -411,6 +422,7 @@ const FILES = [
   "img/scene/firenze-sala-rossa.png",
   "img/scene/firenze-scalinata.png",
   "img/scene/firenze-via-di-novoli.png",
+  "img/scene/giorno-baita-esterno-senza-ascia.png",
   "img/scene/giorno-baita-esterno.png",
   "img/scene/giorno-baita-salotto.png",
   "img/scene/giorno-chiesa.png",
@@ -477,6 +489,7 @@ const FILES = [
   "img/volante.png",
   "index.html",
   "js/motore.js",
+  "js/scena-capitolo2.js",
   "js/scena-demo.js",
   "js/scena-ramones.js",
   "js/scena-tutti.js",
