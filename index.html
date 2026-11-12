@@ -78,6 +78,7 @@ button:active{background:#1a2438;transform:translate(1px,1px)}
 <script src="js/scena-tutti.js"></script>
 <script src="js/scena-ramones.js"></script>
 <script src="js/scena-capitolo2.js"></script>
+<script src="js/prova-voce.js"></script>
 <script>
 (()=>{
 "use strict";
@@ -1935,7 +1936,7 @@ document.addEventListener('wheel',e=>{if(e.ctrlKey)e.preventDefault()},{passive:
 document.addEventListener('visibilitychange',()=>{if(document.hidden){if(SILENT_EL)SILENT_EL.pause()}else if(AU.ctx)unmuteSilentSwitch();if(AU.ctx){if(document.hidden)AU.ctx.suspend();else AU.ctx.resume()}});
 
 /* aggiornamento automatico: se sul server c'e' una versione piu' nuova di questa, ricarica una volta (cancella anche le copie salvate) */
-const BUILD='12 nov 20:00';
+const BUILD='12 nov 20:30';
 {const ve=document.getElementById('ver');if(ve)ve.textContent='v. '+BUILD;
  if(location.protocol.startsWith('http')){
   fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{
@@ -1951,7 +1952,7 @@ if('serviceWorker' in navigator&&location.protocol.startsWith('http')&&!['localh
 window.__dbg={prova,CHARS,storm,SOGNO_T,AU,thunder,setRain,sprTex,itemTex,bagno,openCU,giveItem,combine,refreshInv,takeLog,ITEMS,IDR,CU,AU,MU,S,drive,outside,inside,sogno,startDream,setScene,fade,go:n=>{fade.a=0;fade.to=0;setScene(n)},scenes};
 /* estensioni (js/*.js): ricevono le funzioni del gioco e possono registrare nuove scene */
 {const wrapEl=document.getElementById('wrap');
- const API={g,W,H,RS,R,txt,ell,clamp,lerp,hash,inPoly,nearOnPoly,Actor,loadChar,CHARS,say,setHint,fade,fadeTo,setScene,scenes,mkImg,AU,tone,nburst,sfx,setRain,setFire,musicStart,musicStop,cv,wrap:wrapEl,S,refreshInv,
+ const API={g,W,H,RS,R,txt,ell,clamp,lerp,hash,inPoly,nearOnPoly,Actor,loadChar,CHARS,say,setHint,fade,fadeTo,setScene,scenes,mkImg,AU,tone,nburst,sfx,setRain,setFire,musicStart,musicStop,cv,wrap:wrapEl,S,refreshInv,audioInit,
    view:()=>{const r=cv.getBoundingClientRect();return {k:Math.min(r.width/DW,r.height/H),DW,OX}},now:()=>NOW};
  for(const f of (window.__ext||[])){try{f(API)}catch(e){console.error('estensione',e)}}}
 const boot=()=>{fade.a=1;fade.to=1;const dm=/[?&]demo/.test(location.search)&&scenes.demo,mg=(location.search.match(/[?&](tutti|uomini|donne|bambini|animali|furgone|ramones|capitolo2)(?=[&=#]|$)/)||[])[1],tt=mg&&scenes[mg];

@@ -26,7 +26,7 @@ function frameNick(c,name,x,yb,flip,alpha){   // disegna una posa dell'atlante d
   const ch=CHARS['protagonista-interno'],fr=ch&&ch.fr&&ch.fr[name];if(!fr||alpha<=0)return;
   const s=SC*SEAT_K/RS,dw=ch.w*s,dh=ch.h*s,ax=ch.ax*s;
   c.save();c.globalAlpha=alpha;c.translate(Math.round(x*RS)/RS,yb);c.scale(flip?-1:1,1);c.drawImage(ch.img,fr.x,fr.y,ch.w,ch.h,-ax,-dh,dw,dh);c.restore()}
-const SAL={t0:0,seduto:1,posa:'seat_sleep',posa2:null,mix:0};   // figura seduta disegnata a mano finche' Nick non si alza
+const SAL={t0:1e9,seduto:1,posa:'seat_sleep',posa2:null,mix:0};   // figura seduta disegnata a mano finche' Nick non si alza
 
 registraScena({
   id:'capitolo2',inventario:true,sfondo:'img/scene/giorno-baita-salotto.png',
@@ -44,12 +44,17 @@ registraScena({
     if(SAL.seduto>0){
       frameNick(gg,SAL.posa,SEAT_X,SEAT_Y,true,SAL.seduto*(1-SAL.mix));
       if(SAL.posa2)frameNick(gg,SAL.posa2,SEAT_X,SEAT_Y,true,SAL.seduto*SAL.mix)}
-    const a=1-sm(s.t/2.4);if(a>0&&!C2.sveglio){gg.globalAlpha=a;R(0,0,W,H,'#000');gg.globalAlpha=1}},
+    const a=1-sm((s.t-SAL.t0)/2.4);if(a>0&&!C2.sveglio){gg.globalAlpha=a;R(0,0,W,H,'#000');gg.globalAlpha=1}},
   entra(s){   // (12 nov, seconda versione) niente bagno: si sveglia seduto sul divano, ripensa al sogno, si alza e si va fuori
     const p=s.giocatore;
     if(A.S&&A.refreshInv){A.S.inv=['book'];A.S.bookOpen=true;A.refreshInv()}   // il libro e' nell'inventario
     p.visibile=false;p.x=SEAT_X-6;p.y=SEAT_Y-1;p.dir='W';SAL.seduto=1;SAL.posa='seat_sleep';SAL.posa2=null;SAL.mix=0;   // la nuvoletta parte dalla testa di Nick seduto
+    SAL.t0=1e9;
     s.sequenza(async()=>{
+      // (12 nov) su iPhone l'audio si sblocca solo con un tocco: se si arriva dal link diretto (?capitolo2) si aspetta il tocco
+      while(!(A.AU.ctx&&A.AU.ctx.state==='running')){setHint('TOCCA PER INIZIARE',true);await pausa(.2)}
+      setHint('');SAL.t0=s.t;
+      const V=M.Voce;if(V.clips)for(const k in V.clips)if(/^protagonista-(interno|esterno)\|/.test(k))M.caricaClip('audio/voci/'+V.clips[k]);   // le clip di Nick si preparano subito
       await pausa(3.2);
       for(const [a,b] of [['seat_sleep','seat_doze'],['seat_doze','seat_read_1']]){SAL.posa=a;SAL.posa2=b;
         for(let k=0;k<=20;k++){SAL.mix=k/20;await pausa(.05)}SAL.posa=b;SAL.posa2=null;SAL.mix=0;await pausa(.6)}
