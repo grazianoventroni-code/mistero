@@ -17,7 +17,7 @@ class Ramone extends Pers{
     this.testo=testo;this.testoFino=A.now()+.95;this.parlaFino=A.now()+.55+hash(this.idx+testo.length)*.25;
     if(testo==="Let's go!")this.pugno=A.now()+.9;
     const f=Voce.clips&&Voce.clips[this.nome+'|'+testo];
-    if(f&&!AU.muted){try{this.clip=A.motore.suonaClip('audio/voci/'+f)}catch(e){}}}   // (12 nov) Web Audio: si sente anche su iPhone
+    if(f&&!AU.muted){try{this.clip=A.motore.suonaClip(A.motore.VD+f)}catch(e){}}}   // (12 nov) Web Audio: si sente anche su iPhone
   update(dt){
     super.update(dt);const t=A.now();
     this.tt-=dt;if(this.tt<=0){this.tt=2.2+hash(t+this.idx)*3.5;this.sguardo=t+.9+hash(t*3+this.idx)*.8;this.verso=hash(t*5+this.idx)<.5?'idle_S_2':'idle_S_4'}

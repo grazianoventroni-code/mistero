@@ -15,7 +15,7 @@ window.__C2=C2;const sm=x=>{x=clamp(x,0,1);return x*x*(3-2*x)};
 const pausa=s=>new Promise(r=>setTimeout(r,s*1000));
 /* (12 nov) voce di Nick: le battute del capitolo 2 usano sempre la clip registrata (Piper, _strumenti/genera_voci.py), salvo "solo testo" o audio spento */
 function dn(s,p,testo,opz={}){const V=M.Voce,f=V.clips&&V.clips[p.nome+'|'+testo];
-  if(f&&V.modo!=='muto'&&!(A.AU&&A.AU.muted))opz={...opz,clip:'audio/voci/'+f};
+  if(f&&V.modo!=='muto'&&!(A.AU&&A.AU.muted))opz={...opz,clip:M.VD+f};
   return s.dici(p,testo,opz)}
 
 /* ---------------- 1. salotto di giorno (risveglio) ---------------- */
@@ -54,7 +54,7 @@ registraScena({
       // (12 nov) su iPhone l'audio si sblocca solo con un tocco: se si arriva dal link diretto (?capitolo2) si aspetta il tocco
       while(!(A.AU.ctx&&A.AU.ctx.state==='running')){setHint('TOCCA PER INIZIARE',true);await pausa(.2)}
       setHint('');SAL.t0=s.t;
-      const V=M.Voce;if(V.clips)for(const k in V.clips)if(/^protagonista-(interno|esterno)\|/.test(k))M.caricaClip('audio/voci/'+V.clips[k]);   // le clip di Nick si preparano subito
+      const V=M.Voce;if(V.clips)for(const k in V.clips)if(/^protagonista-(interno|esterno)\|/.test(k))M.caricaClip(M.VD+V.clips[k]);   // le clip di Nick si preparano subito
       await pausa(3.2);
       for(const [a,b] of [['seat_sleep','seat_doze'],['seat_doze','seat_read_1']]){SAL.posa=a;SAL.posa2=b;
         for(let k=0;k<=20;k++){SAL.mix=k/20;await pausa(.05)}SAL.posa=b;SAL.posa2=null;SAL.mix=0;await pausa(.6)}

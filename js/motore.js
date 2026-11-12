@@ -192,7 +192,7 @@ const Voce={modo:(()=>{try{return localStorage.getItem('mistero-voce')||'blip'}c
     return vs[0]},
   disponibile(){return !!window.speechSynthesis&&speechSynthesis.getVoices().some(v=>/^it/i.test(v.lang))},
   imposta(m){this.modo=m;try{localStorage.setItem('mistero-voce',m)}catch(e){}if(window.speechSynthesis&&m!=='voce')speechSynthesis.cancel()}};
-const VD=/[?&]voci=2/.test(location.search)?'audio/voci2/':'audio/voci/';   // ?voci=2 = clip "pulite" (prova)
+const VD=/[?&]voci=2/.test(location.search)?'audio/voci2/':'audio/voci-r2/';   // ?voci=2 = clip "pulite" (prova). (12 nov) voci-r2: le stesse clip in MP3 a 44,1 kHz (quelle a 16 kHz su iPhone non si sentivano)
 fetch(VD+'indice.json').then(r=>r.ok?r.json():null).then(j=>{Voce.clips=j}).catch(()=>{});
 /* (12 nov) clip vocali con Web Audio, non con <audio>: su iPhone un <audio> avviato da un timer (non dal tocco) resta muto,
    mentre il contesto Web Audio, sbloccato dal primo tocco, suona anche con il telefono in modalita' silenziosa. Stessa interfaccia minima di <audio>. */
@@ -399,6 +399,6 @@ Scena.arrivo=null;
 function line2(x0,y0,x1,y1){const n=Math.max(1,Math.ceil(Math.hypot(x1-x0,y1-y0)));for(let i=0;i<=n;i++)R(x0+(x1-x0)*i/n,y0+(y1-y0)*i/n,1,1,'#ffff40')}
 
 function registraScena(cfg){const s=new Scena(cfg);scenes[cfg.id]=s;return s}
-A.motore={Scena,Pers,Mappa,Dialogo,Voce,VOCI,sfx,ambiente,registraScena,blip,suonaClip,caricaClip};
+A.motore={Scena,Pers,Mappa,Dialogo,Voce,VOCI,sfx,ambiente,registraScena,blip,suonaClip,caricaClip,VD};
 window.__motore=A.motore;
 });
