@@ -9,7 +9,7 @@
 (window.__ext=window.__ext||[]).push(function(A){
 "use strict";
 const M=A.motore;if(!M)return;
-const {registraScena,sfx}=M,{g,W,H,RS,R,ell,clamp,lerp,mkImg,CHARS,setHint,fadeTo,setScene,scenes}=A;
+const {registraScena,sfx}=M,{g,W,H,RS,R,ell,clamp,lerp,hash,mkImg,CHARS,setHint,fadeTo,setScene,scenes}=A;
 window.__C2=null;const C2={sveglio:false,specchio:false,pensato:false,visto:false,ascia:0,scavo:0,chiavi:false,tw:0};   // stato del capitolo 2
 window.__C2=C2;const sm=x=>{x=clamp(x,0,1);return x*x*(3-2*x)};
 const pausa=s=>new Promise(r=>setTimeout(r,s*1000));
@@ -151,60 +151,120 @@ registraScena({
       A.fadeTo(1,1.3,()=>{A.setScene('c2-strada');A.fadeTo(0,.9)});await pausa(2)})}
 });
 
-/* ---------------- 5. le prime due strade di montagna: l'auto sfreccia tra le curve (visto da dietro) ---------------- */
-/* Percorsi letti sulle immagini 240x120 (punti x,y della mezzeria della strada, dal basso verso l'orizzonte).
-   Per cambiare le strade basta cambiare questo elenco (altre: strada-lago, strada-arrivo-ponte). */
+/* ---------------- 5. inseguimento da dietro sulle prime due strade di montagna (13 nov, seconda versione) ----------------
+   Strada in prospettiva (stessa idea del capitolo 1: la curvatura dipende dai metri percorsi e la strada si piega riga per riga),
+   ma vista da dietro l'auto, di giorno. Lo sfondo lontano e' preso dalle due strade dipinte (strada-autunno, strada-alpi).
+   L'auto e' grande in basso: da dietro in rettilineo, di tre quarti in curva (specchiata per le curve a sinistra). */
 const IMG_RETRO=mkImg('img/emb/auto164_retro.png'),IMG_R34=mkImg('img/emb/auto164_34retro_d69.png');
-const ROADS=[
- {img:mkImg('img/scene/strada-autunno.png'),dur:7.2,y0:32,path:[[118,121],[165,116],[196,110],[205,103],[196,97],[172,94],[150,92],[138,88],[132,83],[138,79],[150,78],[158,80]]},
- {img:mkImg('img/scene/strada-alpi.png'),dur:8,y0:30,path:[[168,121],[170,112],[160,105],[140,99],[128,92],[128,85],[142,81],[159,77],[160,70],[148,65],[137,61],[139,55],[132,51],[128,48]]}];
-const RT={fade:.9,gap:.45};   // dissolvenza iniziale e pausa nera tra le due strade
-const RP=window.__RP={fumo:[],foglie:[],acc:0,acc2:0,cur:-1,len:[],tot:[],h:0,hx:0};
-function lunghezze(r){let t=0;const L=[0];for(let i=1;i<r.path.length;i++){t+=Math.hypot(r.path[i][0]-r.path[i-1][0],(r.path[i][1]-r.path[i-1][1])*2);L.push(t)}return L}   // la y conta il doppio: prospettiva
-function su(r,u){const L=r.L||(r.L=lunghezze(r)),d=u*L[L.length-1];let i=1;while(i<L.length-1&&L[i]<d)i++;const f=(d-L[i-1])/Math.max(1e-6,L[i]-L[i-1]);
-  const a=r.path[i-1],b=r.path[i];return {x:lerp(a[0],b[0],f),y:lerp(a[1],b[1],f),dx:b[0]-a[0],dy:b[1]-a[1]}}
-const FOGLIE_COL=['#c8791e','#a8541a','#d9a52a','#8c4a1a','#e0b040'];
+const NRAW=240,HZ=46,ZC=6.4,PXM=38,LANE=3.6,ZN=4.8,VEL=27;   // orizzonte (riga), distanza dell'auto dalla camera (m), px per metro a p=1, mezza corsia, m/s
+const sm1=x=>{x=clamp(x,0,1);return x*x*(3-2*x)};
+const CH=[
+ {nome:'autunno',img:mkImg('img/scene/strada-autunno.png'),y0:5,dur:9.5,
+  k:w=>sm1(w/45)*(.0078*Math.sin(w*.031)+.0042*Math.sin(w*.0107+1.2)),
+  suolo:['#5a3418','#7a4a22','#a06a32'],asf:['#3e404c','#4c4f5c'],haze:'#c49a68',foglie:['#c8791e','#a8541a','#d9a52a','#8c4a1a','#e0b040'],
+  alberi:['#c8791e','#e0a030','#a8541a','#7a3a14','#d9a52a'],conifere:['#1a2a1c','#22361f'],muro:false},
+ {nome:'alpi',img:mkImg('img/scene/strada-alpi.png'),y0:4,dur:10,
+  k:w=>sm1(w/45)*(.0105*Math.sin(w*.027+.6)+.0035*Math.sin(w*.012)),
+  suolo:['#6a4226','#8a5a30','#b07840'],asf:['#46485a','#54566a'],haze:'#c89a94',foglie:['#b87a3a','#d9a060','#8a5a30','#c8791e'],
+  alberi:['#1a2a1c','#22361f'],conifere:['#16241a','#1e3020'],muro:true}];
+const CT={fade:1.0,gap:.5};
+const CS={t0:0,k:-1,tab:null,D:0,cam:0,xc:1.8,head:0,fumo:[],foglie:[],acc:0,tre:false,fine:false,ang:0};
+window.__CS=CS;
+function tabella(r){   // direzione dell'auto (radianti) = curvatura sommata lungo la strada, ogni metro
+  const T=new Float32Array(2200);let h=0;for(let w=1;w<T.length;w++){h+=r.k(w);T[w]=h}return T}
+const fh=(T,D)=>{const i=Math.floor(clamp(D,0,2198)),f=D-i;return T[i]+(T[i+1]-T[i])*f};
+const mixc=(a,b,t)=>{const p=c=>[1,3,5].map(i=>parseInt(c.slice(i,i+2),16)),A=p(a),B=p(b);return '#'+A.map((v,i)=>Math.round(v+(B[i]-v)*t).toString(16).padStart(2,'0')).join('')};
+function nuovaStrada(k){CS.k=k;CS.tab=tabella(CH[k]);CS.D=0;CS.cam=1.8;CS.xc=1.8;CS.fumo=[];CS.foglie=[];CS.tre=false;CS.alt=0}
+function blob(gg,cx,cy,rx,ry,col){   // macchia a pixel: righe orizzontali (nessuna sfumatura)
+  rx=Math.max(1,rx);ry=Math.max(1,ry);gg.fillStyle=col;for(let y=-Math.floor(ry);y<=Math.floor(ry);y++){const w=Math.round(rx*Math.sqrt(1-(y*y)/(ry*ry+.01)));gg.fillRect(Math.round(cx-w),Math.round(cy+y),Math.max(1,w*2),1)}}
+function disegnaAlbero(gg,x,y,sc,ro,tipo){   // x,y = piede dell'albero; sc = px per metro
+  const F=(a,b,w,h,c)=>{gg.fillStyle=c;gg.fillRect(Math.round(a),Math.round(b),Math.max(1,Math.round(w)),Math.max(1,Math.round(h)))};
+  F(x-.22*sc,y-2.4*sc,.44*sc,2.4*sc,'#2a1a10');
+  if(tipo==='c'){const col=ro.conifere,st=Math.max(1,Math.round(sc*.3));for(let i=0;i<4;i++){const w=(3.3-i*.7)*sc,h=2*sc,yy=y-(1.5+i*1.5)*sc;
+      for(let r=0;r<h;r+=st){const ww=w*(1-r/h);F(x-ww/2,yy-h+r,ww,st,col[i%2]);F(x-ww/2,yy-h+r,Math.max(1,ww*.22),st,'#0e1810')}}}
+  else{const col=ro.alberi,c0=y-4.6*sc,h=hash(ro.x*3.7);
+    blob(gg,x,c0,2.2*sc,1.9*sc,col[3%col.length]);            // massa scura sotto
+    for(let i=0;i<6;i++){const a=i*2.3+h*6,rx=Math.cos(a)*1.4*sc,ry=Math.sin(a*1.3)*1.1*sc-.2*sc,rr=(1.1+.35*Math.sin(a*2))*sc;blob(gg,x+rx,c0+ry,rr,rr*.82,col[i%3])}   // chiome chiare
+    blob(gg,x-.7*sc,c0-1.1*sc,.7*sc,.5*sc,col[1%col.length])}}
 registraScena({
   id:'c2-strada',area:[[0,0],[2,0],[2,2],[0,2]],suggerimento:'',
   ambiente:{stanza:0,vento:.35,pioggia:0,fuoco:0},
-  disegnaSfondo(gg,s){const k=RP.cur<0?0:RP.cur,im=ROADS[k].img;if(im.complete&&im.naturalWidth)gg.drawImage(im,0,0,W,H);else R(0,0,W,H,'#2a2018')},
-  entra(s){RP.fumo=[];RP.foglie=[];RP.cur=0;RP.h=0;RP.finito=false;s.occupato=true;document.getElementById('bHint').style.display='none';A.setEng&&A.setEng(.9,true)},
-  aggiorna(s,dt){
-    const t=s.t,seg=ROADS.map(r=>r.dur+RT.gap);let k=0,t0=0;while(k<ROADS.length-1&&t>=t0+seg[k]){t0+=seg[k];k++}
-    if(k!==RP.cur){RP.cur=k;RP.fumo=[];RP.foglie=[];RP.h=0}
-    const r=ROADS[k],tl=t-t0,fine=t>=seg.reduce((a,b)=>a+b,0)-RT.gap;
-    RP.k=k;RP.tl=tl;RP.corre=tl>=RT.fade*.4&&tl<r.dur;
-    if(fine&&!RP.finito){RP.finito=true;A.setEng&&A.setEng(0,false);s.hint();A.setHint('CONTINUA…',true)}
-    if(!RP.corre)return;
-    const u=clamp(tl/r.dur,0,1),P=su(r,clamp(u,0,.999)),Q=su(r,clamp(u+.035,0,.999));
-    const sc=clamp(.62*(P.y-r.y0)/(121-r.y0),.1,.62);
-    const ang=Math.atan2(Q.x-P.x,-(Q.y-P.y)*2.2);RP.h+=(ang-RP.h)*Math.min(1,dt*5);RP.sc=sc;RP.x=P.x;RP.y=P.y;RP.ang=RP.h;
-    if(A.AU.engO&&A.AU.ctx){A.AU.engO.frequency.setTargetAtTime(48+Math.abs(RP.h)*26+8*Math.sin(t*3),A.AU.ctx.currentTime,.15)}   // il motore sale in curva
-    // scarico: fumo che resta indietro (verso chi guarda) e si allarga
-    RP.acc+=dt*34;while(RP.acc>=1){RP.acc--;const tre=!!RP.tre,off=(tre?(RP.h<0?.30:-.30):-.27)*64*sc;   // il tubo di scarico e' in basso a sinistra (a destra se l'immagine e' specchiata)
-      RP.fumo.push({x:P.x+off,y:P.y-2.5*sc,vx:-3-Math.random()*6+Math.sin(t*1.3)*2,vy:6+Math.random()*10,t:0,r:.7+Math.random()*.6})}
-    // foglie secche sollevate dal vento dell'auto
-    RP.acc2+=dt*(r.dur>0?46:0);while(RP.acc2>=1){RP.acc2--;RP.foglie.push({x:P.x+(Math.random()-.5)*40*sc,y:P.y+Math.random()*3*sc,vx:(Math.random()-.5)*46,vy:-(18+Math.random()*44),t:0,life:.9+Math.random()*.9,c:FOGLIE_COL[Math.floor(Math.random()*FOGLIE_COL.length)],big:Math.random()<.4,z:sc})}
-    for(const f of RP.fumo){f.t+=dt;f.x+=f.vx*dt;f.y+=f.vy*dt;f.r+=dt*2.6}
-    for(const f of RP.foglie){f.t+=dt;f.x+=f.vx*dt;f.y+=f.vy*dt+f.t*30*dt;f.vy+=34*dt;f.vx*=1-dt*.8}
-    RP.fumo=RP.fumo.filter(f=>f.t<1.1);RP.foglie=RP.foglie.filter(f=>f.t<f.life)},
-  sopra(gg,s){
-    const t=s.t;if(RP.cur<0)return;
-    for(const f of RP.fumo){const a=.5*(1-f.t/1.1);if(a<=0)continue;gg.globalAlpha=a;const q=Math.round(f.r);R(Math.round(f.x-q/2),Math.round(f.y-q/2),Math.max(1,q),Math.max(1,q),f.t<.35?'#b8b8c0':'#8e8e98')}
+  disegnaSfondo(gg,s){
+    const k=CS.k<0?0:CS.k,r=CH[k];if(!CS.tab)return;
+    const D=CS.D,cam=CS.cam,pan=fh(CS.tab,D)*PXM*ZN*.9+Math.sin(s.t*.4)*0,NR=120-HZ;
+    // fondale: striscia alta del dipinto, ingrandita 1,25x e fatta scorrere in orizzontale con la direzione dell'auto (senza giunture)
+    if(r.img.complete&&r.img.naturalWidth){const sw=NRAW/1.25,sx=clamp((NRAW-sw)/2+pan/1.25*-1,0,NRAW-sw),sh=(HZ+2)/1.25;
+      gg.drawImage(r.img,sx,r.y0,sw,sh,0,0,NRAW,HZ+2)}
+    else R(0,0,W,HZ,'#9a7a60');
+    // nebbiolina all'orizzonte
+    for(let y=HZ-9;y<HZ+1;y++){gg.globalAlpha=(y-(HZ-9))/10*.7;R(0,y,W,1,r.haze)}gg.globalAlpha=1;
+    // curvatura lungo la strada (somma doppia: la strada si piega riga per riga)
+    const lt=s.lt||(s.lt=new Float32Array(NR+2));let lat=0,dl=0,pz=0;
+    for(let i=NR;i>=0;i--){const p=Math.max(i/NR,.025),zz=ZN/p;if(i<NR){const dz=zz-pz;dl+=r.k(D+pz)*dz;lat+=dl*dz}pz=zz;lt[i]=lat}
+    s.latAt=p=>{if(p>=1)return 0;const f=clamp(p,0,1)*NR,i=Math.floor(f),a=lt[i],b=lt[Math.min(NR,i+1)];return a+(b-a)*(f-i)};
+    const cxAt=p=>120+PXM*p*(s.latAt(p)-cam),hw=p=>1+PXM*p*LANE;
+    const dashF=w=>Math.floor(w/12)*4.5+Math.min(((w%12)+12)%12,4.5);
+    for(let y=HZ;y<120;y++){
+      const p=(y-HZ)/NR+.002,c=cxAt(p),half=hw(p),w=D+ZN/p,sd=.25+.75*Math.pow(p,.7),band=Math.floor(w/5)%2;
+      gg.globalAlpha=1;R(0,y,W,1,mixc(mixc(r.suolo[0],r.suolo[1],clamp(sd+(band?.08:-.04),0,1)),r.haze,p<.34?(1-p/.34)*.7:0));   // terra d'autunno a fasce chiare e scure, sfumata nella foschia in lontananza
+      for(let i=0;i<7;i++){const wq=Math.floor(w/2.2)+i*53,h=hash(wq*1.7+i),fxw=(hash(wq*.37+i*5)*2-1)*14;   // foglie a terra: attaccate al suolo (la loro posizione e' in metri), larghe quanto serve
+        const fx=c+PXM*p*fxw*(fxw<0?1:1);if(h>.5&&Math.abs(fxw)*PXM*p>half*1.02)R(fx,y,Math.max(1,Math.round(p*2.2)),1,r.foglie[(wq+i)%r.foglie.length])}
+      if(r.muro){const mw=PXM*p*.7;R(c-half-mw-1,y,mw+1,1,mixc('#6a6074','#9a90a0',sd));R(c-half-mw-1,y,1,1,'#3a3446')}
+      R(c-half,y,half*2,1,mixc(r.asf[0],r.asf[1],clamp(sd*.8+(band?.12:0),0,1)));
+      const ew=1+Math.floor(p*1.6);R(c-half,y,ew,1,'#d8d8de');R(c+half-ew,y,ew,1,'#d8d8de');
+      {const wa=D+ZN/(p+1/NR),cov=(dashF(w)-dashF(wa))/Math.max(.01,w-wa);if(cov>.02){const lw=Math.max(1,p*PXM*.16);gg.globalAlpha=Math.min(1,cov);R(c-lw/2,y,lw,1,'#e0b82a');gg.globalAlpha=1}}}
     gg.globalAlpha=1;
-    if(RP.corre&&RP.sc){   // auto: dritta da dietro, in curva di tre quarti (specchiata a sinistra); ombra e piccoli sobbalzi
-      const sc=RP.sc,h=RP.h;RP.tre=RP.tre?Math.abs(h)>.2:Math.abs(h)>.32;const tre=RP.tre,im=tre?IMG_R34:IMG_RETRO;   // isteresi: niente scatti tra le due viste
-      if(im.complete&&im.naturalWidth){
-        const w=im.naturalWidth*sc*(tre?.92:1),hh=im.naturalHeight*sc*(tre?.92:1),bump=Math.sin(t*23)*.35*sc+Math.sin(t*9.7)*.25*sc;
-        ell(RP.x,RP.y+.5,w*.46,Math.max(1,hh*.12),'#000',.38);
-        gg.save();gg.translate(Math.round(RP.x),Math.round(RP.y+bump));gg.rotate(clamp(h*.12,-.08,.08));
-        if(tre&&h<0)gg.scale(-1,1);
-        gg.imageSmoothingEnabled=false;gg.drawImage(im,Math.round(-w/2),Math.round(-hh),Math.round(w),Math.round(hh));gg.restore()}}
-    for(const f of RP.foglie){const a=1-f.t/f.life;if(a<=0)continue;gg.globalAlpha=Math.min(1,a*1.6);R(Math.round(f.x),Math.round(f.y),f.big?2:1,1,f.c)}
+    // alberi (e pali) ai lati: dal piu' lontano al piu' vicino; l'auto si disegna nel punto giusto dell'ordine
+    const lista=[];
+    for(let n=0;n<14;n++){const w0=Math.floor(D/14)*14+n*14,z=w0-D;if(z>2.2&&z<190){lista.push({z,x:LANE+.7,palo:1});if(r.muro)lista.push({z,x:-(LANE+.9),palo:1})}}   // paletti bianchi e rossi: danno la velocita'
+    for(let n=0;n<48;n++){const w0=Math.floor(D/8)*8+n*8;for(const lato of [-1,1]){const h=hash(w0*3+lato*11+k*5),dist=(LANE+2.4+h*13)*lato,z=w0+hash(w0+lato)*8-D;
+      if(z>2.2&&z<190&&hash(w0*5+lato*3)>.25)lista.push({z,x:dist,t:(hash(w0*7+lato)<(k===1?.9:.4))?'c':'a',n:w0})}}
+    lista.push({z:ZC,car:true});lista.sort((a,b)=>b.z-a.z);
+    for(const o of lista){const p=ZN/o.z,y=HZ+p*NR,xx=cxAt(p)+PXM*p*(o.car?(CS.xc-cam):o.x);
+      if(o.car){s.carPos={x:xx-PXM*p*(CS.xc-cam)+PXM*p*(CS.xc-cam),y,p};continue}
+      if(o.palo){const hh=Math.max(1,PXM*p*1.0),ww=Math.max(1,PXM*p*.12);g.fillStyle='#e8e8ee';g.fillRect(Math.round(xx),Math.round(y-hh),Math.round(ww),Math.round(hh));g.fillStyle='#c03028';g.fillRect(Math.round(xx),Math.round(y-hh),Math.round(ww),Math.max(1,Math.round(hh*.3)));continue}
+      if(xx<-60||xx>W+60)continue;const nf=clamp(1-o.z/180,0,1);gg.globalAlpha=.35+.65*nf;
+      disegnaAlbero(gg,xx,y,PXM*p*.95,{alberi:r.alberi,conifere:r.conifere,x:o.n},o.t);gg.globalAlpha=1;
+      if(r.muro&&o.x<0&&false){}}
+    gg.globalAlpha=1;
+    // auto
+    const cp=s.carPos;if(cp){const kk=r.k(D+ZC),tre=CS.tre,im=tre?IMG_R34:IMG_RETRO;
+      if(im.complete&&im.naturalWidth){const larg=(tre?3.1:1.85)*PXM*cp.p,sc=larg/im.naturalWidth,w=im.naturalWidth*sc,h=im.naturalHeight*sc,bump=Math.sin(s.t*21)*.45*cp.p+Math.sin(s.t*8.3)*.3*cp.p;
+        const cxx=cp.x;ell(cxx,cp.y+.5,w*.5,Math.max(1.5,h*.1),'#000',.4);
+        gg.save();gg.translate(Math.round(cxx),Math.round(cp.y+bump));gg.rotate(clamp(kk*40,-.09,.09)*(tre?.5:1));if(tre&&kk<0)gg.scale(-1,1);gg.imageSmoothingEnabled=false;
+        gg.drawImage(im,Math.round(-w/2),Math.round(-h),Math.round(w),Math.round(h));gg.restore()}}
+    // foglie secche portate dal vento (nel mondo, vengono verso di noi) e sollevate dalle ruote; fumo di scarico
+    for(const f of CS.foglie){const z=f.z,p=ZN/Math.max(1.5,z);if(p<.04)continue;const sx=cxAt(Math.min(p,1.4))+PXM*p*(f.x-cam),sy=HZ+p*NR-f.y*PXM*p;
+      const a=clamp(1-f.t/f.life,0,1);gg.globalAlpha=Math.min(1,a*1.5);R(sx,sy,p>.4?3:2,p>.4?2:1,f.c)}
+    for(const f of CS.fumo){const a=.55*(1-f.t/1.2);if(a<=0)continue;gg.globalAlpha=a;const q=Math.round(f.r);R(f.x-q/2,f.y-q/2,Math.max(1,q),Math.max(1,q),f.t<.4?'#c4c4cc':'#8e8e98')}
     gg.globalAlpha=1;
     // dissolvenze: dal nero all'inizio di ogni strada, al nero alla fine
-    const r=ROADS[RP.cur],tl=RP.tl||0;let a=0;if(tl<RT.fade)a=1-sm(tl/RT.fade);else if(tl>r.dur-.5)a=sm((tl-(r.dur-.5))/.5);if(!RP.corre&&tl>=r.dur)a=1;
-    if(a>0){gg.globalAlpha=a;R(0,0,W,H,'#000');gg.globalAlpha=1}}
+    const tl=CS.tl||0;let a=0;if(tl<CT.fade)a=1-sm1(tl/CT.fade);else if(tl>r.dur-.6)a=sm1((tl-(r.dur-.6))/.6);
+    if(CS.stop)a=1;if(a>0){gg.globalAlpha=a;R(0,0,W,H,'#000');gg.globalAlpha=1}},
+  entra(s){CS.t0=0;CS.fine=false;CS.stop=false;nuovaStrada(0);CS.tl=0;s.occupato=true;document.getElementById('bHint').style.display='none';A.setEng&&A.setEng(.9,true)},
+  aggiorna(s,dt){
+    const seg=CH.map(r=>r.dur+CT.gap);let k=0,t0=0;const t=s.t;while(k<CH.length-1&&t>=t0+seg[k]){t0+=seg[k];k++}
+    if(k!==CS.k)nuovaStrada(k);const r=CH[k];CS.tl=t-t0;
+    const fine=t>=seg.reduce((a,b)=>a+b,0)-CT.gap;CS.stop=CS.tl>=r.dur&&k===CH.length-1||fine;
+    if(fine&&!CS.fine){CS.fine=true;A.setEng&&A.setEng(0,false);A.setHint('CONTINUA…',true)}
+    if(CS.stop||CS.tl>=r.dur)return;
+    const v=VEL*clamp(.55+CS.tl/2.2,.55,1);CS.D+=v*dt;const D=CS.D;
+    const kk=r.k(D+ZC),kn=r.k(D+ZC+14);
+    // posizione sulla corsia: oscilla piano, in curva tira un po' verso l'esterno; la camera la segue in ritardo
+    const bersaglio=1.8-kn*45*2+Math.sin(s.t*.85)*.28+Math.sin(s.t*2.3)*.07;CS.xc+=(bersaglio-CS.xc)*Math.min(1,dt*3.2);
+    CS.cam+=(CS.xc-CS.cam)*Math.min(1,dt*1.7);
+    CS.tre=CS.tre?Math.abs(kn)>.0034:Math.abs(kn)>.0052;
+    if(A.AU.engO&&A.AU.ctx)A.AU.engO.frequency.setTargetAtTime(52+Math.abs(kn)*3800+7*Math.sin(t*3),A.AU.ctx.currentTime,.15);
+    const cp=s.carPos;
+    if(cp){const tre=CS.tre,larg=(tre?3.1:1.85)*PXM*cp.p,lato=tre&&kk<0?-1:1;
+      CS.acc+=dt*44;while(CS.acc>=1){CS.acc--;const ox=(tre?-.40:-.30)*larg*lato;CS.fumo.push({x:cp.x+ox,y:cp.y-(tre?3.6:4.2)*cp.p*1.1,vx:-2*lato*Math.random()-1+Math.sin(t*1.4)*1.5,vy:5+Math.random()*9,t:0,r:1.1+Math.random()*.7})}
+      CS.fumo.forEach(f=>{f.t+=dt;f.x+=f.vx*dt;f.y+=f.vy*dt;f.r+=dt*3});CS.fumo=CS.fumo.filter(f=>f.t<1.2);
+      // foglie sollevate dalle ruote
+      if(Math.random()<dt*52)CS.foglie.push({kind:'r',z:ZC-.2,x:CS.xc+(Math.random()-.5)*2.4,y:.1,vy:2.4+Math.random()*2.4,vx:(Math.random()-.5)*5,t:0,life:.9+Math.random()*.8,c:r.foglie[Math.floor(Math.random()*r.foglie.length)]})}
+    // foglie nel vento: dal fondo verso di noi
+    if(Math.random()<dt*26)CS.foglie.push({kind:'v',z:60+Math.random()*50,x:(Math.random()-.5)*26,y:.3+Math.random()*2.6,vy:0,vx:(Math.random()-.5)*2,t:0,life:5,c:r.foglie[Math.floor(Math.random()*r.foglie.length)]});
+    for(const f of CS.foglie){f.t+=dt;f.z-=(f.kind==='v'?VEL*clamp(.55+CS.tl/2.2,.55,1):VEL*.45)*dt;f.x+=f.vx*dt;if(f.kind==='r'){f.y+=f.vy*dt;f.vy-=7*dt}else f.y+=Math.sin(f.t*3+f.x)*.8*dt}
+    CS.foglie=CS.foglie.filter(f=>f.t<f.life&&f.z>1.6&&f.y>-.2)}
 });
 
 /* da fine capitolo 1 (sogno) al capitolo 2 */
