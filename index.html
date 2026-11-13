@@ -10,7 +10,7 @@
 <meta name="theme-color" content="#000000">
 <script>/* (12 nov) pulizia: a ogni versione nuova si tolgono service worker e memoria vecchi e si ricarica una volta.
    Un service worker rimasto da versioni precedenti serviva script e indice delle voci superati (le voci non si sentivano). BUILD0 lo aggiorna pubblica.py. */
-(function(){var BUILD0='12 nov 21:45';try{if(!('serviceWorker' in navigator)||localStorage.getItem('mistero-build')===BUILD0)return;localStorage.setItem('mistero-build',BUILD0);window.__pulizia=1;
+(function(){var BUILD0='13 nov 07:00';try{if(!('serviceWorker' in navigator)||localStorage.getItem('mistero-build')===BUILD0)return;localStorage.setItem('mistero-build',BUILD0);window.__pulizia=1;
  var t=setTimeout(function(){location.reload()},4000);
  Promise.all([navigator.serviceWorker.getRegistrations().then(function(rs){return Promise.all(rs.map(function(r){return r.unregister()}))}),
    window.caches?caches.keys().then(function(ks){return Promise.all(ks.map(function(k){return caches.delete(k)}))}):0]).then(function(){clearTimeout(t);location.reload()},function(){clearTimeout(t);location.reload()})}catch(e){}})();</script>
@@ -79,12 +79,12 @@ button:active{background:#1a2438;transform:translate(1px,1px)}
 <div id="probe" style="position:fixed;visibility:hidden;pointer-events:none;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)"></div>
 <div id="rot"><i></i><div>RUOTA IL TELEFONO<br>IN ORIZZONTALE</div></div>
 
-<script src="js/motore.js?v=12nov2145"></script>
-<script src="js/scena-demo.js?v=12nov2145"></script>
-<script src="js/scena-tutti.js?v=12nov2145"></script>
-<script src="js/scena-ramones.js?v=12nov2145"></script>
-<script src="js/scena-capitolo2.js?v=12nov2145"></script>
-<script src="js/prova-voce.js?v=12nov2145"></script>
+<script src="js/motore.js?v=13nov0700"></script>
+<script src="js/scena-demo.js?v=13nov0700"></script>
+<script src="js/scena-tutti.js?v=13nov0700"></script>
+<script src="js/scena-ramones.js?v=13nov0700"></script>
+<script src="js/scena-capitolo2.js?v=13nov0700"></script>
+<script src="js/prova-voce.js?v=13nov0700"></script>
 <script>
 (()=>{
 "use strict";
@@ -356,23 +356,47 @@ function splitText(s,max=88){
   if(best<0)for(let i=8;i<s.length-8;i++){if(s[i]===' '||s[i]===','){const d=Math.abs(i-mid);if(d<bd){bd=d;best=s[i]===','?i:i-1}}}
   if(best<0)return [s];
   return [...splitText(s.slice(0,best+1),max),...splitText(s.slice(best+1),max)]}
+/* ---- (13 nov) voce di Nick: i testi in basso hanno la clip registrata (Kokoro, indice voci-r2). Il testo si scrive in tempo con la voce.
+   Le clip passano da Web Audio (come i rumori): si sentono anche con l'iPhone in modalita' silenziosa. Senza clip il testo va come prima. */
+const VOX={idx:null,buf:{},src:null,tok:0,t:null};
+fetch('audio/voci-r2/indice.json',{cache:'no-cache'}).then(r=>r.ok?r.json():null).then(j=>{VOX.idx=j}).catch(()=>{});
+function voxOn(){let m='';try{m=localStorage.getItem('mistero-voce')||''}catch(e){}return !!AU.ctx&&!AU.muted&&m!=='muto'}
+function voxUrl(t,who='protagonista-interno'){const f=VOX.idx&&VOX.idx[who+'|'+t];return f?'audio/voci-r2/'+f:null}
+function voxLoad(u){if(!AU.ctx)return Promise.resolve(null);
+  if(!VOX.buf[u])VOX.buf[u]=fetch(u).then(r=>r.arrayBuffer()).then(ab=>new Promise((ok,ko)=>AU.ctx.decodeAudioData(ab,ok,ko))).catch(()=>{delete VOX.buf[u];return null});
+  return VOX.buf[u]}
+function voxStop(){if(VOX.src){try{VOX.src.stop()}catch(e){}VOX.src=null}}
+function voxStart(b){const c=AU.ctx;if(c.state==='suspended')c.resume();const sr=c.createBufferSource(),gn=c.createGain();sr.buffer=b;gn.gain.value=1;sr.connect(gn);gn.connect(AU.master);sr.start(c.currentTime+.03);VOX.src=sr}
+let vox=null,sayDone=null;
+function closeSay(){clearInterval(typer);typer=null;clearTimeout(hideT);dlgEl.classList.remove('on');voxStop();vox=null;const f=sayDone;sayDone=null;if(f)f()}
 function nextChunk(){
   if(!qrest.length)return;
   full=qrest.shift();pos=0;txtEl.textContent='';dlgEl.classList.add('on');
-  typer=setInterval(()=>{pos++;txtEl.textContent=full.slice(0,pos);if(pos%3===0)sfx.blip();if(pos>=full.length){clearInterval(typer);typer=null;afterText()}},24)}
+  let per=24;if(vox){const sh=vox.shares.shift()||1;per=clamp(sh*850/Math.max(1,full.length),16,70);vox.end=performance.now()+sh*1000}
+  typer=setInterval(()=>{pos++;txtEl.textContent=full.slice(0,pos);if(pos%3===0&&!vox)sfx.blip();if(pos>=full.length){clearInterval(typer);typer=null;afterText()}},per)}
 function afterText(){clearTimeout(hideT);
+  if(vox){const w=Math.max(0,vox.end-performance.now());
+    if(qrest.length)hideT=setTimeout(nextChunk,w+40);else hideT=setTimeout(closeSay,w+1200);return}
   if(qrest.length)hideT=setTimeout(nextChunk,1200+full.length*62);          // tempo di lettura prima della seconda parte
-  else hideT=setTimeout(()=>dlgEl.classList.remove('on'),3500+full.length*55)}
-function say(s){clearInterval(typer);clearTimeout(hideT);typer=null;txtEl.textContent='';full='';pos=0;qrest=[];
+  else hideT=setTimeout(closeSay,3500+full.length*55)}
+function say(s){const old=sayDone;sayDone=null;clearInterval(typer);clearTimeout(hideT);typer=null;voxStop();vox=null;VOX.tok++;txtEl.textContent='';full='';pos=0;qrest=[];
+  if(old)old();
   if(!s){dlgEl.classList.remove('on');return}
+  const u=voxOn()&&voxUrl(s);
+  if(u){const tok=VOX.tok;   // si decodifica la clip (pochi ms), poi partono voce e testo insieme
+    voxLoad(u).then(b=>{if(tok!==VOX.tok)return;
+      if(!b){qrest=splitText(s);nextChunk();return}
+      qrest=splitText(s);const tot=qrest.reduce((a,x)=>a+x.length,0);vox={shares:qrest.map(x=>b.duration*x.length/tot),end:0};
+      voxStart(b);nextChunk()});return}
   qrest=splitText(s);nextChunk()}
+function sayP(s){return new Promise(r=>{say(s);if(!s){r();return}sayDone=r})}   // come say(), ma si aspetta la fine del testo (e della voce)
 function finishText(){
   if(typer){clearInterval(typer);typer=null;txtEl.textContent=full;afterText();return}
-  if(qrest.length){clearTimeout(hideT);nextChunk()}}
+  if(qrest.length){clearTimeout(hideT);if(vox){voxStop();vox=null}nextChunk()}}
 /* un tocco sulla casella del testo: completa la frase, poi passa alla successiva o chiude la nuvola */
 dlgEl.addEventListener('pointerdown',e=>{e.stopPropagation();e.preventDefault();
   if(typer||qrest.length){finishText();return}
-  clearTimeout(hideT);dlgEl.classList.remove('on')});
+  closeSay()});
 
 /* ================= stato ================= */
 const S={scene:'start',stove:{wood:false,lit:false,litAt:-1000},inv:[],logs:0,logsLeft:3,candleLit:false,candleBath:false,bookOpen:false,bathSeen:false,keyTaken:false,binOpen:false,paperStage:0,dreamSeen:false};
@@ -1942,7 +1966,7 @@ document.addEventListener('wheel',e=>{if(e.ctrlKey)e.preventDefault()},{passive:
 document.addEventListener('visibilitychange',()=>{if(document.hidden){if(SILENT_EL)SILENT_EL.pause()}else if(AU.ctx)unmuteSilentSwitch();if(AU.ctx){if(document.hidden)AU.ctx.suspend();else AU.ctx.resume()}});
 
 /* aggiornamento automatico: se sul server c'e' una versione piu' nuova di questa, ricarica una volta (cancella anche le copie salvate) */
-const BUILD='12 nov 21:45';
+const BUILD='13 nov 07:00';
 {const ve=document.getElementById('ver');if(ve)ve.textContent='v. '+BUILD;
  if(location.protocol.startsWith('http')){
   fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{
@@ -1955,10 +1979,10 @@ if('serviceWorker' in navigator&&location.protocol.startsWith('http')&&!['localh
   /* quando una versione nuova prende il posto della vecchia, ricarico: subito se siamo alla schermata d'inizio, altrimenti appena ci si torna (cosi' non si perde la scena in corso) */
   navigator.serviceWorker.addEventListener('controllerchange',()=>{if(!had||window.__rl)return;window.__rl=1;if(cur===start)location.reload();else window.__pendingReload=true})}
 
-window.__dbg={prova,CHARS,storm,SOGNO_T,AU,thunder,setRain,sprTex,itemTex,bagno,openCU,giveItem,combine,refreshInv,takeLog,ITEMS,IDR,CU,AU,MU,S,drive,outside,inside,sogno,startDream,setScene,fade,go:n=>{fade.a=0;fade.to=0;setScene(n)},scenes};
+window.__dbg={say,sayP,VOX,prova,CHARS,storm,SOGNO_T,AU,thunder,setRain,sprTex,itemTex,bagno,openCU,giveItem,combine,refreshInv,takeLog,ITEMS,IDR,CU,AU,MU,S,drive,outside,inside,sogno,startDream,setScene,fade,go:n=>{fade.a=0;fade.to=0;setScene(n)},scenes};
 /* estensioni (js/*.js): ricevono le funzioni del gioco e possono registrare nuove scene */
 {const wrapEl=document.getElementById('wrap');
- const API={g,W,H,RS,R,txt,ell,clamp,lerp,hash,inPoly,nearOnPoly,Actor,loadChar,CHARS,say,setHint,fade,fadeTo,setScene,scenes,mkImg,AU,tone,nburst,sfx,setRain,setFire,musicStart,musicStop,cv,wrap:wrapEl,S,refreshInv,audioInit,
+ const API={g,W,H,RS,R,txt,ell,clamp,lerp,hash,inPoly,nearOnPoly,Actor,loadChar,CHARS,say,setHint,fade,fadeTo,setScene,scenes,mkImg,AU,tone,nburst,sfx,setRain,setFire,musicStart,musicStop,cv,wrap:wrapEl,S,refreshInv,audioInit,sayP,voxUrl,voxLoad,setEng,
    view:()=>{const r=cv.getBoundingClientRect();return {k:Math.min(r.width/DW,r.height/H),DW,OX}},now:()=>NOW};
  for(const f of (window.__ext||[])){try{f(API)}catch(e){console.error('estensione',e)}}}
 const boot=()=>{fade.a=1;fade.to=1;const dm=/[?&]demo/.test(location.search)&&scenes.demo,mg=(location.search.match(/[?&](tutti|uomini|donne|bambini|animali|furgone|ramones|capitolo2)(?=[&=#]|$)/)||[])[1],tt=mg&&scenes[mg];

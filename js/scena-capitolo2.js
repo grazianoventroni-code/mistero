@@ -13,10 +13,8 @@ const {registraScena,sfx}=M,{g,W,H,RS,R,ell,clamp,lerp,mkImg,CHARS,setHint,fadeT
 window.__C2=null;const C2={sveglio:false,specchio:false,pensato:false,visto:false,ascia:0,scavo:0,chiavi:false,tw:0};   // stato del capitolo 2
 window.__C2=C2;const sm=x=>{x=clamp(x,0,1);return x*x*(3-2*x)};
 const pausa=s=>new Promise(r=>setTimeout(r,s*1000));
-/* (12 nov) voce di Nick: le battute del capitolo 2 usano sempre la clip registrata (Piper, _strumenti/genera_voci.py), salvo "solo testo" o audio spento */
-function dn(s,p,testo,opz={}){const V=M.Voce,f=V.clips&&V.clips[p.nome+'|'+testo];
-  if(f&&V.modo!=='muto'&&!(A.AU&&A.AU.muted))opz={...opz,clip:M.VD+f};
-  return s.dici(p,testo,opz)}
+/* (13 nov) i testi di Nick stanno in basso, nello stesso riquadro del capitolo 1, con la sua voce (clip Kokoro, indice voci-r2) */
+function dn(s,p,testo,opz={}){return A.sayP(testo)}
 
 /* ---------------- 1. salotto di giorno (risveglio) ---------------- */
 const IMG_COAT=mkImg('img/emb/img_cappotto_sedia_r2.png'),IMG_HAT=mkImg('img/emb/img_cappello_sedia_r1.png');
@@ -54,8 +52,7 @@ registraScena({
       // (12 nov) su iPhone l'audio si sblocca solo con un tocco: se si arriva dal link diretto (?capitolo2) si aspetta il tocco
       while(!(A.AU.ctx&&A.AU.ctx.state==='running')){setHint('TOCCA PER INIZIARE',true);await pausa(.2)}
       setHint('');SAL.t0=s.t;
-      const V=M.Voce;if(V.clips)for(const k in V.clips)if(/^protagonista-(interno|esterno)\|/.test(k))M.caricaClip(M.VD+V.clips[k]);   // le clip di Nick si preparano subito
-      await pausa(3.2);
+            await pausa(3.2);
       for(const [a,b] of [['seat_sleep','seat_doze'],['seat_doze','seat_read_1']]){SAL.posa=a;SAL.posa2=b;
         for(let k=0;k<=20;k++){SAL.mix=k/20;await pausa(.05)}SAL.posa=b;SAL.posa2=null;SAL.mix=0;await pausa(.6)}
       C2.sveglio=true;
@@ -66,7 +63,7 @@ registraScena({
       await pausa(.4);sfx.alza();
       p.x=186;p.y=110;p.dir='W';p.visibile=true;
       for(let k=0;k<=12;k++){SAL.seduto=1-k/12;await pausa(.03)}
-      SAL.seduto=0;C2.pensato=true;await pausa(.8);
+      SAL.seduto=0;C2.pensato=true;document.getElementById('bHint').style.display='none';await pausa(.8);
       s.vaiScena('c2-esterno',{x:152,y:98,dir:'S'})})}
 });
 
@@ -143,8 +140,71 @@ registraScena({
       gg.save();gg.translate(68,97);const wx0=-Math.round(dw/2),wy0=-cy;gg.drawImage(IMG_WHEEL,wx0,wy0,dw,dh);gg.drawImage(IMG_WHEEL,0,hh-1,hw,1,wx0,wy0+dh,dw,70);gg.restore()}
     gg.globalAlpha=.10;R(0,0,W,H,'#ffe0a0');gg.globalAlpha=1},   // luce del giorno nell'abitacolo
   ambiente:{stanza:.4,vento:.05,pioggia:0,fuoco:0},
-  suggerimento:'CONTINUA…',
-  entra(s){s.occupato=true;setTimeout(()=>sfx.portaChiude(),300);setTimeout(()=>sfx.chiavi(),1400)}
+  suggerimento:'',
+  entra(s){   // dentro l'auto: Nick dice «Partiamo!», parte il motore, dissolvenza al nero e si passa alle strade di montagna
+    s.occupato=true;document.getElementById('bHint').style.display='none';setTimeout(()=>sfx.portaChiude(),300);setTimeout(()=>sfx.chiavi(),1300);
+    s.sequenza(async()=>{
+      await pausa(2.2);
+      const dit=A.sayP('Partiamo!');await pausa(.9);
+      for(let k=0;k<7;k++){A.tone(64+k*3,.2,'sawtooth',.05,80+k*4);await pausa(.17)}   // il motorino d'avviamento
+      A.setEng&&A.setEng(.7,true);await pausa(.5);await dit;
+      A.fadeTo(1,1.3,()=>{A.setScene('c2-strada');A.fadeTo(0,.9)});await pausa(2)})}
+});
+
+/* ---------------- 5. le prime due strade di montagna: l'auto sfreccia tra le curve (visto da dietro) ---------------- */
+/* Percorsi letti sulle immagini 240x120 (punti x,y della mezzeria della strada, dal basso verso l'orizzonte).
+   Per cambiare le strade basta cambiare questo elenco (altre: strada-lago, strada-arrivo-ponte). */
+const IMG_RETRO=mkImg('img/emb/auto164_retro.png'),IMG_R34=mkImg('img/emb/auto164_34retro_d69.png');
+const ROADS=[
+ {img:mkImg('img/scene/strada-autunno.png'),dur:7.2,y0:32,path:[[118,121],[165,116],[196,110],[205,103],[196,97],[172,94],[150,92],[138,88],[132,83],[138,79],[150,78],[158,80]]},
+ {img:mkImg('img/scene/strada-alpi.png'),dur:8,y0:30,path:[[168,121],[170,112],[160,105],[140,99],[128,92],[128,85],[142,81],[159,77],[160,70],[148,65],[137,61],[139,55],[132,51],[128,48]]}];
+const RT={fade:.9,gap:.45};   // dissolvenza iniziale e pausa nera tra le due strade
+const RP=window.__RP={fumo:[],foglie:[],acc:0,acc2:0,cur:-1,len:[],tot:[],h:0,hx:0};
+function lunghezze(r){let t=0;const L=[0];for(let i=1;i<r.path.length;i++){t+=Math.hypot(r.path[i][0]-r.path[i-1][0],(r.path[i][1]-r.path[i-1][1])*2);L.push(t)}return L}   // la y conta il doppio: prospettiva
+function su(r,u){const L=r.L||(r.L=lunghezze(r)),d=u*L[L.length-1];let i=1;while(i<L.length-1&&L[i]<d)i++;const f=(d-L[i-1])/Math.max(1e-6,L[i]-L[i-1]);
+  const a=r.path[i-1],b=r.path[i];return {x:lerp(a[0],b[0],f),y:lerp(a[1],b[1],f),dx:b[0]-a[0],dy:b[1]-a[1]}}
+const FOGLIE_COL=['#c8791e','#a8541a','#d9a52a','#8c4a1a','#e0b040'];
+registraScena({
+  id:'c2-strada',area:[[0,0],[2,0],[2,2],[0,2]],suggerimento:'',
+  ambiente:{stanza:0,vento:.35,pioggia:0,fuoco:0},
+  disegnaSfondo(gg,s){const k=RP.cur<0?0:RP.cur,im=ROADS[k].img;if(im.complete&&im.naturalWidth)gg.drawImage(im,0,0,W,H);else R(0,0,W,H,'#2a2018')},
+  entra(s){RP.fumo=[];RP.foglie=[];RP.cur=0;RP.h=0;RP.finito=false;s.occupato=true;document.getElementById('bHint').style.display='none';A.setEng&&A.setEng(.9,true)},
+  aggiorna(s,dt){
+    const t=s.t,seg=ROADS.map(r=>r.dur+RT.gap);let k=0,t0=0;while(k<ROADS.length-1&&t>=t0+seg[k]){t0+=seg[k];k++}
+    if(k!==RP.cur){RP.cur=k;RP.fumo=[];RP.foglie=[];RP.h=0}
+    const r=ROADS[k],tl=t-t0,fine=t>=seg.reduce((a,b)=>a+b,0)-RT.gap;
+    RP.k=k;RP.tl=tl;RP.corre=tl>=RT.fade*.4&&tl<r.dur;
+    if(fine&&!RP.finito){RP.finito=true;A.setEng&&A.setEng(0,false);s.hint();A.setHint('CONTINUA…',true)}
+    if(!RP.corre)return;
+    const u=clamp(tl/r.dur,0,1),P=su(r,clamp(u,0,.999)),Q=su(r,clamp(u+.035,0,.999));
+    const sc=clamp(.62*(P.y-r.y0)/(121-r.y0),.1,.62);
+    const ang=Math.atan2(Q.x-P.x,-(Q.y-P.y)*2.2);RP.h+=(ang-RP.h)*Math.min(1,dt*5);RP.sc=sc;RP.x=P.x;RP.y=P.y;RP.ang=RP.h;
+    if(A.AU.engO&&A.AU.ctx){A.AU.engO.frequency.setTargetAtTime(48+Math.abs(RP.h)*26+8*Math.sin(t*3),A.AU.ctx.currentTime,.15)}   // il motore sale in curva
+    // scarico: fumo che resta indietro (verso chi guarda) e si allarga
+    RP.acc+=dt*34;while(RP.acc>=1){RP.acc--;const tre=!!RP.tre,off=(tre?(RP.h<0?.30:-.30):-.27)*64*sc;   // il tubo di scarico e' in basso a sinistra (a destra se l'immagine e' specchiata)
+      RP.fumo.push({x:P.x+off,y:P.y-2.5*sc,vx:-3-Math.random()*6+Math.sin(t*1.3)*2,vy:6+Math.random()*10,t:0,r:.7+Math.random()*.6})}
+    // foglie secche sollevate dal vento dell'auto
+    RP.acc2+=dt*(r.dur>0?46:0);while(RP.acc2>=1){RP.acc2--;RP.foglie.push({x:P.x+(Math.random()-.5)*40*sc,y:P.y+Math.random()*3*sc,vx:(Math.random()-.5)*46,vy:-(18+Math.random()*44),t:0,life:.9+Math.random()*.9,c:FOGLIE_COL[Math.floor(Math.random()*FOGLIE_COL.length)],big:Math.random()<.4,z:sc})}
+    for(const f of RP.fumo){f.t+=dt;f.x+=f.vx*dt;f.y+=f.vy*dt;f.r+=dt*2.6}
+    for(const f of RP.foglie){f.t+=dt;f.x+=f.vx*dt;f.y+=f.vy*dt+f.t*30*dt;f.vy+=34*dt;f.vx*=1-dt*.8}
+    RP.fumo=RP.fumo.filter(f=>f.t<1.1);RP.foglie=RP.foglie.filter(f=>f.t<f.life)},
+  sopra(gg,s){
+    const t=s.t;if(RP.cur<0)return;
+    for(const f of RP.fumo){const a=.5*(1-f.t/1.1);if(a<=0)continue;gg.globalAlpha=a;const q=Math.round(f.r);R(Math.round(f.x-q/2),Math.round(f.y-q/2),Math.max(1,q),Math.max(1,q),f.t<.35?'#b8b8c0':'#8e8e98')}
+    gg.globalAlpha=1;
+    if(RP.corre&&RP.sc){   // auto: dritta da dietro, in curva di tre quarti (specchiata a sinistra); ombra e piccoli sobbalzi
+      const sc=RP.sc,h=RP.h;RP.tre=RP.tre?Math.abs(h)>.2:Math.abs(h)>.32;const tre=RP.tre,im=tre?IMG_R34:IMG_RETRO;   // isteresi: niente scatti tra le due viste
+      if(im.complete&&im.naturalWidth){
+        const w=im.naturalWidth*sc*(tre?.92:1),hh=im.naturalHeight*sc*(tre?.92:1),bump=Math.sin(t*23)*.35*sc+Math.sin(t*9.7)*.25*sc;
+        ell(RP.x,RP.y+.5,w*.46,Math.max(1,hh*.12),'#000',.38);
+        gg.save();gg.translate(Math.round(RP.x),Math.round(RP.y+bump));gg.rotate(clamp(h*.12,-.08,.08));
+        if(tre&&h<0)gg.scale(-1,1);
+        gg.imageSmoothingEnabled=false;gg.drawImage(im,Math.round(-w/2),Math.round(-hh),Math.round(w),Math.round(hh));gg.restore()}}
+    for(const f of RP.foglie){const a=1-f.t/f.life;if(a<=0)continue;gg.globalAlpha=Math.min(1,a*1.6);R(Math.round(f.x),Math.round(f.y),f.big?2:1,1,f.c)}
+    gg.globalAlpha=1;
+    // dissolvenze: dal nero all'inizio di ogni strada, al nero alla fine
+    const r=ROADS[RP.cur],tl=RP.tl||0;let a=0;if(tl<RT.fade)a=1-sm(tl/RT.fade);else if(tl>r.dur-.5)a=sm((tl-(r.dur-.5))/.5);if(!RP.corre&&tl>=r.dur)a=1;
+    if(a>0){gg.globalAlpha=a;R(0,0,W,H,'#000');gg.globalAlpha=1}}
 });
 
 /* da fine capitolo 1 (sogno) al capitolo 2 */

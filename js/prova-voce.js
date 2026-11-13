@@ -10,11 +10,11 @@ const M=A.motore,AU=A.AU,TESTO='protagonista-interno|Che sonno… Dove sono?… 
 const d=document.createElement('div');
 d.style.cssText='position:fixed;inset:0;z-index:999;background:#0b0d12;color:#e8dfc0;font:15px/1.35 -apple-system,Helvetica,sans-serif;padding:14px 16px;overflow:auto';
 d.innerHTML='<b style="font-size:17px">PROVA DELLE VOCI</b><br>Tocca i pulsanti uno alla volta e dimmi cosa senti e cosa compare qui sotto.<br><br>'+
-  '<button id="pv1">1 · VOCE DI NICK (come nel gioco)</button><br><br><button id="pv4">4 · VOCE DI NICK, FORMATO VECCHIO (16 kHz)</button><br><br><button id="pv2">2 · VOCE DI NICK (lettore audio)</button><br><br><button id="pv3">3 · BIP DI PROVA</button>'+
+  '<button id="pv1">1 · VOCE DI NICK (come nel gioco)</button><br><br><button id="pv4">4 · VOCE DI NICK, FORMATO VECCHIO (16 kHz)</button><br><br><button id="pv5">5 · PRETE: FILE ORIGINALE APPROVATO (16 kHz)</button><br><br><button id="pv6">6 · PRETE: FILE ATTUALE DEL GIOCO (44,1 kHz)</button><br><br><button id="pv2">2 · VOCE DI NICK (lettore audio)</button><br><br><button id="pv3">3 · BIP DI PROVA</button>'+
   '<pre id="pvlog" style="white-space:pre-wrap;margin-top:14px;font:13px/1.4 Menlo,monospace;color:#9fd6d0"></pre>';
 document.body.appendChild(d);
 for(const b of d.querySelectorAll('button'))b.style.cssText='font:inherit;font-weight:600;padding:12px 16px;background:#1c2230;color:#e8dfc0;border:2px solid #4a5a70;border-radius:4px;width:100%;max-width:420px;text-align:left';
-const SCRIPT='prova 12 nov 21:45';
+const SCRIPT='prova 13 nov 07:00';
 const log=t=>{d.querySelector('#pvlog').textContent+=t+'\n'};
 const stato=()=>{const V=M&&M.Voce,c=AU.ctx;
   log('script: '+SCRIPT+' | motore voci: '+(M&&M.VD)+' | versione: '+((document.getElementById('ver')||{}).textContent||'?')+' | audio: '+(c?c.state+' '+c.sampleRate+' Hz':'non ancora creato')+' | muto: '+!!AU.muted+' | modo parlato: '+(V?V.modo:'?')+
@@ -30,5 +30,7 @@ d.querySelector('#pv3').onpointerup=e=>{e.stopPropagation();A.audioInit&&A.audio
   stato();try{A.tone(440,.5,'sine',.25);log('3: bip inviato')}catch(er){log('3: errore '+er.message)}};
 d.querySelector('#pv4').onpointerup=e=>{e.stopPropagation();A.audioInit&&A.audioInit();const c=AU.ctx;if(c&&c.state==='suspended')c.resume();const u='audio/prova-16k.mp3';
   M.caricaClip(u).then(b=>{if(!b){log('4: ERRORE nel decodificare il formato vecchio');return}log('4: formato vecchio decodificato, '+b.duration.toFixed(1)+' s; parte ora');M.suonaClip(u)})};
+for(const [id,u] of [['pv5','audio/prova-prete-originale.mp3'],['pv6','audio/prova-prete-convertita.mp3']])d.querySelector('#'+id).onpointerup=e=>{e.stopPropagation();A.audioInit&&A.audioInit();const c=AU.ctx;if(c&&c.state==='suspended')c.resume();
+  M.caricaClip(u).then(b=>{if(!b){log(id+': ERRORE nel decodificare');return}log(id+': parte ('+b.duration.toFixed(1)+' s)');M.suonaClip(u)})};
 stato();
 });
