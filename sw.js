@@ -1,7 +1,7 @@
 // Service worker: il gioco funziona offline.
 // - i file del gioco (immagini, audio, icone) sono salvati alla prima apertura (sempre scaricati freschi: cache reload) e serviti dalla memoria del telefono;
 // - la pagina, gli script (.js), gli indici (.json) e questo file si chiedono prima alla rete (cosi' gli aggiornamenti arrivano subito) e, senza rete, si usa la copia salvata.
-const VERSION = "15 nov 01:00";
+const VERSION = "15 nov 02:00";
 const CACHE = "mistero-" + VERSION;
 const FILES = [
   "./",
@@ -665,7 +665,7 @@ const FILES = [
   "js/scena-ramones.js",
   "js/scena-tutti.js",
   "manifest.webmanifest",
-  "video/guida-alpina_r5-curve.json"
+  "video/guida-alpina_r6-curve.json"
 ];
 // si cerca SOLO nella cache di questa versione: caches.match() senza nome guarda anche le vecchie e serviva immagini superate
 const cerca = (r) => caches.open(CACHE).then((c) => c.match(r, { ignoreSearch: true }));

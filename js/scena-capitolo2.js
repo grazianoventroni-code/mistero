@@ -19,7 +19,7 @@ function dn(s,p,testo,opz={}){return A.sayP(testo)}
 /* ---------------- 1. salotto di giorno (risveglio) ---------------- */
 const IMG_COAT=mkImg('img/emb/img_cappotto_sedia_r2.png'),IMG_HAT=mkImg('img/emb/img_cappello_sedia_r1.png');
 const COAT={x:37,y:61,hx:54.5,hy:73.8};   // stessa posizione della notte (COAT_CH)
-const SEAT_X=196,SEAT_Y=109,SEAT_K=.78,SC=2.05;   // come nel sogno: Nick seduto sul divano
+const SEAT_X=204,SEAT_Y=107,SEAT_K=.78,SC=2.05;   // come nel sogno: Nick seduto sul divano
 function frameNick(c,name,x,yb,flip,alpha){   // disegna una posa dell'atlante del protagonista (interno) come nel sogno
   const ch=CHARS['protagonista-interno'],fr=ch&&ch.fr&&ch.fr[name];if(!fr||alpha<=0)return;
   const s=SC*SEAT_K/RS,dw=ch.w*s,dh=ch.h*s,ax=ch.ax*s;
@@ -146,10 +146,10 @@ registraScena({
 });
 
 /* ---------------- 5. filmato della guida sulla strada alpina (14 nov) ----------------
-   Non e' piu' una scena disegnata dal gioco: e' un filmato (video/guida-alpina_r5.mp4, 10 s, H.264) fatto con _strumenti/film_guida.py
+   Non e' piu' una scena disegnata dal gioco: e' un filmato (video/guida-alpina_r6.mp4, 10 s, H.264) fatto con _strumenti/film_guida.py
    sul dipinto strada-alpi.png: l'auto percorre la strada, la camera la segue. Si sovrappone all'area di gioco con la riproduzione nativa
    del telefono (muto, inline); il motore si sente col Web Audio del gioco. Se il filmato non parte si passa subito a «CONTINUA…». */
-const FILM_SRC='video/guida-alpina_r5.mp4';
+const FILM_SRC='video/guida-alpina_r6.mp4';
 const FILM_CURVE=[0.03, 0.09, 0.09, 0.09, 0.09, 0.09, 0.28, 0.3, 0.24, 0.36, 0.5, 0.48, 0.17, 0.3, 0.79, 1.21, 1.06, 0.34, 0.48, 1.2, 1.82, 1.96, 1.24, 0.23, 0.08, 0.86, 1.85, 0.83, 0.54, 2.08, 6.72, 23.71, 5.1, 4.03, 3.98, 3.98, 3.98, 3.98];   // quanto la strada gira, ogni 8 fotogrammi: guida il suono del motore
 const FILM={el:null,partito:false,finito:false,t0:0};
 function filmEl(){
