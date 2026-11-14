@@ -24,7 +24,7 @@ function frameNick(c,name,x,yb,flip,alpha){   // disegna una posa dell'atlante d
   const ch=CHARS['protagonista-interno'],fr=ch&&ch.fr&&ch.fr[name];if(!fr||alpha<=0)return;
   const s=SC*SEAT_K/RS,dw=ch.w*s,dh=ch.h*s,ax=ch.ax*s;
   c.save();c.globalAlpha=alpha;c.translate(Math.round(x*RS)/RS,yb);c.scale(flip?-1:1,1);c.drawImage(ch.img,fr.x,fr.y,ch.w,ch.h,-ax,-dh,dw,dh);c.restore()}
-const SAL={t0:1e9,seduto:1,posa:'seat_sleep',posa2:null,mix:0};   // figura seduta disegnata a mano finche' Nick non si alza
+const SAL={t0:1e9,seduto:1,posa:'seat_nb_sleep',posa2:null,mix:0};   // figura seduta disegnata a mano finche' Nick non si alza
 
 registraScena({
   id:'capitolo2',inventario:true,sfondo:'img/scene/giorno-baita-salotto.png',
@@ -46,14 +46,14 @@ registraScena({
   entra(s){   // (12 nov, seconda versione) niente bagno: si sveglia seduto sul divano, ripensa al sogno, si alza e si va fuori
     const p=s.giocatore;
     if(A.S&&A.refreshInv){A.S.inv=['book'];A.S.bookOpen=true;A.refreshInv()}   // il libro e' nell'inventario
-    p.visibile=false;p.x=SEAT_X-6;p.y=SEAT_Y-1;p.dir='W';SAL.seduto=1;SAL.posa='seat_sleep';SAL.posa2=null;SAL.mix=0;   // la nuvoletta parte dalla testa di Nick seduto
+    p.visibile=false;p.x=SEAT_X-6;p.y=SEAT_Y-1;p.dir='W';SAL.seduto=1;SAL.posa='seat_nb_sleep';SAL.posa2=null;SAL.mix=0;   // la nuvoletta parte dalla testa di Nick seduto
     SAL.t0=1e9;
     s.sequenza(async()=>{
       // (12 nov) su iPhone l'audio si sblocca solo con un tocco: se si arriva dal link diretto (?capitolo2) si aspetta il tocco
       while(!(A.AU.ctx&&A.AU.ctx.state==='running')){setHint('TOCCA PER INIZIARE',true);await pausa(.2)}
       setHint('');SAL.t0=s.t;
             await pausa(3.2);
-      for(const [a,b] of [['seat_sleep','seat_doze'],['seat_doze','seat_read_1']]){SAL.posa=a;SAL.posa2=b;
+      for(const [a,b] of [['seat_nb_sleep','seat_nb_doze'],['seat_nb_doze','seat_nb_wake']]){SAL.posa=a;SAL.posa2=b;
         for(let k=0;k<=20;k++){SAL.mix=k/20;await pausa(.05)}SAL.posa=b;SAL.posa2=null;SAL.mix=0;await pausa(.6)}
       C2.sveglio=true;
       for(const t of ['Che sonno… Dove sono?… Ah, la baita.','Che sogno strano… Era tutto così confuso.','Cos\'erano quei posti?',
@@ -69,7 +69,7 @@ registraScena({
 
 /* ---------------- 3. esterno di giorno: le chiavi nella pozzanghera ---------------- */
 const BG_EST=mkImg('img/scene/giorno-baita-esterno.png'),BG_EST2=mkImg('img/scene/giorno-baita-esterno-senza-ascia.png');
-const IMG_ASCIA=mkImg('img/emb/ascia_r1.png');   // 18x12, tolta dallo stesso sfondo (_strumenti/c2_ascia.py)
+const IMG_ASCIA=mkImg('img/emb/ascia_r2.png');   // 18x14, dal foglio ascia-sola del 14 nov (prima 18x12 tolta dallo sfondo) (_strumenti/c2_ascia.py)
 const POZ={x:166,y:107},CAR_X=6;   // luccichio nella pozzanghera grande; auto come di notte (CAR_X=6, base 112)
 function disegnaAscia(gg,hx,hy,ang,flip){   // l'ascia e' presa per il fondo del manico (in alto a destra nello sprite: 17,1)
   if(!(IMG_ASCIA.complete&&IMG_ASCIA.naturalWidth))return;
@@ -152,10 +152,10 @@ registraScena({
 });
 
 /* ---------------- 5. filmato della guida sulla strada alpina (14 nov) ----------------
-   Non e' piu' una scena disegnata dal gioco: e' un filmato (video/guida-alpina_r3.mp4, 10 s, H.264) fatto con _strumenti/film_guida.py
+   Non e' piu' una scena disegnata dal gioco: e' un filmato (video/guida-alpina_r4.mp4, 10 s, H.264) fatto con _strumenti/film_guida.py
    sul dipinto strada-alpi.png: l'auto percorre la strada, la camera la segue. Si sovrappone all'area di gioco con la riproduzione nativa
    del telefono (muto, inline); il motore si sente col Web Audio del gioco. Se il filmato non parte si passa subito a «CONTINUA…». */
-const FILM_SRC='video/guida-alpina_r3.mp4';
+const FILM_SRC='video/guida-alpina_r4.mp4';
 const FILM_CURVE=[0.03, 0.09, 0.09, 0.09, 0.09, 0.09, 0.28, 0.3, 0.24, 0.36, 0.5, 0.48, 0.17, 0.3, 0.79, 1.21, 1.06, 0.34, 0.48, 1.2, 1.82, 1.96, 1.24, 0.23, 0.08, 0.86, 1.85, 0.83, 0.54, 2.08, 6.72, 23.71, 5.1, 4.03, 3.98, 3.98, 3.98, 3.98];   // quanto la strada gira, ogni 8 fotogrammi: guida il suono del motore
 const FILM={el:null,partito:false,finito:false,t0:0};
 function filmEl(){

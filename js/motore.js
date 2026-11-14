@@ -183,7 +183,7 @@ function blip(p,ch,altezza,vol){
   o.connect(fl);fl.connect(gn);gn.connect(AU.master);o.start(t);o.stop(t+d+.02);
   if(vo){const o2=c.createOscillator(),g2=c.createGain(),f2=c.createBiquadFilter();o2.type=p.forma;o2.frequency.value=o.frequency.value;f2.type='bandpass';f2.Q.value=3;f2.frequency.value=vo[1];
     g2.gain.setValueAtTime(.0001,t);g2.gain.linearRampToValueAtTime(vol*.5,t+.008);g2.gain.exponentialRampToValueAtTime(.0001,t+d);o2.connect(f2);f2.connect(g2);g2.connect(AU.master);o2.start(t);o2.stop(t+d+.02)}}
-const Voce={modo:(()=>{try{return localStorage.getItem('mistero-voce')||'blip'}catch(e){return'blip'}})(),voci:null,
+const Voce={modo:'muto',   /* (14 nov) niente voci: solo testi. Il modo e' sempre 'muto' (SOLO TESTO) e il pulsante del parlato non c'e' piu' */voci:null,
   scegli(sx){ // sceglie la voce italiana del telefono adatta: maschile o femminile
     if(!window.speechSynthesis)return null;const vs=speechSynthesis.getVoices().filter(v=>/^it/i.test(v.lang));if(!vs.length)return null;
     const M=['Luca','Cosimo','Giorgio','Diego','Marco','Paolo','Male'],F=['Alice','Federica','Paola','Elsa','Emma','Isabella','Google italiano','Female'];
@@ -193,7 +193,7 @@ const Voce={modo:(()=>{try{return localStorage.getItem('mistero-voce')||'blip'}c
   disponibile(){return !!window.speechSynthesis&&speechSynthesis.getVoices().some(v=>/^it/i.test(v.lang))},
   imposta(m){this.modo=m;try{localStorage.setItem('mistero-voce',m)}catch(e){}if(window.speechSynthesis&&m!=='voce')speechSynthesis.cancel()}};
 const VD=/[?&]voci=2/.test(location.search)?'audio/voci2/':'audio/voci-r2/';   // ?voci=2 = clip "pulite" (prova). (12 nov) voci-r2: le stesse clip in MP3 a 44,1 kHz (quelle a 16 kHz su iPhone non si sentivano)
-fetch(VD+'indice.json',{cache:'no-cache'}).then(r=>r.ok?r.json():null).then(j=>{Voce.clips=j}).catch(()=>{});
+/* (14 nov) indice delle clip non piu' caricato: voci tolte */
 /* (12 nov) clip vocali con Web Audio, non con <audio>: su iPhone un <audio> avviato da un timer (non dal tocco) resta muto,
    mentre il contesto Web Audio, sbloccato dal primo tocco, suona anche con il telefono in modalita' silenziosa. Stessa interfaccia minima di <audio>. */
 const CLIPBUF={};
@@ -295,13 +295,7 @@ const Dialogo={
     this.cor=null;this.el.classList.remove('on');c.r.res(true);this.prossima()},
   azzera(){while(this.coda.length)this.coda.pop().res(false);if(this.cor){const c=this.cor;if(c.att){c.att.talking=false;c.att.bocca=1}if(c.clip)c.clip.pause();c.r.res(false);this.cor=null}if(this.el)this.el.classList.remove('on');if(this.scelteEl){this.scelteEl.remove();this.scelteEl=null}if(window.speechSynthesis)speechSynthesis.cancel()}};
 
-/* pulsante voce: BLIP (voci a suoni), VOCE (sintesi italiana del telefono), MUTO (solo testo) */
-(function(){const bar=document.getElementById('bar');if(!bar||document.getElementById('bVoce'))return;
-  const b=document.createElement('button');b.id='bVoce';const et={blip:'♬',voce:'🗣',muto:'✎'};
-  const agg=()=>{b.textContent=et[Voce.modo]||'♬';b.title='Parlato: '+Voce.modo};agg();
-  b.onclick=e=>{e.stopPropagation();const ordine=['blip','voce','muto'].filter(m=>m!=='voce'||Voce.disponibile()||!window.speechSynthesis||true);
-    const i=ordine.indexOf(Voce.modo);Voce.imposta(ordine[(i+1)%ordine.length]);agg();setHint('PARLATO: '+({blip:'VOCI A SUONI',voce:'VOCE ITALIANA',muto:'SOLO TESTO'})[Voce.modo]);setTimeout(()=>setHint(''),1800)};
-  bar.appendChild(b)})();
+/* (14 nov) pulsante del parlato tolto: il gioco ha solo testi */
 
 /* ============================================================ 5. SCENA CAMMINABILE */
 class Scena{
