@@ -7,6 +7,8 @@
 "use strict";
 const {Scena,Pers,Voce}=A.motore,{R,txt,AU,clamp,hash}=A;
 
+/* (14 nov) le voci parlate sono state tolte dal gioco, ma le grida dei Ramones restano come EFFETTI SONORI (audio/effetti) */
+let CLIPS=null;fetch('audio/effetti/indice.json',{cache:'no-cache'}).then(r=>r.ok?r.json():null).then(j=>{CLIPS=j}).catch(()=>{});
 const NOMI=['ramone-1','ramone-2','ramone-3','ramone-4'];
 const FRASI=['Hey!','Ho!',"Let's go!"];
 
@@ -16,8 +18,8 @@ class Ramone extends Pers{
   grida(testo){
     this.testo=testo;this.testoFino=A.now()+.95;this.parlaFino=A.now()+.55+hash(this.idx+testo.length)*.25;
     if(testo==="Let's go!")this.pugno=A.now()+.9;
-    const f=Voce.clips&&Voce.clips[this.nome+'|'+testo];
-    if(f&&!AU.muted){try{this.clip=A.motore.suonaClip(A.motore.VD+f)}catch(e){}}}   // (12 nov) Web Audio: si sente anche su iPhone
+    const f=CLIPS&&CLIPS[this.nome+'|'+testo];
+    if(f&&!AU.muted){try{this.clip=A.motore.suonaClip('audio/effetti/'+f)}catch(e){}}}   // (12 nov) Web Audio: si sente anche su iPhone
   update(dt){
     super.update(dt);const t=A.now();
     this.tt-=dt;if(this.tt<=0){this.tt=2.2+hash(t+this.idx)*3.5;this.sguardo=t+.9+hash(t*3+this.idx)*.8;this.verso=hash(t*5+this.idx)<.5?'idle_S_2':'idle_S_4'}

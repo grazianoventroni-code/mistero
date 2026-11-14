@@ -1,11 +1,24 @@
 // Service worker: il gioco funziona offline.
 // - i file del gioco (immagini, audio, icone) sono salvati alla prima apertura (sempre scaricati freschi: cache reload) e serviti dalla memoria del telefono;
 // - la pagina, gli script (.js), gli indici (.json) e questo file si chiedono prima alla rete (cosi' gli aggiornamenti arrivano subito) e, senza rete, si usa la copia salvata.
-const VERSION = "14 nov 22:00";
+const VERSION = "14 nov 23:00";
 const CACHE = "mistero-" + VERSION;
 const FILES = [
   "./",
   "apple-touch-icon.png",
+  "audio/effetti/indice.json",
+  "audio/effetti/ramone-1-057be5bb.mp3",
+  "audio/effetti/ramone-1-3e2102d6.mp3",
+  "audio/effetti/ramone-1-bcbd2ee6.mp3",
+  "audio/effetti/ramone-2-7d6a6b61.mp3",
+  "audio/effetti/ramone-2-8375611d.mp3",
+  "audio/effetti/ramone-2-a22f7a56.mp3",
+  "audio/effetti/ramone-3-4f8ecbe5.mp3",
+  "audio/effetti/ramone-3-8ae38782.mp3",
+  "audio/effetti/ramone-3-a77f9d7d.mp3",
+  "audio/effetti/ramone-4-2a609121.mp3",
+  "audio/effetti/ramone-4-5fb96a29.mp3",
+  "audio/effetti/ramone-4-a24128cf.mp3",
   "audio/prova-16k.mp3",
   "audio/temporale.wav",
   "audio/tuoni.mp3",
