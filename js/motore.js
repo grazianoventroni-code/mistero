@@ -313,7 +313,19 @@ class Scena{
     this.sfondo=cfg.sfondo?mkImg(cfg.sfondo):null;
     this.oggetti=[];this.attori={};this.giocatore=null;this.occupato=false;this.t=0;this.hover=null;this.ultimoTocco=0;this.debug=/[?&]debug/.test(location.search);
     this.superfici=cfg.superfici||[];this.sup0=cfg.superficie||'legno'}
-  scala(y){const c=this.cfg;if(c.scala)return c.scala(y);const p=c.prof||[94,117,1.45,1.9];return lerp(p[2],p[3],clamp((y-p[0])/(p[1]-p[0]),0,1))}
+  /* (15 nov) la scala viene dalla PROSPETTIVA (vedi PROSP in index.html): px/m = (y-orizzonte)/1,6. Riferimento della scena: cfg.rif=[yr,sr] ("in yr un uomo ha scala sr"),
+     oppure, per le scene vecchie, il punto medio di cfg.prof. cfg.orizzonte (quota schermo dell'orizzonte) puo' essere scritto a mano se si legge dal dipinto. */
+  prospettiva(){const c=this.cfg;if(this._pr)return this._pr;let yr,sr;if(c.rif){yr=c.rif[0];sr=c.rif[1]}else{const p=c.prof||[94,117,1.45,1.9];yr=(p[0]+p[1])/2;sr=(p[2]+p[3])/2}
+    const yh=c.orizzonte!==undefined?c.orizzonte:PROSP.orizzonte(yr,sr);return this._pr={yh,yr,sr}}
+  scala(y){const c=this.cfg;if(c.scala)return c.scala(y);const q=this.prospettiva();return PROSP.scala(q.yh,q.yr,q.sr,y)}
+  perM(y){const q=this.prospettiva();return PROSP.perM(q.yh,q.yr,q.sr,y)}   // pixel logici per metro a quella quota del pavimento
+  disegnaGriglia(){   // (15 nov) ?griglia: orizzonte, linee prospettiche verso il punto di fuga, linee del pavimento a distanze fisse e un uomo di 1,75 m in tre punti: serve a controllare le proporzioni
+    const q=this.prospettiva(),vx=this.cfg.puntoDiFuga!==undefined?this.cfg.puntoDiFuga:W/2,HC=PROSP.HC;g.save();g.globalAlpha=.8;
+    R(0,Math.round(q.yh),W,1,'#00ffff');txt('ORIZZONTE y='+q.yh.toFixed(1),2,Math.max(1,Math.round(q.yh)-7),'#00ffff');
+    for(const ppm of [40,30,24,19,15,12,9]){const y=q.yh+ppm*HC;if(y>0&&y<H){g.globalAlpha=.45;R(0,Math.round(y),W,1,'#ffe060');txt(ppm+'px/m',W-30,Math.round(y)-6,'#ffe060')}}
+    g.globalAlpha=.4;for(let x=-120;x<=W+120;x+=30)line2(vx,q.yh,x,H)
+    g.globalAlpha=.9;for(const y of [q.yr-9,q.yr,q.yr+9]){const h=1.75*(y-q.yh)/HC,x=W*.08+(y-q.yr+9)*8;R(Math.round(x),Math.round(y-h),1,Math.round(h),'#ff60ff');R(Math.round(x)-2,Math.round(y-h),5,1,'#ff60ff');R(Math.round(x)-2,Math.round(y),5,1,'#ff60ff')}
+    g.restore()}
   superficieIn(x,y){for(const s of this.superfici)if(inPoly(s.poly,x,y))return s.tipo;return this.sup0}
   passo(p){const a=this.cfg.audioPassi;if(a===false)return;const sup=this.superficieIn(p.x,p.y);
     const vicino=this.giocatore?Math.hypot(p.x-this.giocatore.x,p.y-this.giocatore.y):0;
@@ -354,7 +366,8 @@ class Scena{
     if(this.cfg.sopra)this.cfg.sopra(g,this);
     // evidenzia il punto toccabile sotto il dito / il mouse
     const h=this.hover;if(h&&!this.occupato){g.globalAlpha=.5+.25*Math.sin(now()*8);const r=h.rect;if(r){R(r[0],r[1],r[2],1,'#e0a040');R(r[0],r[1]+r[3]-1,r[2],1,'#e0a040');R(r[0],r[1],1,r[3],'#e0a040');R(r[0]+r[2]-1,r[1],1,r[3],'#e0a040')}g.globalAlpha=1}
-    if(this.debug)this.disegnaDebug()}
+    if(this.debug)this.disegnaDebug();
+    if(/[?&]griglia/.test(location.search))this.disegnaGriglia()}
   disegnaDebug(){const m=this.mappa;g.globalAlpha=.35;
     for(let j=0;j<m.ny;j++)for(let i=0;i<m.nx;i++)if(m.gr[j*m.nx+i])R(m.x0+i*m.cell,m.y0+j*m.cell,1,1,'#40ff80');
     for(const h of this.cfg.punti||[])if(h.rect)R(h.rect[0],h.rect[1],h.rect[2],h.rect[3],'#ff4080');

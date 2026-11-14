@@ -10,7 +10,7 @@
 <meta name="theme-color" content="#000000">
 <script>/* (12 nov) pulizia: a ogni versione nuova si tolgono service worker e memoria vecchi e si ricarica una volta.
    Un service worker rimasto da versioni precedenti serviva script e indice delle voci superati (le voci non si sentivano). BUILD0 lo aggiorna pubblica.py. */
-(function(){var BUILD0='15 nov 02:00';try{if(!('serviceWorker' in navigator)||localStorage.getItem('mistero-build')===BUILD0)return;localStorage.setItem('mistero-build',BUILD0);window.__pulizia=1;
+(function(){var BUILD0='15 nov 04:00';try{if(!('serviceWorker' in navigator)||localStorage.getItem('mistero-build')===BUILD0)return;localStorage.setItem('mistero-build',BUILD0);window.__pulizia=1;
  var t=setTimeout(function(){location.reload()},4000);
  Promise.all([navigator.serviceWorker.getRegistrations().then(function(rs){return Promise.all(rs.map(function(r){return r.unregister()}))}),
    window.caches?caches.keys().then(function(ks){return Promise.all(ks.map(function(k){return caches.delete(k)}))}):0]).then(function(){clearTimeout(t);location.reload()},function(){clearTimeout(t);location.reload()})}catch(e){}})();</script>
@@ -79,11 +79,11 @@ button:active{background:#1a2438;transform:translate(1px,1px)}
 <div id="probe" style="position:fixed;visibility:hidden;pointer-events:none;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)"></div>
 <div id="rot"><i></i><div>RUOTA IL TELEFONO<br>IN ORIZZONTALE</div></div>
 
-<script src="js/motore.js?v=15nov0200"></script>
-<script src="js/scena-demo.js?v=15nov0200"></script>
-<script src="js/scena-tutti.js?v=15nov0200"></script>
-<script src="js/scena-ramones.js?v=15nov0200"></script>
-<script src="js/scena-capitolo2.js?v=15nov0200"></script>
+<script src="js/motore.js?v=15nov0400"></script>
+<script src="js/scena-demo.js?v=15nov0400"></script>
+<script src="js/scena-tutti.js?v=15nov0400"></script>
+<script src="js/scena-ramones.js?v=15nov0400"></script>
+<script src="js/scena-capitolo2.js?v=15nov0400"></script>
 <script>
 (()=>{
 "use strict";
@@ -369,12 +369,12 @@ function voxStart(b){const c=AU.ctx;if(c.state==='suspended')c.resume();const sr
 /* ---- (14 nov) VERSI DEI PERSONAGGI: sforzo, sorpresa, sospiri, dubbi, respiri, affanni. Interiezioni brevissime (Eh! Uh! Ah… Hm…) e respiri, non parlato recitato.
    Clip in audio/fiato (indice.json: {personaggio:{tipo:[file]}}), generate da _strumenti/genera_versi.py. Suonano solo se l'audio e' sbloccato e non e' muto. */
 const FIATO={idx:null,ult:0,ALIAS:{'protagonista-esterno':'protagonista-interno','anna-senza-giacca':'anna',gemella2:'gemella'}};
-fetch('audio/fiato/indice.json',{cache:'no-cache'}).then(r=>r.ok?r.json():null).then(j=>{FIATO.idx=j}).catch(()=>{});
+fetch('audio/fiato-r2/indice.json',{cache:'no-cache'}).then(r=>r.ok?r.json():null).then(j=>{FIATO.idx=j}).catch(()=>{});
 FIATO.suona=function(nome,tipo,prob=1,vol=.9,ritardo=0){
   if(!this.idx||!AU.ctx||AU.muted||AU.ctx.state!=='running'||Math.random()>prob)return;
   const d=this.idx[this.ALIAS[nome]||nome],l=d&&d[tipo];if(!l||!l.length)return;
   const now=performance.now();if(now-this.ult<600)return;this.ult=now;
-  const u='audio/fiato/'+l[Math.floor(Math.random()*l.length)];
+  const u='audio/fiato-r2/'+l[Math.floor(Math.random()*l.length)];
   voxLoad(u).then(b=>{if(!b)return;const c=AU.ctx,sr=c.createBufferSource(),gn=c.createGain();sr.buffer=b;gn.gain.value=vol;sr.connect(gn);gn.connect(AU.master);sr.start(c.currentTime+.03+ritardo)})};
 window.FIATO=FIATO;
 let vox=null,sayDone=null;
@@ -1890,7 +1890,19 @@ class Actor{
 
 /* ================= scena di prova (apri il gioco con ?prova) ================= */
 const PV_AREA=[[26,94],[222,94],[238,117],[4,117]];
-const pvScale=y=>lerp(1.45,1.9,clamp((y-94)/(117-94),0,1));
+/* ============ (15 nov) PROSPETTIVA: UNICA REGOLA per la scala di personaggi e oggetti in tutto il gioco ============
+   Modello: macchina da presa orizzontale (pinhole) a un'altezza HC dal suolo. Per un punto del pavimento che appare alla quota schermo y sotto l'orizzonte yh:
+       px per metro (y) = (y - yh) / HC            (la scala cresce in modo lineare scendendo verso il basso, e vale 0 sull'orizzonte)
+   Un adulto (1,75 m) occupa quindi 1,75*(y-yh)/HC px; l'atlante degli adulti e' alto 130 px = 32,5 px logici a scala 1, cioe' PXM = 18,6 px/m a scala 1.
+   L'orizzonte passa all'altezza degli occhi di chi sta in piedi (HC = 1,6 m): cosi' tutte le teste degli uomini in piedi toccano la stessa linea dell'orizzonte,
+   qualunque sia la distanza. Ogni scena indica un punto di riferimento (yr, sr) = "in yr un uomo ha scala sr" e ne deriva l'orizzonte; oppure da' direttamente
+   `orizzonte`. Oggetti reali (auto 4,55 x 1,45 m, porte 2,0 m, divano 0,9 m...) si dimensionano con gli stessi px/m: PROSP.perM(). */
+const PROSP={HC:1.6,PXM:18.6,
+  orizzonte(yr,sr){return yr-this.HC*this.PXM*sr},
+  scala(yh,yr,sr,y){return sr*Math.max(2,y-yh)/(yr-yh)},
+  perM(yh,yr,sr,y){return this.scala(yh,yr,sr,y)*this.PXM}};
+window.PROSP=PROSP;
+const pvScale=y=>PROSP.scala(PROSP.orizzonte(105.5,1.675),105.5,1.675,y);   // scena di prova: riferimento al centro dell'area (era lerp(1,45;1,9) lineare senza orizzonte)
 const prova={actors:[],sel:0,ready:false,lastTap:0,fps:0,fn:0,ft:0,
   enter(){
     document.getElementById('bHint').style.display='none';say('');this.ready=false;
@@ -1976,7 +1988,7 @@ document.addEventListener('wheel',e=>{if(e.ctrlKey)e.preventDefault()},{passive:
 document.addEventListener('visibilitychange',()=>{if(document.hidden){if(SILENT_EL)SILENT_EL.pause()}else if(AU.ctx)unmuteSilentSwitch();if(AU.ctx){if(document.hidden)AU.ctx.suspend();else AU.ctx.resume()}});
 
 /* aggiornamento automatico: se sul server c'e' una versione piu' nuova di questa, ricarica una volta (cancella anche le copie salvate) */
-const BUILD='15 nov 02:00';
+const BUILD='15 nov 04:00';
 {const ve=document.getElementById('ver');if(ve)ve.textContent='v. '+BUILD;
  if(location.protocol.startsWith('http')){
   fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{

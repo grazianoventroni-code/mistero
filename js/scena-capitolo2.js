@@ -24,6 +24,19 @@ function frameNick(c,name,x,yb,flip,alpha){   // disegna una posa dell'atlante d
   const ch=CHARS['protagonista-interno'],fr=ch&&ch.fr&&ch.fr[name];if(!fr||alpha<=0)return;
   const s=SC*SEAT_K/RS,dw=ch.w*s,dh=ch.h*s,ax=ch.ax*s;
   c.save();c.globalAlpha=alpha;c.translate(Math.round(x*RS)/RS,yb);c.scale(flip?-1:1,1);c.drawImage(ch.img,fr.x,fr.y,ch.w,ch.h,-ax,-dh,dw,dh);c.restore()}
+
+/* ---------------- (15 nov) rumori ambiente di giorno: uccelli fuori, vento tra i tronchi, legno che scricchiola, stufa che si raffredda ---------------- */
+const AMBG={tb:3,tc:9,ts:6,tl:14};
+function cinguetta(f0,n,vol){for(let i=0;i<n;i++){const f=f0*(1+(Math.random()-.5)*.25);setTimeout(()=>{A.tone(f,.07+Math.random()*.05,'sine',vol,f*(1.15+Math.random()*.3))},i*(85+Math.random()*60))}}
+function ambienteGiorno(dt,dentro){
+  if(!A.AU.ctx||A.AU.muted||A.AU.ctx.state!=='running')return;
+  AMBG.tb-=dt;if(AMBG.tb<=0){AMBG.tb=(dentro?3.5:1.8)+Math.random()*(dentro?6:4);const v=dentro?.014:.032;
+    cinguetta(2600+Math.random()*1900,2+Math.floor(Math.random()*4),v);if(Math.random()<.35)setTimeout(()=>cinguetta(3600+Math.random()*900,3,v*.8),500+Math.random()*500)}
+  if(dentro){
+    AMBG.tc-=dt;if(AMBG.tc<=0){AMBG.tc=18+Math.random()*26;A.tone(150+Math.random()*30,.45,'sawtooth',.016,105);A.nburst(420,5,.35,.02,'bandpass')}   // il legno della baita scricchiola
+    AMBG.ts-=dt;if(AMBG.ts<=0){AMBG.ts=7+Math.random()*9;A.nburst(2100,7,.025,.045,'bandpass');setTimeout(()=>A.nburst(1700,6,.03,.03,'bandpass'),90+Math.random()*120)}   // tic della stufa che si raffredda
+    AMBG.tl-=dt;if(AMBG.tl<=0){AMBG.tl=25+Math.random()*30;A.nburst(260,1.2,1.4,.012,'lowpass')}   // soffio d'aria nel camino
+  }else{AMBG.tl-=dt;if(AMBG.tl<=0){AMBG.tl=9+Math.random()*12;A.nburst(900,.8,1.6,.02,'bandpass')}}}   // folata tra gli abeti
 const SAL={t0:1e9,seduto:1,posa:'seat_nb_sleep',posa2:null,mix:0};   // figura seduta disegnata a mano finche' Nick non si alza
 
 registraScena({
@@ -32,9 +45,10 @@ registraScena({
   partenza:{x:186,y:110,dir:'W'},
   area:[[6,97],[234,97],[238,118],[2,118]],
   ostacoli:[[[58,89],[104,89],[104,100],[58,100]],[[124,87],[160,87],[160,99],[124,99]],[[188,92],[238,92],[238,106],[188,106]]],
-  scala:()=>SC,
+  rif:[110,SC],   // (15 nov) prospettiva: a y=110 Nick ha scala 2,05 (come da seduto); orizzonte = occhi di un uomo in piedi (PROSP)
   superficie:'legno',superfici:[{poly:[[150,108],[190,104],[238,108],[238,118],[150,118]],tipo:'tappeto'}],
-  ambiente:{stanza:1,vento:.08,pioggia:0,fuoco:0},
+  ambiente:{stanza:0,vento:.55,pioggia:0,fuoco:0},   // (15 nov) niente ronzio a 50 Hz: aria nei tronchi + uccelli, scricchiolii e tic della stufa (ambienteGiorno)
+  aggiorna(s,dt){ambienteGiorno(dt,true)},
   suggerimento:'',
   sotto(gg){   // impermeabile e cappello sulla sedia, come la sera prima
     for(const [im,x,y] of [[IMG_COAT,COAT.x,COAT.y],[IMG_HAT,COAT.hx,COAT.hy]])if(im.complete&&im.naturalWidth)gg.drawImage(im,x,y,im.naturalWidth/RS,im.naturalHeight/RS)},
@@ -70,7 +84,11 @@ registraScena({
 /* ---------------- 3. esterno di giorno: le chiavi nella pozzanghera ---------------- */
 const BG_EST=mkImg('img/scene/giorno-baita-esterno.png'),BG_EST2=mkImg('img/scene/giorno-baita-esterno-senza-ascia.png');
 const IMG_ASCIA=mkImg('img/emb/ascia_r2.png');   // 18x14, dal foglio ascia-sola del 14 nov (prima 18x12 tolta dallo sfondo) (_strumenti/c2_ascia.py)
-const POZ={x:166,y:107},CAR_X=6;   // luccichio nella pozzanghera grande; auto come di notte (CAR_X=6, base 112)
+const POZ={x:166,y:107},CAR_X=6;
+/* (15 nov) l'auto e' un oggetto reale (Alfa 164: alta 1,45 m, sprite 3/4 posteriore 69x30 = 20,7 px/m a quel disegno): la sua misura sullo schermo viene dai px/m del pavimento
+   alla quota della base (112), con la STESSA prospettiva che scala Nick: orizzonte = occhi di un uomo in piedi */
+const PR_EST={yr:107,sr:1.047},YH_EST=PROSP.orizzonte(PR_EST.yr,PR_EST.sr),CAR_BASE=112;
+const CAR=(()=>{const ppm=PROSP.perM(YH_EST,PR_EST.yr,PR_EST.sr,CAR_BASE),k=ppm/(30/1.45);return {w:Math.round(69*k),h:Math.round(30*k),k}})();   // luccichio nella pozzanghera grande; auto come di notte (CAR_X=6, base 112)
 function disegnaAscia(gg,hx,hy,ang,flip){   // l'ascia e' presa per il fondo del manico (in alto a destra nello sprite: 17,1)
   if(!(IMG_ASCIA.complete&&IMG_ASCIA.naturalWidth))return;
   gg.save();gg.translate(hx,hy);if(flip)gg.scale(-1,1);gg.rotate(ang);gg.drawImage(IMG_ASCIA,-17,-1);gg.restore()}
@@ -85,14 +103,15 @@ registraScena({
   partenza:{x:152,y:98,dir:'S'},
   area:[[2,96],[238,96],[238,119],[2,119]],
   ostacoli:[[[2,99],[78,99],[78,114],[2,114]],[[204,96],[232,96],[232,101],[204,101]]],
-  prof:[96,119,.98,1.12],audioPassi:false,   // (12 nov) fuori dalla baita i passi non fanno rumore
+  rif:[107,1.047],audioPassi:false,   // (15 nov) prospettiva: a y=107 Nick ha scala 1,047 (33 px) -> orizzonte y~75,8; la scala cresce scendendo, come l'auto   // (12 nov) fuori dalla baita i passi non fanno rumore
   superficie:'fango',superfici:[{poly:[[138,104],[186,104],[186,111],[138,111]],tipo:'pozzanghera'},{poly:[[78,96],[112,96],[112,101],[78,101]],tipo:'pozzanghera'}],
-  ambiente:{stanza:0,vento:.18,pioggia:0,fuoco:0},
+  ambiente:{stanza:0,vento:.45,pioggia:0,fuoco:0},
+  aggiorna(s,dt){ambienteGiorno(dt,false)},
   suggerimento:'TOCCA PER CAMMINARE',
   disegnaSfondo(gg){const im=C2.ascia?BG_EST2:BG_EST;if(im.complete&&im.naturalWidth)gg.drawImage(im,0,0,W,H);else R(0,0,W,H,'#3a5a7a')},
-  oggetti:[{img:'img/emb/auto164_34retro_d69.png',x:CAR_X,y:112-30,w:69,h:30,baseY:112}],
+  oggetti:[{img:'img/emb/auto164_34retro_d69.png',x:CAR_X,y:112-CAR.h,w:CAR.w,h:CAR.h,baseY:112}],   // (15 nov) misure dalla prospettiva
   sotto(gg,s){
-    ell(CAR_X+35,111,38,2.5,'#05060a',.4);   // ombra dell'auto
+    ell(CAR_X+CAR.w/2,111,CAR.w*.55,2.5,'#05060a',.4);   // ombra dell'auto
     if(!C2.chiavi&&C2.tw){const k=Math.max(0,Math.sin(s.t*2.6))**6;stella(gg,POZ.x,POZ.y,k)}},   // luccichio nel fango
   sopra(gg,s){
     const p=s.giocatore;if(!p)return;
