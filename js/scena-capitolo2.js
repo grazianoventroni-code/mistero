@@ -97,14 +97,8 @@ registraScena({
   sopra(gg,s){
     const p=s.giocatore;if(!p)return;
     for(let i=FANGO.length-1;i>=0;i--){const f=FANGO[i];f.t+=1/60;f.x+=f.vx/60;f.y+=f.vy/60;f.vy+=90/60;if(f.t>.7){FANGO.splice(i,1);continue}R(Math.round(f.x),Math.round(f.y),1,1,f.c)}
-    if(C2.ascia===1){   // ascia in mano mentre cammina: lungo il fianco, lama in basso
-      const fl=p.dir==='W',sw=p.state==='walk'?Math.sin(p.fase*Math.PI*2)*.12:0;
-      disegnaAscia(gg,p.x+(fl?-2:2),p.y-17,-1.1+sw,fl)}   // angolo -1,1: manico verticale, lama in basso
-    if(C2.ascia===2){   // scavo: posa accovacciata, l'ascia raspa il fango davanti a Nick
-      const s0=p.scala()/RS,ac=CHARS['protagonista-esterno'],ax=ac?ac.ax:65.5,hh=ac?ac.h:130;
-      const giu=p.seq&&p.seq[p.si]&&p.seq[p.si][0]==='reach';
-      const hx=giu?p.x+(98-ax)*s0:p.x+(72-ax)*s0,hy=giu?p.y-(hh-116)*s0:p.y-(hh-90)*s0;
-      disegnaAscia(gg,hx,hy,giu?.12:1.0,true)}},   // giu': lama sul fango davanti; su: lama sollevata in avanti
+    p.axe=C2.ascia>0;   // (15 nov) l'ascia e' nelle pose di Nick ('_axe'): camminata, fermo, ascia sollevata (crouch) e abbassata sul fango (reach)
+    },
   punti:[
     {nome:'LA POZZANGHERA',rect:[140,101,46,11],cammina:{x:156,y:110,dir:'E'},visibile:()=>C2.tw&&!C2.chiavi,usa:async(s,p)=>{
       if(!C2.visto){await dn(s,p,'Le chiavi dell\'auto! Ma sono immerse nel fango.');await dn(s,p,'Come le recupero senza sporcarmi?');C2.visto=true;return}
@@ -152,10 +146,10 @@ registraScena({
 });
 
 /* ---------------- 5. filmato della guida sulla strada alpina (14 nov) ----------------
-   Non e' piu' una scena disegnata dal gioco: e' un filmato (video/guida-alpina_r4.mp4, 10 s, H.264) fatto con _strumenti/film_guida.py
+   Non e' piu' una scena disegnata dal gioco: e' un filmato (video/guida-alpina_r5.mp4, 10 s, H.264) fatto con _strumenti/film_guida.py
    sul dipinto strada-alpi.png: l'auto percorre la strada, la camera la segue. Si sovrappone all'area di gioco con la riproduzione nativa
    del telefono (muto, inline); il motore si sente col Web Audio del gioco. Se il filmato non parte si passa subito a «CONTINUA…». */
-const FILM_SRC='video/guida-alpina_r4.mp4';
+const FILM_SRC='video/guida-alpina_r5.mp4';
 const FILM_CURVE=[0.03, 0.09, 0.09, 0.09, 0.09, 0.09, 0.28, 0.3, 0.24, 0.36, 0.5, 0.48, 0.17, 0.3, 0.79, 1.21, 1.06, 0.34, 0.48, 1.2, 1.82, 1.96, 1.24, 0.23, 0.08, 0.86, 1.85, 0.83, 0.54, 2.08, 6.72, 23.71, 5.1, 4.03, 3.98, 3.98, 3.98, 3.98];   // quanto la strada gira, ogni 8 fotogrammi: guida il suono del motore
 const FILM={el:null,partito:false,finito:false,t0:0};
 function filmEl(){

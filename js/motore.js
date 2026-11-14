@@ -144,7 +144,12 @@ class Pers extends Actor{
     const ciclo=Math.max(14,this.altezza()*.78)*(this.corsa?.62:1);
     const f0=this.fase;this.fase+=step/ciclo;
     if(Math.floor(this.fase*2)!==Math.floor(f0*2)){this.piede^=1;if(this.scena)this.scena.passo(this)}}
-  pose(){
+  pose(){   // (15 nov) con l'ascia in mano (this.axe) si usano le pose '<nome>_axe' dell'atlante, se esistono
+    const r=this.pose0();if(!this.axe||!r||!this.c||!this.c.fr)return r;
+    const n=r.n,f=this.c.fr;let m=null;
+    if(/^(front|idle_S_\d|talk_S_\d|walk_S_\d)$/.test(n))m='front_axe';else if(n==='left'||n==='right')m='right_axe';else if(/^walk\d$/.test(n)||n==='crouch'||n==='reach')m=n+'_axe';
+    if(m&&f[m])r.n=m;return r}
+  pose0(){
     const f=this.c.fr,d=this.dir,E=d==='E'||d==='W',flip=d==='W',stat={S:'front',N:'back',E:'right',W:'left'}[d];
     if(this.seq&&this.seq[this.si]&&this.seq[this.si][0])return {n:this.seq[this.si][0],flip,dy:0};
     if(this.state==='sit'&&this.seats().length)return {n:this.seats()[this.seatI%this.seats().length],flip,dy:0};
