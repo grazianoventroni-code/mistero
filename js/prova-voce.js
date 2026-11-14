@@ -14,7 +14,7 @@ d.innerHTML='<b style="font-size:17px">PROVA DELLE VOCI</b><br>Tocca i pulsanti 
   '<pre id="pvlog" style="white-space:pre-wrap;margin-top:14px;font:13px/1.4 Menlo,monospace;color:#9fd6d0"></pre>';
 document.body.appendChild(d);
 for(const b of d.querySelectorAll('button'))b.style.cssText='font:inherit;font-weight:600;padding:12px 16px;background:#1c2230;color:#e8dfc0;border:2px solid #4a5a70;border-radius:4px;width:100%;max-width:420px;text-align:left';
-const SCRIPT='prova 13 nov 13:00';
+const SCRIPT='prova 14 nov 20:00';
 const log=t=>{d.querySelector('#pvlog').textContent+=t+'\n'};
 const stato=()=>{const V=M&&M.Voce,c=AU.ctx;
   log('script: '+SCRIPT+' | motore voci: '+(M&&M.VD)+' | versione: '+((document.getElementById('ver')||{}).textContent||'?')+' | audio: '+(c?c.state+' '+c.sampleRate+' Hz':'non ancora creato')+' | muto: '+!!AU.muted+' | modo parlato: '+(V?V.modo:'?')+
