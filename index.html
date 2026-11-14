@@ -10,7 +10,7 @@
 <meta name="theme-color" content="#000000">
 <script>/* (12 nov) pulizia: a ogni versione nuova si tolgono service worker e memoria vecchi e si ricarica una volta.
    Un service worker rimasto da versioni precedenti serviva script e indice delle voci superati (le voci non si sentivano). BUILD0 lo aggiorna pubblica.py. */
-(function(){var BUILD0='15 nov 04:00';try{if(!('serviceWorker' in navigator)||localStorage.getItem('mistero-build')===BUILD0)return;localStorage.setItem('mistero-build',BUILD0);window.__pulizia=1;
+(function(){var BUILD0='15 nov 06:00';try{if(!('serviceWorker' in navigator)||localStorage.getItem('mistero-build')===BUILD0)return;localStorage.setItem('mistero-build',BUILD0);window.__pulizia=1;
  var t=setTimeout(function(){location.reload()},4000);
  Promise.all([navigator.serviceWorker.getRegistrations().then(function(rs){return Promise.all(rs.map(function(r){return r.unregister()}))}),
    window.caches?caches.keys().then(function(ks){return Promise.all(ks.map(function(k){return caches.delete(k)}))}):0]).then(function(){clearTimeout(t);location.reload()},function(){clearTimeout(t);location.reload()})}catch(e){}})();</script>
@@ -79,11 +79,11 @@ button:active{background:#1a2438;transform:translate(1px,1px)}
 <div id="probe" style="position:fixed;visibility:hidden;pointer-events:none;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)"></div>
 <div id="rot"><i></i><div>RUOTA IL TELEFONO<br>IN ORIZZONTALE</div></div>
 
-<script src="js/motore.js?v=15nov0400"></script>
-<script src="js/scena-demo.js?v=15nov0400"></script>
-<script src="js/scena-tutti.js?v=15nov0400"></script>
-<script src="js/scena-ramones.js?v=15nov0400"></script>
-<script src="js/scena-capitolo2.js?v=15nov0400"></script>
+<script src="js/motore.js?v=15nov0600"></script>
+<script src="js/scena-demo.js?v=15nov0600"></script>
+<script src="js/scena-tutti.js?v=15nov0600"></script>
+<script src="js/scena-ramones.js?v=15nov0600"></script>
+<script src="js/scena-capitolo2.js?v=15nov0600"></script>
 <script>
 (()=>{
 "use strict";
@@ -162,8 +162,8 @@ function audioInit(){
   if(AU.ctx){if(AU.ctx.state==='suspended')AU.ctx.resume();loadAudioFiles();return}
   const C=window.AudioContext||window.webkitAudioContext;if(!C)return;
   const c=AU.ctx=new C();
-  const n=c.sampleRate*2,buf=c.createBuffer(1,n,c.sampleRate),d=buf.getChannelData(0);
-  for(let i=0;i<n;i++)d[i]=Math.random()*2-1;AU.buf=buf;
+  const n=c.sampleRate*2,buf=c.createBuffer(2,n,c.sampleRate),d=buf.getChannelData(0),d2=buf.getChannelData(1);   // (15 nov) rumore STEREO: due canali indipendenti, cosi' pioggia, vento e fuoco riempiono tutto il campo
+  for(let i=0;i<n;i++){d[i]=Math.random()*2-1;d2[i]=Math.random()*2-1}AU.buf=buf;
   AU.master=c.createGain();AU.master.gain.value=AU.muted?0:.9;AU.master.connect(c.destination);
   const loopNoise=()=>{const s=c.createBufferSource();s.buffer=buf;s.loop=true;return s};
   const rs=loopNoise(),hp=c.createBiquadFilter();hp.type='highpass';hp.frequency.value=900;
@@ -236,11 +236,17 @@ function thunderSynth(v=1){if(!AU.ctx)return;const c=AU.ctx,t0=c.currentTime+.02
   // 3. il rimbombo che rotola per la valle: colpi gravi, ruvidi, sempre piu' lontani
   let tt=t0+.4;for(let k=0;k<15;k++){const fall=Math.pow(1-k/15,1.05),dur=1.1+Math.random()*1.6;
     burst(tt,dur,380+Math.random()*180,36,(.7+.5*Math.random())*fall*1.4,'lowpass',1.2,undefined,12+Math.random()*16);tt+=.2+Math.random()*.6}}
-function nburst(freq,q,dur,vol,type='bandpass'){if(!AU.ctx)return;const c=AU.ctx,t=c.currentTime,s=c.createBufferSource();s.buffer=AU.buf;
+/* (15 nov) spazio: riverbero d'ambiente condiviso (risposta all'impulso stereo di 1,6 s); pan -1..1 sposta il suono nel campo stereo, rev = quantita' di riverbero (0..1) */
+function spazio(){const c=AU.ctx;if(AU.sp)return AU.sp;const len=Math.floor(c.sampleRate*1.6),ib=c.createBuffer(2,len,c.sampleRate);
+  for(let ch=0;ch<2;ch++){const d=ib.getChannelData(ch);let lp=0;for(let i=0;i<len;i++){lp+=((Math.random()*2-1)-lp)*(.18+.5*(1-i/len));d[i]=lp*Math.pow(1-i/len,2.2)*2.2}}
+  const cv=c.createConvolver();cv.buffer=ib;const g2=c.createGain();g2.gain.value=.9;cv.connect(g2);g2.connect(AU.master);return AU.sp={cv}}
+function uscita(node,pan,rev){const c=AU.ctx;let n=node;if(pan){const pn=c.createStereoPanner();pn.pan.value=Math.max(-1,Math.min(1,pan));n.connect(pn);n=pn}
+  n.connect(AU.master);if(rev){const r=c.createGain();r.gain.value=rev;n.connect(r);r.connect(spazio().cv)}return n}
+function nburst(freq,q,dur,vol,type='bandpass',pan=0,rev=0){if(!AU.ctx)return;const c=AU.ctx,t=c.currentTime,s=c.createBufferSource();s.buffer=AU.buf;
   const f=c.createBiquadFilter();f.type=type;f.frequency.value=freq;f.Q.value=q;const gn=c.createGain();
-  gn.gain.setValueAtTime(vol,t);gn.gain.exponentialRampToValueAtTime(.001,t+dur);s.connect(f);f.connect(gn);gn.connect(AU.master);s.start(t);s.stop(t+dur+.05)}
-function tone(f,d,type,vol,fTo){if(!AU.ctx)return;const c=AU.ctx,t=c.currentTime,o=c.createOscillator(),gn=c.createGain();o.type=type;o.frequency.setValueAtTime(f,t);
-  if(fTo)o.frequency.exponentialRampToValueAtTime(fTo,t+d);gn.gain.setValueAtTime(vol,t);gn.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(gn);gn.connect(AU.master);o.start(t);o.stop(t+d+.02)}
+  gn.gain.setValueAtTime(vol,t);gn.gain.exponentialRampToValueAtTime(.001,t+dur);s.connect(f);f.connect(gn);uscita(gn,pan,rev);s.start(t);s.stop(t+dur+.05)}
+function tone(f,d,type,vol,fTo,pan=0,rev=0){if(!AU.ctx)return;const c=AU.ctx,t=c.currentTime,o=c.createOscillator(),gn=c.createGain();o.type=type;o.frequency.setValueAtTime(f,t);
+  if(fTo)o.frequency.exponentialRampToValueAtTime(fTo,t+d);gn.gain.setValueAtTime(vol,t);gn.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(gn);uscita(gn,pan,rev);o.start(t);o.stop(t+d+.02)}
 const sfx={
   thud(){nburst(160,1,.25,.7,'lowpass');tone(90,.2,'sine',.25,50)},
   scratch(){nburst(3500,2,.45,.35,'highpass')},
@@ -276,7 +282,7 @@ function note(o){
   for(const d of (o.det||[0])){const os=c.createOscillator();os.type=o.type||'sawtooth';os.frequency.value=o.f;os.detune.value=d;
     if(o.vib){const l=c.createOscillator();l.frequency.value=5.2;const lg2=c.createGain();lg2.gain.value=o.vib;l.connect(lg2);lg2.connect(os.detune);l.start(t);l.stop(end)}
     os.connect(f);os.start(t);os.stop(end)}
-  f.connect(g2);g2.connect(b.dry);
+  f.connect(g2);if(o.pan){const pn=c.createStereoPanner();pn.pan.value=o.pan;g2.connect(pn);pn.connect(b.dry)}else g2.connect(b.dry);
   if(o.send){const s=c.createGain();s.gain.value=o.send;g2.connect(s);s.connect(b.send)}
   if(o.rev){const s=c.createGain();s.gain.value=o.rev;g2.connect(s);s.connect(b.rsend)}
 }
@@ -330,6 +336,25 @@ function schedDream(step,t){
   for(const [st,m] of S_BELL){if(st===s&&hash(step*2.3+bar*5)>.2)mBell(t,m+(bar%2?-1:0),.05+hash(step)*.025,4.5)}      // carillon lontano, non allineato alla tonalita'
   if(s===8&&bar%2===1)note({t,f:mf(ch[2]+12),dur:5,vol:.03,type:'triangle',det:[-22,22],att:2.4,rel:2.6,cut:900,vib:10,rev:.8});
 }
+/* ---- (15 nov) INTERMEZZI MUSICALI: brevi frasi sintetizzate (stile anni 80, stereo, con eco e riverbero) che seguono la trama. sting('nome') suona una volta e si spegne.
+   alba = risveglio caldo; scintilla = qualcosa luccica; scoperta = si trova qualcosa; tonfo = colpo sordo; partenza = si parte; ponte = rintocco scuro; simbolo = brivido; donna = coro lontano */
+const STING={
+  alba(t){const ch=[[62,66,69,73],[59,66,69,73],[62,67,71,74]];ch.forEach((c2,i)=>{for(const m of c2)note({t:t+i*2.6,f:mf(m),dur:2.6,vol:.032,type:'triangle',det:[-7,7],cut:1500,att:.9,rel:1.6,send:.2,rev:.5,pan:(m%3-1)*.5})});
+    [74,78,81,85,81,78,74,79].forEach((m,i)=>note({t:t+.4+i*.55,f:mf(m),dur:.2,vol:.045,type:'sine',cut:4000,att:.01,rel:.9,send:.55,rev:.7,pan:Math.sin(i*1.3)*.7}))},
+  scintilla(t){[93,97,100,105].forEach((m,i)=>mBell(t+i*.09,m,.04,1.1))},
+  scoperta(t){[62,69,74,78,81].forEach((m,i)=>note({t:t+i*.2,f:mf(m),dur:.3,vol:.06,type:'triangle',cut:2600,att:.01,rel:.6,send:.5,rev:.6,pan:(i-2)*.3}));
+    for(const m of [62,66,69])note({t:t+.9,f:mf(m),dur:1.6,vol:.03,type:'sawtooth',det:[-8,8],cut:900,att:.3,rel:1.4,rev:.5})},
+  tonfo(t){const c=AU.ctx,o=c.createOscillator(),g2=c.createGain();o.frequency.setValueAtTime(110,t);o.frequency.exponentialRampToValueAtTime(40,t+.25);g2.gain.setValueAtTime(.4,t);g2.gain.exponentialRampToValueAtTime(.001,t+.45);o.connect(g2);g2.connect(MU.bus.dry);o.start(t);o.stop(t+.5);
+    mNoise(t,380,1,.18,.25,'lowpass',.3)},
+  partenza(t){const ch=[[50,57,62],[46,53,58],[43,50,55],[45,52,57]];ch.forEach((c2,i)=>{for(const m of c2)note({t:t+i*1.6,f:mf(m),dur:1.7,vol:.05+i*.012,type:'sawtooth',det:[-9,9],cut:600+i*350,att:.5,rel:.9,send:.2,rev:.4,pan:(m%5-2)*.3});
+      note({t:t+i*1.6,f:mf(c2[0]-12),dur:1.5,vol:.18,type:'sawtooth',cut:420,q:2,rel:.2})})},
+  ponte(t){mBell(t,43,.11,5);mBell(t+1.5,38,.1,6);note({t,f:mf(31),dur:4.5,vol:.09,type:'sine',att:1,rel:2.5,cut:260})},
+  simbolo(t){for(let i=0;i<6;i++)note({t:t+i*.13,f:mf(82+i*2.5),dur:.2,vol:.025,type:'sine',att:.02,rel:.9,send:.5,rev:.8,pan:Math.sin(i*2.1)})},
+  donna(t){for(const [m,p] of [[62,-.4],[69,0],[74,.4]])note({t,f:mf(m),dur:4,vol:.05,type:'sawtooth',det:[-12,12],cut:850,q:3,att:1.6,rel:2.4,vib:14,rev:.9,send:.4,pan:p})}
+};
+function sting(nome,vol=1){if(!AU.ctx||AU.muted||AU.ctx.state!=='running'||!STING[nome])return;const c=AU.ctx,old=MU.bus,b=makeBus();MU.bus=b;b.out.gain.value=vol*.9;STING[nome](c.currentTime+.05);MU.bus=old;
+  setTimeout(()=>{try{b.out.disconnect()}catch(e){}},12000)}
+window.sting=sting;
 const THEMES={drive:{bpm:72,fn:schedDrive,vol:.85},mystery:{bpm:58,fn:schedMystery,vol:.7},sogno:{bpm:42,fn:schedDream,vol:.75}};
 function musicStop(fade=2){
   if(!MU.name)return;const old=MU.bus,c=AU.ctx;clearInterval(MU.timer);MU.name=null;
@@ -369,12 +394,12 @@ function voxStart(b){const c=AU.ctx;if(c.state==='suspended')c.resume();const sr
 /* ---- (14 nov) VERSI DEI PERSONAGGI: sforzo, sorpresa, sospiri, dubbi, respiri, affanni. Interiezioni brevissime (Eh! Uh! Ah… Hm…) e respiri, non parlato recitato.
    Clip in audio/fiato (indice.json: {personaggio:{tipo:[file]}}), generate da _strumenti/genera_versi.py. Suonano solo se l'audio e' sbloccato e non e' muto. */
 const FIATO={idx:null,ult:0,ALIAS:{'protagonista-esterno':'protagonista-interno','anna-senza-giacca':'anna',gemella2:'gemella'}};
-fetch('audio/fiato-r2/indice.json',{cache:'no-cache'}).then(r=>r.ok?r.json():null).then(j=>{FIATO.idx=j}).catch(()=>{});
+fetch('audio/fiato-r3/indice.json',{cache:'no-cache'}).then(r=>r.ok?r.json():null).then(j=>{FIATO.idx=j}).catch(()=>{});
 FIATO.suona=function(nome,tipo,prob=1,vol=.9,ritardo=0){
   if(!this.idx||!AU.ctx||AU.muted||AU.ctx.state!=='running'||Math.random()>prob)return;
   const d=this.idx[this.ALIAS[nome]||nome],l=d&&d[tipo];if(!l||!l.length)return;
   const now=performance.now();if(now-this.ult<600)return;this.ult=now;
-  const u='audio/fiato-r2/'+l[Math.floor(Math.random()*l.length)];
+  const u='audio/fiato-r3/'+l[Math.floor(Math.random()*l.length)];
   voxLoad(u).then(b=>{if(!b)return;const c=AU.ctx,sr=c.createBufferSource(),gn=c.createGain();sr.buffer=b;gn.gain.value=vol;sr.connect(gn);gn.connect(AU.master);sr.start(c.currentTime+.03+ritardo)})};
 window.FIATO=FIATO;
 let vox=null,sayDone=null;
@@ -910,7 +935,7 @@ const outside={chr:{x:84,dir:1,tx:null,walking:false,dist:0,enter:0},idle:0,ripp
     if(c.enter){const a=clamp((NOW-c.enter)/.5,0,1);R(147,62,10,21,'#06080c');g.globalAlpha=a*.7;R(147,62,10,21,'#c8903c');g.globalAlpha=1;R(147+Math.round(10*a),62,Math.max(0,10-Math.round(10*a)),21,'#3a2616')}
     // auto parcheggiata
     ell(CAR_X+35,111,38,2.5,'#05060a',.55);
-    if(IMG_CARX.complete&&IMG_CARX.naturalWidth)g.drawImage(IMG_CARX,CAR_X,112-IMG_CARX.naturalHeight);
+    this.yh=PROSP.orizzonte(110,OUT_SC);PROSP.disegnaAuto(g,IMG_CARX,this.yh,CAR_X+36,112-4,21.4);   // (15 nov) auto dalla scatola in prospettiva (orizzonte dalla scala di Nick OUT_SC)
     if(!(c.enter&&NOW-c.enter>.45)){if(this.act&&this.act.c.ready)this.act.draw(OUT_SC);else drawChar(c.x,110,c.dir,c.walking,c.dist)}
     if(fl>0){g.globalAlpha=fl*.14;R(0,0,W,H,'#b4c4e4');g.globalAlpha=1}
     rainFx(190,0,H,150,.55,T);
@@ -1901,6 +1926,34 @@ const PROSP={HC:1.6,PXM:18.6,
   orizzonte(yr,sr){return yr-this.HC*this.PXM*sr},
   scala(yh,yr,sr,y){return sr*Math.max(2,y-yh)/(yr-yh)},
   perM(yh,yr,sr,y){return this.scala(yh,yr,sr,y)*this.PXM}};
+/* --- punti di fuga e oggetti a scatola (auto): modello a foro stenopeico con distanza focale F (px logici, campo di 40 gradi) e punto principale (CX, orizzonte).
+   Un punto del pavimento a profondita' Z (m) e lateralita' X (m) cade a  sx = CX + F*X/Z,  sy = yh + F*(HC-h)/Z  (h = quota in m).  Quindi px/m = F/Z = (sy-yh)/HC come sopra.
+   Le direzioni orizzontali (sin b, 0, cos b) convergono nel punto di fuga (CX + F*tan b, yh); quelle perpendicolari in (CX - F/tan b, yh). */
+PROSP.F=330;PROSP.CX=120;
+PROSP.mondo=function(yh,xs,ys){const Z=this.F*this.HC/Math.max(1,ys-yh);return {Z,X:(xs-this.CX)*Z/this.F}};
+PROSP.proietta=function(yh,X,Z,h){return [this.CX+this.F*X/Z,yh+this.F*(this.HC-h)/Z]};
+/* scatola di un'auto (L x Wd x H m), centro dell'impronta a terra al punto di schermo (xs,ys); b = angolo dell'asse (rad da +Z verso +X).
+   psi0 = angolo (gradi) sotto cui lo sprite e' disegnato rispetto all'asse: b si sceglie perche' da QUI si veda l'auto proprio sotto quell'angolo. */
+PROSP.scatola=function(yh,xs,ys,psi0,dim){dim=dim||{L:4.55,W:1.83,H:1.43};const m=this.mondo(yh,xs,ys),a=Math.atan2(m.X,m.Z),b=a+psi0*Math.PI/180,sb=Math.sin(b),cb=Math.cos(b);
+  const V=[];for(const u of [-1,1])for(const v of [-1,1])for(const h of [0,dim.H]){const X=m.X+u*dim.L/2*sb+v*dim.W/2*cb,Z=m.Z+u*dim.L/2*cb-v*dim.W/2*sb;V.push({u,v,h,p:this.proietta(yh,X,Z,h)})}
+  let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;for(const q of V){x0=Math.min(x0,q.p[0]);x1=Math.max(x1,q.p[0]);y0=Math.min(y0,q.p[1]);y1=Math.max(y1,q.p[1])}
+  return {b,V,x0,x1,y0,y1,vpAsse:this.CX+this.F*Math.tan(b),vpTraverso:this.CX-this.F/Math.tan(b),Z:m.Z,X:m.X}};
+PROSP.disegnaAuto=function(g,img,yh,xs,ys,psi0){if(!(img&&img.complete&&img.naturalWidth))return null;const sc=this.scatola(yh,xs,ys,psi0||21.4),w=sc.x1-sc.x0,k=w/img.naturalWidth,h=img.naturalHeight*k;
+  g.drawImage(img,sc.x0,sc.y1-h,w,h);return sc};
+/* griglia di controllo (?griglia): orizzonte, punto di fuga centrale, linee del pavimento, 1,75 m in tre punti e, se c'e' un'auto, la sua scatola con i due punti di fuga */
+PROSP.griglia=function(g,yh,yr,sc){const W=240,H=120,HC=this.HC;g.save();
+  const hl=(y,c,a)=>{g.globalAlpha=a;g.fillStyle=c;g.fillRect(0,Math.round(y),W,1)};
+  hl(yh,'#00ffff',.85);for(const ppm of [40,30,24,19,15,12,9]){const y=yh+ppm*HC;if(y<H)hl(y,'#ffe060',.4)}
+  const ln=(x0,y0,x1,y1,c,a)=>{g.globalAlpha=a;g.fillStyle=c;const n=Math.max(1,Math.ceil(Math.hypot(x1-x0,y1-y0)));for(let i=0;i<=n;i++)g.fillRect(Math.round(x0+(x1-x0)*i/n),Math.round(y0+(y1-y0)*i/n),1,1)};
+  for(let x=-120;x<=W+120;x+=30)ln(this.CX,yh,x,H,'#ffe060',.3);
+  for(const y of [yr-9,yr,yr+9]){const h=1.75*(y-yh)/HC,x=W*.08+(y-yr+9)*8;ln(x,y-h,x,y,'#ff60ff',.9)}
+  if(sc){const E=[[0,1],[2,3],[4,5],[6,7],[0,2],[1,3],[4,6],[5,7],[0,4],[1,5],[2,6],[3,7]];
+    for(const [i,j] of E)ln(sc.V[i].p[0],sc.V[i].p[1],sc.V[j].p[0],sc.V[j].p[1],'#ff8040',.95);
+    const bot=sc.V.filter(q=>q.h===0);
+    for(const q of bot){ln(q.p[0],q.p[1],sc.vpAsse,yh,'#40ff80',.35);ln(q.p[0],q.p[1],q.p[0]+(q.p[0]-sc.vpTraverso)*0+(sc.vpTraverso<0?1:-1)*60,yh+(q.p[1]-yh)*(1-60/Math.max(60,Math.abs(sc.vpTraverso-q.p[0]))),'#4080ff',.35)}
+    g.globalAlpha=1;g.fillStyle='#40ff80';g.fillRect(Math.round(sc.vpAsse)-2,Math.round(yh)-2,5,5);
+    g.fillStyle='#4080ff';g.fillRect(2,Math.round(yh)-2,5,5)}
+  g.restore()};
 window.PROSP=PROSP;
 const pvScale=y=>PROSP.scala(PROSP.orizzonte(105.5,1.675),105.5,1.675,y);   // scena di prova: riferimento al centro dell'area (era lerp(1,45;1,9) lineare senza orizzonte)
 const prova={actors:[],sel:0,ready:false,lastTap:0,fps:0,fn:0,ft:0,
@@ -1988,7 +2041,7 @@ document.addEventListener('wheel',e=>{if(e.ctrlKey)e.preventDefault()},{passive:
 document.addEventListener('visibilitychange',()=>{if(document.hidden){if(SILENT_EL)SILENT_EL.pause()}else if(AU.ctx)unmuteSilentSwitch();if(AU.ctx){if(document.hidden)AU.ctx.suspend();else AU.ctx.resume()}});
 
 /* aggiornamento automatico: se sul server c'e' una versione piu' nuova di questa, ricarica una volta (cancella anche le copie salvate) */
-const BUILD='15 nov 04:00';
+const BUILD='15 nov 06:00';
 {const ve=document.getElementById('ver');if(ve)ve.textContent='v. '+BUILD;
  if(location.protocol.startsWith('http')){
   fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{
@@ -2004,7 +2057,7 @@ if('serviceWorker' in navigator&&location.protocol.startsWith('http')&&!['localh
 window.__dbg={say,sayP,VOX,prova,CHARS,storm,SOGNO_T,AU,thunder,setRain,sprTex,itemTex,bagno,openCU,giveItem,combine,refreshInv,takeLog,ITEMS,IDR,CU,AU,MU,S,drive,outside,inside,sogno,startDream,setScene,fade,go:n=>{fade.a=0;fade.to=0;setScene(n)},scenes};
 /* estensioni (js/*.js): ricevono le funzioni del gioco e possono registrare nuove scene */
 {const wrapEl=document.getElementById('wrap');
- const API={g,W,H,RS,R,txt,ell,clamp,lerp,hash,inPoly,nearOnPoly,Actor,loadChar,CHARS,say,setHint,fade,fadeTo,setScene,scenes,mkImg,AU,tone,nburst,sfx,setRain,setFire,musicStart,musicStop,cv,wrap:wrapEl,S,refreshInv,audioInit,sayP,voxUrl,voxLoad,setEng,
+ const API={g,W,H,RS,R,txt,ell,clamp,lerp,hash,inPoly,nearOnPoly,Actor,loadChar,CHARS,say,setHint,fade,fadeTo,setScene,scenes,mkImg,AU,tone,nburst,spazio,uscita,sting,sfx,setRain,setFire,musicStart,musicStop,cv,wrap:wrapEl,S,refreshInv,audioInit,sayP,voxUrl,voxLoad,setEng,
    view:()=>{const r=cv.getBoundingClientRect();return {k:Math.min(r.width/DW,r.height/H),DW,OX}},now:()=>NOW};
  for(const f of (window.__ext||[])){try{f(API)}catch(e){console.error('estensione',e)}}}
 const boot=()=>{fade.a=1;fade.to=1;const dm=/[?&]demo/.test(location.search)&&scenes.demo,mg=(location.search.match(/[?&](tutti|uomini|donne|bambini|animali|furgone|ramones|capitolo2)(?=[&=#]|$)/)||[])[1],tt=mg&&scenes[mg];

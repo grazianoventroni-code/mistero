@@ -26,17 +26,41 @@ function frameNick(c,name,x,yb,flip,alpha){   // disegna una posa dell'atlante d
   c.save();c.globalAlpha=alpha;c.translate(Math.round(x*RS)/RS,yb);c.scale(flip?-1:1,1);c.drawImage(ch.img,fr.x,fr.y,ch.w,ch.h,-ax,-dh,dw,dh);c.restore()}
 
 /* ---------------- (15 nov) rumori ambiente di giorno: uccelli fuori, vento tra i tronchi, legno che scricchiola, stufa che si raffredda ---------------- */
-const AMBG={tb:3,tc:9,ts:6,tl:14};
-function cinguetta(f0,n,vol){for(let i=0;i<n;i++){const f=f0*(1+(Math.random()-.5)*.25);setTimeout(()=>{A.tone(f,.07+Math.random()*.05,'sine',vol,f*(1.15+Math.random()*.3))},i*(85+Math.random()*60))}}
+const AMBG={tb:2,tc:9,ts:6,tl:10,tg:4,tp:20};
+/* ---- (15 nov) AMBIENTE STEREO: ogni suono nasce in un punto del campo (pan -1..1), ha una distanza (piu' lontano = piu' cupo, piu' piano, piu' riverbero) e, per gli uccelli, un canto
+   fatto con una piccola modulazione di frequenza (timbro vivo, non onda pura). Dentro la baita gli uccelli si sentono attraverso la parete (filtrati) dalle finestre a destra e a sinistra. */
+const rnd=(a,b)=>a+Math.random()*(b-a);
+function nota(f,d,vol,pan,dist,dentro,glide=1.1){const c=A.AU.ctx,t=c.currentTime,o=c.createOscillator(),m=c.createOscillator(),mg=c.createGain(),g2=c.createGain(),lp=c.createBiquadFilter();
+  o.type='sine';o.frequency.setValueAtTime(f,t);o.frequency.exponentialRampToValueAtTime(Math.max(200,f*glide),t+d);
+  m.frequency.value=f*2.01;mg.gain.value=f*(.10+.12*Math.random());m.connect(mg);mg.connect(o.frequency);
+  g2.gain.setValueAtTime(0,t);g2.gain.linearRampToValueAtTime(vol*(1-.65*dist)*(dentro?.45:1),t+.012);g2.gain.exponentialRampToValueAtTime(.0001,t+d);
+  lp.type='lowpass';lp.frequency.value=(dentro?2600:9500)-6200*dist;o.connect(lp);lp.connect(g2);A.uscita(g2,pan,.18+.7*dist);
+  o.start(t);m.start(t);o.stop(t+d+.03);m.stop(t+d+.03)}
+const seq=(lista,pan,dist,dentro)=>{let t=0;for(const [f,d,v,gl,gap] of lista){const tt=t,pp=pan+rnd(-.03,.03);setTimeout(()=>nota(f,d,v,pp,dist,dentro,gl||1.1),tt*1000);t+=d+(gap??.04)}};
+const SPECIE={
+  cincia(pan,dist,dentro){const a=rnd(4300,5400),b=a*.82;seq([[a,.07,.034,.95],[b,.07,.034,1.05],[a,.07,.034,.95],[b,.07,.034,1.05],[a,.07,.03,.95],[b,.07,.03,1.05]],pan,dist,dentro)},
+  fringuello(pan,dist,dentro){const l=[];let f=rnd(5000,5600);for(let i=0;i<13;i++){l.push([f,.045,.03-i*.0005,.96,.012]);f*=.975}l.push([3300,.09,.028,1.1,.05],[3900,.12,.026,.9,0]);seq(l,pan,dist,dentro)},
+  merlo(pan,dist,dentro){const l=[];let f=rnd(1700,2300);for(let i=0;i<rnd(4,8);i++){f=Math.max(1400,Math.min(3200,f*rnd(.8,1.28)));l.push([f,rnd(.14,.32),.03,rnd(.8,1.25),rnd(.04,.16)])}seq(l,pan,dist,dentro)},
+  cuculo(pan,dist,dentro){const l=[];for(let i=0;i<Math.floor(rnd(2,5));i++)l.push([790,.26,.036,.8,.1],[640,.3,.036,.9,.35]);seq(l,pan,Math.max(dist,.6),dentro)},
+  picchio(pan,dist,dentro){for(let i=0;i<9;i++)setTimeout(()=>{A.nburst(1700,5,.012,.05*(1-dist*.6),'bandpass',pan,.4+.4*dist)},i*70+rnd(-6,6))}
+};
 function ambienteGiorno(dt,dentro){
   if(!A.AU.ctx||A.AU.muted||A.AU.ctx.state!=='running')return;
-  AMBG.tb-=dt;if(AMBG.tb<=0){AMBG.tb=(dentro?3.5:1.8)+Math.random()*(dentro?6:4);const v=dentro?.014:.032;
-    cinguetta(2600+Math.random()*1900,2+Math.floor(Math.random()*4),v);if(Math.random()<.35)setTimeout(()=>cinguetta(3600+Math.random()*900,3,v*.8),500+Math.random()*500)}
+  AMBG.tb-=dt;if(AMBG.tb<=0){AMBG.tb=(dentro?3:1.6)+Math.random()*(dentro?6:3.5);
+    const x=Math.random(),k=x<.34?'cincia':x<.6?'fringuello':x<.84?'merlo':x<.94?'cuculo':'picchio';
+    const pan=dentro?(Math.random()<.5?-.55:.7)+rnd(-.15,.15):rnd(-.95,.95),dist=dentro?rnd(.3,.7):rnd(.05,.8);
+    SPECIE[k](pan,dist,dentro);if(k==='cincia'&&Math.random()<.45)setTimeout(()=>SPECIE.cincia(-pan*.8,Math.min(1,dist+.25),dentro),rnd(500,1200))}   // un secondo uccello risponde dall'altra parte
   if(dentro){
-    AMBG.tc-=dt;if(AMBG.tc<=0){AMBG.tc=18+Math.random()*26;A.tone(150+Math.random()*30,.45,'sawtooth',.016,105);A.nburst(420,5,.35,.02,'bandpass')}   // il legno della baita scricchiola
-    AMBG.ts-=dt;if(AMBG.ts<=0){AMBG.ts=7+Math.random()*9;A.nburst(2100,7,.025,.045,'bandpass');setTimeout(()=>A.nburst(1700,6,.03,.03,'bandpass'),90+Math.random()*120)}   // tic della stufa che si raffredda
-    AMBG.tl-=dt;if(AMBG.tl<=0){AMBG.tl=25+Math.random()*30;A.nburst(260,1.2,1.4,.012,'lowpass')}   // soffio d'aria nel camino
-  }else{AMBG.tl-=dt;if(AMBG.tl<=0){AMBG.tl=9+Math.random()*12;A.nburst(900,.8,1.6,.02,'bandpass')}}}   // folata tra gli abeti
+    AMBG.tc-=dt;if(AMBG.tc<=0){AMBG.tc=rnd(16,36);const pan=rnd(-.8,.8),f=rnd(90,150);   // legno che scricchiola: sega lenta che scende, rumore stretto che la segue
+      A.tone(f*1.25,rnd(.5,.9),'sawtooth',.012,f*.78,pan,.35);setTimeout(()=>A.tone(f*1.6,.25,'triangle',.008,f*1.2,pan,.35),rnd(120,300));A.nburst(rnd(300,520),7,.4,.012,'bandpass',pan,.3)}
+    AMBG.ts-=dt;if(AMBG.ts<=0){AMBG.ts=rnd(6,15);const n=1+Math.floor(Math.random()*3);   // la stufa che si raffredda: tic metallici a destra
+      for(let i=0;i<n;i++)setTimeout(()=>{A.nburst(rnd(1700,2600),8,.022,.04,'bandpass',.3,.25);A.tone(rnd(1200,1700),.05,'sine',.012,rnd(900,1200),.3,.3)},i*rnd(110,260))}
+    AMBG.tl-=dt;if(AMBG.tl<=0){AMBG.tl=rnd(18,34);A.nburst(rnd(220,320),1.2,2.2,.012,'lowpass',rnd(.2,.5),.5)}   // soffio d'aria nel camino
+    AMBG.tp-=dt;if(AMBG.tp<=0){AMBG.tp=rnd(25,50);const p0=rnd(-.9,.9);for(let i=0;i<3;i++)setTimeout(()=>A.nburst(rnd(900,1400),1.5,.18,.012,'bandpass',p0+i*.1,.3),i*rnd(180,360))}   // passi leggeri sul tetto, uno scoiattolo
+  }else{
+    AMBG.tg-=dt;if(AMBG.tg<=0){AMBG.tg=rnd(7,15);const p0=rnd(-1,1);A.nburst(rnd(700,1200),.7,rnd(1.4,2.4),.02,'bandpass',p0,.5);setTimeout(()=>A.nburst(rnd(2600,4200),.9,rnd(1,1.8),.012,'bandpass',-p0,.5),rnd(100,400))}   // folate tra gli abeti, da un lato all'altro
+    AMBG.tl-=dt;if(AMBG.tl<=0){AMBG.tl=rnd(10,22);for(let i=0;i<4;i++)setTimeout(()=>A.nburst(rnd(2500,4500),2,.06,.012,'bandpass',rnd(-.9,.9),.4),i*rnd(60,220))}   // foglie che frusciano
+  }}
 const SAL={t0:1e9,seduto:1,posa:'seat_nb_sleep',posa2:null,mix:0};   // figura seduta disegnata a mano finche' Nick non si alza
 
 registraScena({
@@ -47,7 +71,7 @@ registraScena({
   ostacoli:[[[58,89],[104,89],[104,100],[58,100]],[[124,87],[160,87],[160,99],[124,99]],[[188,92],[238,92],[238,106],[188,106]]],
   rif:[110,SC],   // (15 nov) prospettiva: a y=110 Nick ha scala 2,05 (come da seduto); orizzonte = occhi di un uomo in piedi (PROSP)
   superficie:'legno',superfici:[{poly:[[150,108],[190,104],[238,108],[238,118],[150,118]],tipo:'tappeto'}],
-  ambiente:{stanza:0,vento:.55,pioggia:0,fuoco:0},   // (15 nov) niente ronzio a 50 Hz: aria nei tronchi + uccelli, scricchiolii e tic della stufa (ambienteGiorno)
+  ambiente:{stanza:0,vento:.4,foglie:.5,aria:1,pioggia:0,fuoco:0},   // (15 nov) niente ronzio a 50 Hz: aria nei tronchi + uccelli, scricchiolii e tic della stufa (ambienteGiorno)
   aggiorna(s,dt){ambienteGiorno(dt,true)},
   suggerimento:'',
   sotto(gg){   // impermeabile e cappello sulla sedia, come la sera prima
@@ -65,16 +89,18 @@ registraScena({
     s.sequenza(async()=>{
       // (12 nov) su iPhone l'audio si sblocca solo con un tocco: se si arriva dal link diretto (?capitolo2) si aspetta il tocco
       while(!(A.AU.ctx&&A.AU.ctx.state==='running')){setHint('TOCCA PER INIZIARE',true);await pausa(.2)}
-      setHint('');SAL.t0=s.t;
+      setHint('');SAL.t0=s.t;A.sting('alba');   // intermezzo: il mattino
             await pausa(3.2);
       for(const [a,b] of [['seat_nb_sleep','seat_nb_doze'],['seat_nb_doze','seat_nb_wake']]){SAL.posa=a;SAL.posa2=b;
         for(let k=0;k<=20;k++){SAL.mix=k/20;await pausa(.05)}SAL.posa=b;SAL.posa2=null;SAL.mix=0;await pausa(.6)}
       C2.sveglio=true;FIATO.suona('protagonista-interno','sospiro',1,.85);
+      let kk=0;
       for(const t of ['Che sonno… Dove sono?… Ah, la baita.','Che sogno strano… Era tutto così confuso.','Cos\'erano quei posti?',
         'Quel ponte… l\'ho riconosciuto. Era il Ponte del Diavolo.','Che significato ha?','E quel simbolo? Cosa significa?',
         'E cos\'è Settimo?','E quella donna? Chi è?','Non capisco…','Devo capirlo. Mi metto in viaggio.'])
-        await dn(s,p,t,{frontale:false});
-      await pausa(.4);sfx.alza();FIATO.suona('protagonista-interno','sforzo',1,.85);
+        {if(kk===3)A.sting('ponte');if(kk===5)A.sting('simbolo');if(kk===7)A.sting('donna');kk++;
+        await dn(s,p,t,{frontale:false})}
+      A.sting('scoperta',.7);await pausa(.4);sfx.alza();FIATO.suona('protagonista-interno','sforzo',1,.85);
       p.x=186;p.y=110;p.dir='W';p.visibile=true;
       for(let k=0;k<=12;k++){SAL.seduto=1-k/12;await pausa(.03)}
       SAL.seduto=0;C2.pensato=true;document.getElementById('bHint').style.display='none';await pausa(.8);
@@ -87,8 +113,11 @@ const IMG_ASCIA=mkImg('img/emb/ascia_r2.png');   // 18x14, dal foglio ascia-sola
 const POZ={x:166,y:107},CAR_X=6;
 /* (15 nov) l'auto e' un oggetto reale (Alfa 164: alta 1,45 m, sprite 3/4 posteriore 69x30 = 20,7 px/m a quel disegno): la sua misura sullo schermo viene dai px/m del pavimento
    alla quota della base (112), con la STESSA prospettiva che scala Nick: orizzonte = occhi di un uomo in piedi */
-const PR_EST={yr:107,sr:1.047},YH_EST=PROSP.orizzonte(PR_EST.yr,PR_EST.sr),CAR_BASE=112;
-const CAR=(()=>{const ppm=PROSP.perM(YH_EST,PR_EST.yr,PR_EST.sr,CAR_BASE),k=ppm/(30/1.45);return {w:Math.round(69*k),h:Math.round(30*k),k}})();   // luccichio nella pozzanghera grande; auto come di notte (CAR_X=6, base 112)
+const PR_EST={yr:107,sr:1.047},YH_EST=PROSP.orizzonte(PR_EST.yr,PR_EST.sr);   // orizzonte della scena = occhi di un uomo in piedi (PROSP)
+/* (15 nov) AUTO IN PROSPETTIVA: l'Alfa 164 (4,55 x 1,83 x 1,43 m) e' una scatola in 3D proiettata con la stessa camera che scala Nick; lo sprite (3/4 posteriore, disegnato a 21,4 gradi dall'asse)
+   e' scalato sulla scatola proiettata, e l'angolo dell'asse e' scelto perche' da quel punto si veda proprio sotto 21,4 gradi. Punti di fuga: asse dell'auto e perpendicolare (griglia con ?griglia). */
+const IMG_AUTO34=mkImg('img/emb/auto164_34retro_d69.png');
+const AUTO={xs:40,ys:107.3,sc:null};   // centro dell'impronta a terra, in px di schermo
 function disegnaAscia(gg,hx,hy,ang,flip){   // l'ascia e' presa per il fondo del manico (in alto a destra nello sprite: 17,1)
   if(!(IMG_ASCIA.complete&&IMG_ASCIA.naturalWidth))return;
   gg.save();gg.translate(hx,hy);if(flip)gg.scale(-1,1);gg.rotate(ang);gg.drawImage(IMG_ASCIA,-17,-1);gg.restore()}
@@ -105,13 +134,14 @@ registraScena({
   ostacoli:[[[2,99],[78,99],[78,114],[2,114]],[[204,96],[232,96],[232,101],[204,101]]],
   rif:[107,1.047],audioPassi:false,   // (15 nov) prospettiva: a y=107 Nick ha scala 1,047 (33 px) -> orizzonte y~75,8; la scala cresce scendendo, come l'auto   // (12 nov) fuori dalla baita i passi non fanno rumore
   superficie:'fango',superfici:[{poly:[[138,104],[186,104],[186,111],[138,111]],tipo:'pozzanghera'},{poly:[[78,96],[112,96],[112,101],[78,101]],tipo:'pozzanghera'}],
-  ambiente:{stanza:0,vento:.45,pioggia:0,fuoco:0},
+  ambiente:{stanza:0,vento:.5,foglie:1,aria:.35,pioggia:0,fuoco:0},
   aggiorna(s,dt){ambienteGiorno(dt,false)},
   suggerimento:'TOCCA PER CAMMINARE',
   disegnaSfondo(gg){const im=C2.ascia?BG_EST2:BG_EST;if(im.complete&&im.naturalWidth)gg.drawImage(im,0,0,W,H);else R(0,0,W,H,'#3a5a7a')},
-  oggetti:[{img:'img/emb/auto164_34retro_d69.png',x:CAR_X,y:112-CAR.h,w:CAR.w,h:CAR.h,baseY:112}],   // (15 nov) misure dalla prospettiva
+  oggetti:[{baseY:112,disegna(gg){AUTO.sc=PROSP.disegnaAuto(gg,IMG_AUTO34,YH_EST,AUTO.xs,AUTO.ys,21.4)||AUTO.sc}}],
+  scatolaAuto:()=>PROSP.scatola(YH_EST,AUTO.xs,AUTO.ys,21.4),
   sotto(gg,s){
-    ell(CAR_X+CAR.w/2,111,CAR.w*.55,2.5,'#05060a',.4);   // ombra dell'auto
+    if(AUTO.sc)ell((AUTO.sc.x0+AUTO.sc.x1)/2,AUTO.sc.y1-1,(AUTO.sc.x1-AUTO.sc.x0)*.52,2.5,'#05060a',.4);   // ombra dell'auto
     if(!C2.chiavi&&C2.tw){const k=Math.max(0,Math.sin(s.t*2.6))**6;stella(gg,POZ.x,POZ.y,k)}},   // luccichio nel fango
   sopra(gg,s){
     const p=s.giocatore;if(!p)return;
@@ -124,19 +154,19 @@ registraScena({
       if(!C2.ascia)await dn(s,p,'Come le recupero senza sporcarmi?')}},
     {nome:'L\'ASCIA',rect:[208,72,26,16],cammina:{x:206,y:104,dir:'E'},visibile:()=>C2.visto&&!C2.ascia,usa:async(s,p)=>{
       await dn(s,p,'L\'ascia! È lo strumento ideale.');
-      p.dir='E';await new Promise(r=>{p.pickUp();setTimeout(()=>{C2.ascia=1;sfx.raccogli()},450);setTimeout(r,1300)});
+      p.dir='E';await new Promise(r=>{p.pickUp();setTimeout(()=>{C2.ascia=1;sfx.raccogli();A.sting('tonfo')},450);setTimeout(r,1300)});
       if(!(await p.vaiA(150,110,false,'E')))return;p.dir='E';
       // smuove la terra: braccio giu' (raspa) e su, con schizzi di fango
       C2.ascia=2;const N=4;p.state='act';p.seq=[];for(let i=0;i<N;i++)p.seq.push(['crouch',.32],['reach',.42]);p.seq.push(['crouch',.4],['#',0]);p.seq=p.seq.filter(a=>a[0]==='#'||p.has(a[0]));p.si=0;p.st=0;
-      for(let i=0;i<N;i++){await pausa(.32+.12);sfx.passo('fango',1);FIATO.suona('protagonista-esterno','sforzo',.8,.85);for(let j=0;j<6;j++)FANGO.push({x:POZ.x-2+Math.random()*4,y:POZ.y,vx:(Math.random()-.3)*30,vy:-25-Math.random()*25,t:0,c:Math.random()<.5?'#4a3424':'#2e2016'});await pausa(.3)}
-      C2.chiavi=true;sfx.chiavi();await pausa(.9);
+      for(let i=0;i<N;i++){await pausa(.32+.12);sfx.passo('fango',1);A.nburst(rnd(420,640),1.1,.14,.07,'lowpass',.15,.2);A.tone(rnd(110,160),.12,'sine',.05,60,.15,.1);FIATO.suona('protagonista-esterno','sforzo',.8,.85);for(let j=0;j<6;j++)FANGO.push({x:POZ.x-2+Math.random()*4,y:POZ.y,vx:(Math.random()-.3)*30,vy:-25-Math.random()*25,t:0,c:Math.random()<.5?'#4a3424':'#2e2016'});await pausa(.3)}
+      C2.chiavi=true;sfx.chiavi();A.sting('scoperta');await pausa(.9);
       C2.ascia=0;   // l'ascia resta a terra accanto alla pozzanghera? per ora non si disegna piu'
       s.vaiScena('c2-auto')}}],
   entra(s){
     const p=s.giocatore;FANGO.length=0;
     s.sequenza(async()=>{
       await pausa(1.2);await p.vaiA(150,106,false,'S');p.dir='S';
-      sfx.stoffa();await pausa(.5);sfx.stoffa();await pausa(.4);
+      sfx.stoffa();await pausa(.5);sfx.stoffa();await pausa(.4);A.sting('scintilla');
       await dn(s,p,'Le chiavi dell\'auto… Non sono nelle tasche.');
       C2.tw=1;s.hint()})}
 });
@@ -158,7 +188,7 @@ registraScena({
     s.occupato=true;document.getElementById('bHint').style.display='none';setTimeout(()=>sfx.portaChiude(),300);filmEl().load();setTimeout(()=>sfx.chiavi(),1300);
     s.sequenza(async()=>{
       await pausa(2.2);
-      const dit=A.sayP('Partiamo!');await pausa(.9);
+      const dit=A.sayP('Partiamo!');A.sting('partenza');await pausa(.9);
       for(let k=0;k<7;k++){A.tone(64+k*3,.2,'sawtooth',.05,80+k*4);await pausa(.17)}   // il motorino d'avviamento
       A.setEng&&A.setEng(.7,true);await pausa(.5);await dit;
       A.fadeTo(1,1.3,()=>{A.setScene('c2-strada');A.fadeTo(0,.9)});await pausa(2)})}

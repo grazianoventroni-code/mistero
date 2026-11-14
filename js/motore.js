@@ -52,14 +52,21 @@ Object.assign(sfx,{
   stoffa(){noise(1800,.7,.18,.05,'bandpass')}
 });
 // ambienti: vento e brusio di stanza (pioggia e fuoco usano le funzioni gia' esistenti del gioco)
-const AMB={vento:null,stanza:null};
+const AMB={vento:null,stanza:null,foglie:null,aria:null};
 function ambiente(o={}){
   if(!AU.ctx)return;const c=AU.ctx,t=c.currentTime;
   if(!AMB.vento){const s=c.createBufferSource();s.buffer=AU.buf;s.loop=true;const bp=c.createBiquadFilter();bp.type='bandpass';bp.frequency.value=520;bp.Q.value=.7;
     const gn=c.createGain();gn.gain.value=0;const lfo=c.createOscillator(),lg=c.createGain();lfo.frequency.value=.13;lg.gain.value=220;lfo.connect(lg);lg.connect(bp.frequency);
     s.connect(bp);bp.connect(gn);gn.connect(AU.master);s.start();lfo.start();AMB.vento=gn}
   if(!AMB.stanza){const o1=c.createOscillator(),o2=c.createOscillator(),gn=c.createGain();o1.frequency.value=50;o2.frequency.value=100.4;gn.gain.value=0;o1.connect(gn);o2.connect(gn);gn.connect(AU.master);o1.start();o2.start();AMB.stanza=gn}
+  /* (15 nov) strati stereo (il rumore di base ha due canali indipendenti): fruscio di foglie/chiome (banda alta, modulata da raffiche lente diverse a sinistra e a destra) e
+     "aria" della stanza (respiro grave del legno e dell'aria, quasi impercettibile ma riempie il campo) */
+  if(!AMB.foglie){const s2=c.createBufferSource();s2.buffer=AU.buf;s2.loop=true;const bp=c.createBiquadFilter();bp.type='bandpass';bp.frequency.value=3800;bp.Q.value=.45;const gn=c.createGain();gn.gain.value=0;
+    const l1=c.createOscillator(),lg=c.createGain();l1.frequency.value=.11;lg.gain.value=.5;l1.connect(lg);const am=c.createGain();am.gain.value=.55;lg.connect(am.gain);s2.connect(bp);bp.connect(am);am.connect(gn);gn.connect(AU.master);s2.start();l1.start();AMB.foglie=gn}
+  if(!AMB.aria){const s2=c.createBufferSource();s2.buffer=AU.buf;s2.loop=true;const lp=c.createBiquadFilter();lp.type='lowpass';lp.frequency.value=240;const gn=c.createGain();gn.gain.value=0;
+    const l1=c.createOscillator(),lg=c.createGain();l1.frequency.value=.07;lg.gain.value=70;l1.connect(lg);lg.connect(lp.frequency);s2.connect(lp);lp.connect(gn);gn.connect(AU.master);s2.start();l1.start();AMB.aria=gn}
   AMB.vento.gain.setTargetAtTime((o.vento||0)*.05,t,.8);AMB.stanza.gain.setTargetAtTime((o.stanza||0)*.012,t,.8);
+  AMB.foglie.gain.setTargetAtTime((o.foglie||0)*.016,t,1.2);AMB.aria.gain.setTargetAtTime((o.aria||0)*.05,t,1.2);
   if(A.setRain&&o.pioggia!==undefined)A.setRain(o.pioggia,!!o.pioggiaDentro);
   if(A.setFire&&o.fuoco!==undefined)A.setFire(o.fuoco)}
 
@@ -319,13 +326,10 @@ class Scena{
     const yh=c.orizzonte!==undefined?c.orizzonte:PROSP.orizzonte(yr,sr);return this._pr={yh,yr,sr}}
   scala(y){const c=this.cfg;if(c.scala)return c.scala(y);const q=this.prospettiva();return PROSP.scala(q.yh,q.yr,q.sr,y)}
   perM(y){const q=this.prospettiva();return PROSP.perM(q.yh,q.yr,q.sr,y)}   // pixel logici per metro a quella quota del pavimento
-  disegnaGriglia(){   // (15 nov) ?griglia: orizzonte, linee prospettiche verso il punto di fuga, linee del pavimento a distanze fisse e un uomo di 1,75 m in tre punti: serve a controllare le proporzioni
-    const q=this.prospettiva(),vx=this.cfg.puntoDiFuga!==undefined?this.cfg.puntoDiFuga:W/2,HC=PROSP.HC;g.save();g.globalAlpha=.8;
-    R(0,Math.round(q.yh),W,1,'#00ffff');txt('ORIZZONTE y='+q.yh.toFixed(1),2,Math.max(1,Math.round(q.yh)-7),'#00ffff');
-    for(const ppm of [40,30,24,19,15,12,9]){const y=q.yh+ppm*HC;if(y>0&&y<H){g.globalAlpha=.45;R(0,Math.round(y),W,1,'#ffe060');txt(ppm+'px/m',W-30,Math.round(y)-6,'#ffe060')}}
-    g.globalAlpha=.4;for(let x=-120;x<=W+120;x+=30)line2(vx,q.yh,x,H)
-    g.globalAlpha=.9;for(const y of [q.yr-9,q.yr,q.yr+9]){const h=1.75*(y-q.yh)/HC,x=W*.08+(y-q.yr+9)*8;R(Math.round(x),Math.round(y-h),1,Math.round(h),'#ff60ff');R(Math.round(x)-2,Math.round(y-h),5,1,'#ff60ff');R(Math.round(x)-2,Math.round(y),5,1,'#ff60ff')}
-    g.restore()}
+  disegnaGriglia(){   // (15 nov) ?griglia: orizzonte, punto di fuga centrale, linee del pavimento, un uomo di 1,75 m in tre punti e, se la scena ha un'auto (cfg.scatolaAuto), la sua scatola con i DUE punti di fuga
+    const q=this.prospettiva(),sc=this.cfg.scatolaAuto?this.cfg.scatolaAuto():null;PROSP.griglia(g,q.yh,q.yr,sc);
+    txt('ORIZZONTE y='+q.yh.toFixed(1)+'  F='+PROSP.F+'  HC='+PROSP.HC+' m',2,Math.max(1,Math.round(q.yh)-7),'#00ffff');
+    if(sc){txt('PF1 asse x='+sc.vpAsse.toFixed(0),Math.min(W-70,Math.max(2,sc.vpAsse-30)),Math.round(q.yh)-14,'#40ff80');txt('PF2 trasverso x='+sc.vpTraverso.toFixed(0)+' (fuori campo)',2,Math.round(q.yh)+4,'#4080ff');txt(((sc.x1-sc.x0)).toFixed(0)+'x'+((sc.y1-sc.y0)).toFixed(0)+' px = 4,55 m',Math.round(sc.x0),Math.round(sc.y1)+2,'#ff8040')}}
   superficieIn(x,y){for(const s of this.superfici)if(inPoly(s.poly,x,y))return s.tipo;return this.sup0}
   passo(p){const a=this.cfg.audioPassi;if(a===false)return;const sup=this.superficieIn(p.x,p.y);
     const vicino=this.giocatore?Math.hypot(p.x-this.giocatore.x,p.y-this.giocatore.y):0;
