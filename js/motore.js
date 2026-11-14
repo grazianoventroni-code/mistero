@@ -194,8 +194,9 @@ const Voce={modo:'muto',   /* (14 nov) niente voci: solo testi. Il modo e' sempr
     return vs[0]},
   disponibile(){return !!window.speechSynthesis&&speechSynthesis.getVoices().some(v=>/^it/i.test(v.lang))},
   imposta(m){this.modo=m;try{localStorage.setItem('mistero-voce',m)}catch(e){}if(window.speechSynthesis&&m!=='voce')speechSynthesis.cancel()}};
-const VD=/[?&]voci=2/.test(location.search)?'audio/voci2/':'audio/voci-r2/';   // ?voci=2 = clip "pulite" (prova). (12 nov) voci-r2: le stesse clip in MP3 a 44,1 kHz (quelle a 16 kHz su iPhone non si sentivano)
-/* (14 nov) indice delle clip non piu' caricato: voci tolte */
+const VD='audio/gemelle/';   // ?voci=2 = clip "pulite" (prova). (12 nov) voci-r2: le stesse clip in MP3 a 44,1 kHz (quelle a 16 kHz su iPhone non si sentivano)
+/* (14 nov) voci tolte, TRANNE le gemelle (le uniche che parlano): indice e clip in audio/gemelle */
+fetch('audio/gemelle/indice.json',{cache:'no-cache'}).then(r=>r.ok?r.json():null).then(j=>{Voce.clips=j}).catch(()=>{});
 /* (12 nov) clip vocali con Web Audio, non con <audio>: su iPhone un <audio> avviato da un timer (non dal tocco) resta muto,
    mentre il contesto Web Audio, sbloccato dal primo tocco, suona anche con il telefono in modalita' silenziosa. Stessa interfaccia minima di <audio>. */
 const CLIPBUF={};
@@ -239,14 +240,14 @@ const Dialogo={
     this.creaDOM();const att=r.att,p=VOCI[att&&att.nome]||VOCI.default,tx=r.testo;
     // testo a capo gestito dal browser; qui si calcolano solo tempi e vocali
     this.cor={r,att,p,tx,n:0,acc:0,t:0,fine:false,att2:0,tts:null,clip:null,mouthT:0};
-    if(att&&window.FIATO&&!r.opz.animale)FIATO.suona(att.n,/\?\s*$/.test(tx)?'dubbio':/!\s*$/.test(tx)?'sorpresa':Math.random()<.5?'sospiro':'dubbio',.7,.85);   // (14 nov) un'interiezione brevissima prima del testo
+    if(att&&window.FIATO&&!r.opz.animale&&att.nome!=='gemella')FIATO.suona(att.n,/\?\s*$/.test(tx)?'dubbio':/!\s*$/.test(tx)?'sorpresa':Math.random()<.5?'sospiro':'dubbio',.7,.85);   // (14 nov) un'interiezione brevissima prima del testo
     if(att){att.talking=true;att.bocca=1;if(!att.seq&&att.state!=='sit'&&r.opz.frontale!==false&&att.c&&att.c.fr&&att.c.fr.talk_S_1){att.dir='S'}}
     const nm=r.opz.nome||(att&&att.etichetta)||'';this.nome=nm;this.col=r.opz.colore||p.col;
     this.el.style.setProperty('--bc',this.col);this.el.style.borderColor=this.col;this.el.style.fontSize=this.fontPx()+'px';
     this.cor.cps=p.cps*(r.opz.vel||1);
     // voce del telefono o clip registrata
     const reg=(window.__battute=window.__battute||[]);if(att&&!reg.some(b=>b.pers===att.nome&&b.testo===tx))reg.push({pers:att.nome,testo:tx});   // elenco delle battute dette: serve a genera_voci.py
-    const cf=r.opz.clip||(Voce.modo==='voce'&&Voce.clips&&att&&Voce.clips[att.nome+'|'+tx]?VD+Voce.clips[att.nome+'|'+tx]:null);   // clip registrata (Piper) se esiste per questa battuta
+    const cf=r.opz.clip||(Voce.clips&&att&&att.nome==='gemella'&&Voce.clips['gemella|'+tx]?VD+Voce.clips['gemella|'+tx]:null);   // clip registrata (Piper) se esiste per questa battuta
     if(cf){this.cor.clip=suonaClip(cf)}
     else if(Voce.modo==='voce'&&window.speechSynthesis&&!r.opz.animale){const v=Voce.scegli(p.sx);const u=new SpeechSynthesisUtterance(tx);u.lang='it-IT';if(v)u.voice=v;u.pitch=clamp(p.tp,.1,2);u.rate=clamp(p.tr*(r.opz.vel||1),.5,1.6);
       u.onboundary=e=>{this.cor&&(this.cor.bi=e.charIndex)};u.onend=()=>{this.cor&&(this.cor.ttsFine=true)};this.cor.tts=u;speechSynthesis.cancel();speechSynthesis.speak(u);
