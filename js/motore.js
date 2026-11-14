@@ -129,11 +129,13 @@ class Pers extends Actor{
     if(this.seq){this.st+=dt;let cur=this.seq[this.si];
       while(cur&&cur[1]>0&&this.st>=cur[1]){this.st-=cur[1];this.si++;cur=this.seq[this.si]}
       if(!cur||cur[0]==='#'){this.seq=null;this.state='idle'}else return}
-    if(!this.path.length){if(this.state==='walk'){this.state='idle';this.v=0}return}
+    if(!this.path.length){if(this.state==='walk'){this.state='idle';this.v=0}
+      if(window.FIATO&&this.state==='idle'&&this.visibile!==false){this.riposo=(this.riposo===undefined?25+Math.random()*50:this.riposo)-dt;if(this.riposo<=0){this.riposo=45+Math.random()*60;FIATO.suona(this.n,Math.random()<.5?'respiro':'sospiro',1,.7)}}   /* (14 nov) ogni tanto un respiro o un sospiro */
+      return}
     const [tx,ty]=this.path[0],dx=tx-this.x,dy=ty-this.y,d=Math.hypot(dx,dy),s=this.scala();
     this.v=Math.min(1,this.v+dt*4);
     const vel=this.vel*(s/1.45)*(this.corsa?1.9:1)*(.45+.55*this.v)*(this.path.length===1&&d<5?Math.max(.5,d/5):1),step=Math.min(vel*dt,d);
-    if(d<.6){this.path.shift();if(!this.path.length){this.state='idle';this.v=0;if(this.arrivo)this.dir=this.arrivo;const r=this._res;this._res=null;if(r)r(true)}return}
+    if(d<.6){this.path.shift();if(!this.path.length){this.state='idle';this.v=0;if(this.corsa&&window.FIATO)FIATO.suona(this.n,'affanno',.85,.8);if(this.arrivo)this.dir=this.arrivo;const r=this._res;this._res=null;if(r)r(true)}return}
     this.x+=dx/d*step;this.y+=dy/d*step;this.lastD=d+(this.path.length-1)*50;this.state='walk';
     const horiz=this.dir==='E'||this.dir==='W';
     if(horiz?Math.abs(dy)>Math.abs(dx)*1.5:Math.abs(dx)>Math.abs(dy)*.8)this.dir=Math.abs(dx)>=Math.abs(dy)*(horiz?1.5:.8)?(dx>0?'E':'W'):(dy>0?'S':'N');
@@ -237,6 +239,7 @@ const Dialogo={
     this.creaDOM();const att=r.att,p=VOCI[att&&att.nome]||VOCI.default,tx=r.testo;
     // testo a capo gestito dal browser; qui si calcolano solo tempi e vocali
     this.cor={r,att,p,tx,n:0,acc:0,t:0,fine:false,att2:0,tts:null,clip:null,mouthT:0};
+    if(att&&window.FIATO&&!r.opz.animale)FIATO.suona(att.n,/\?\s*$/.test(tx)?'dubbio':/!\s*$/.test(tx)?'sorpresa':Math.random()<.5?'sospiro':'dubbio',.7,.85);   // (14 nov) un'interiezione brevissima prima del testo
     if(att){att.talking=true;att.bocca=1;if(!att.seq&&att.state!=='sit'&&r.opz.frontale!==false&&att.c&&att.c.fr&&att.c.fr.talk_S_1){att.dir='S'}}
     const nm=r.opz.nome||(att&&att.etichetta)||'';this.nome=nm;this.col=r.opz.colore||p.col;
     this.el.style.setProperty('--bc',this.col);this.el.style.borderColor=this.col;this.el.style.fontSize=this.fontPx()+'px';

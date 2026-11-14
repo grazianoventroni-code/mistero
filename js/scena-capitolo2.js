@@ -55,12 +55,12 @@ registraScena({
             await pausa(3.2);
       for(const [a,b] of [['seat_nb_sleep','seat_nb_doze'],['seat_nb_doze','seat_nb_wake']]){SAL.posa=a;SAL.posa2=b;
         for(let k=0;k<=20;k++){SAL.mix=k/20;await pausa(.05)}SAL.posa=b;SAL.posa2=null;SAL.mix=0;await pausa(.6)}
-      C2.sveglio=true;
+      C2.sveglio=true;FIATO.suona('protagonista-interno','sospiro',1,.85);
       for(const t of ['Che sonno… Dove sono?… Ah, la baita.','Che sogno strano… Era tutto così confuso.','Cos\'erano quei posti?',
         'Quel ponte… l\'ho riconosciuto. Era il Ponte del Diavolo.','Che significato ha?','E quel simbolo? Cosa significa?',
         'E cos\'è Settimo?','E quella donna? Chi è?','Non capisco…','Devo capirlo. Mi metto in viaggio.'])
         await dn(s,p,t,{frontale:false});
-      await pausa(.4);sfx.alza();
+      await pausa(.4);sfx.alza();FIATO.suona('protagonista-interno','sforzo',1,.85);
       p.x=186;p.y=110;p.dir='W';p.visibile=true;
       for(let k=0;k<=12;k++){SAL.seduto=1-k/12;await pausa(.03)}
       SAL.seduto=0;C2.pensato=true;document.getElementById('bHint').style.display='none';await pausa(.8);
@@ -115,7 +115,7 @@ registraScena({
       if(!(await p.vaiA(150,110,false,'E')))return;p.dir='E';
       // smuove la terra: braccio giu' (raspa) e su, con schizzi di fango
       C2.ascia=2;const N=4;p.state='act';p.seq=[];for(let i=0;i<N;i++)p.seq.push(['crouch',.32],['reach',.42]);p.seq.push(['crouch',.4],['#',0]);p.seq=p.seq.filter(a=>a[0]==='#'||p.has(a[0]));p.si=0;p.st=0;
-      for(let i=0;i<N;i++){await pausa(.32+.12);sfx.passo('fango',1);for(let j=0;j<6;j++)FANGO.push({x:POZ.x-2+Math.random()*4,y:POZ.y,vx:(Math.random()-.3)*30,vy:-25-Math.random()*25,t:0,c:Math.random()<.5?'#4a3424':'#2e2016'});await pausa(.3)}
+      for(let i=0;i<N;i++){await pausa(.32+.12);sfx.passo('fango',1);FIATO.suona('protagonista-esterno','sforzo',.8,.85);for(let j=0;j<6;j++)FANGO.push({x:POZ.x-2+Math.random()*4,y:POZ.y,vx:(Math.random()-.3)*30,vy:-25-Math.random()*25,t:0,c:Math.random()<.5?'#4a3424':'#2e2016'});await pausa(.3)}
       C2.chiavi=true;sfx.chiavi();await pausa(.9);
       C2.ascia=0;   // l'ascia resta a terra accanto alla pozzanghera? per ora non si disegna piu'
       s.vaiScena('c2-auto')}}],

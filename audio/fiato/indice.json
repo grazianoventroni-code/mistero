@@ -1,0 +1,893 @@
+{
+"protagonista-interno": {
+"sforzo": [
+"protagonista-interno-sforzo-1.mp3",
+"protagonista-interno-sforzo-2.mp3",
+"protagonista-interno-sforzo-3.mp3"
+],
+"sorpresa": [
+"protagonista-interno-sorpresa-1.mp3",
+"protagonista-interno-sorpresa-2.mp3",
+"protagonista-interno-sorpresa-3.mp3"
+],
+"sospiro": [
+"protagonista-interno-sospiro-1.mp3",
+"protagonista-interno-sospiro-2.mp3"
+],
+"dubbio": [
+"protagonista-interno-dubbio-1.mp3",
+"protagonista-interno-dubbio-2.mp3"
+],
+"dolore": [
+"protagonista-interno-dolore-1.mp3"
+],
+"respiro": [
+"protagonista-interno-respiro-1.mp3",
+"protagonista-interno-respiro-2.mp3"
+],
+"affanno": [
+"protagonista-interno-affanno-1.mp3"
+],
+"sbuffo": [
+"protagonista-interno-sbuffo-1.mp3"
+]
+},
+"donna": {
+"sforzo": [
+"donna-sforzo-1.mp3",
+"donna-sforzo-2.mp3",
+"donna-sforzo-3.mp3"
+],
+"sorpresa": [
+"donna-sorpresa-1.mp3",
+"donna-sorpresa-2.mp3",
+"donna-sorpresa-3.mp3"
+],
+"sospiro": [
+"donna-sospiro-1.mp3",
+"donna-sospiro-2.mp3"
+],
+"dubbio": [
+"donna-dubbio-1.mp3",
+"donna-dubbio-2.mp3"
+],
+"dolore": [
+"donna-dolore-1.mp3"
+],
+"respiro": [
+"donna-respiro-1.mp3",
+"donna-respiro-2.mp3"
+],
+"affanno": [
+"donna-affanno-1.mp3"
+],
+"sbuffo": [
+"donna-sbuffo-1.mp3"
+]
+},
+"ramone-1": {
+"sforzo": [
+"ramone-1-sforzo-1.mp3",
+"ramone-1-sforzo-2.mp3",
+"ramone-1-sforzo-3.mp3"
+],
+"sorpresa": [
+"ramone-1-sorpresa-1.mp3",
+"ramone-1-sorpresa-2.mp3",
+"ramone-1-sorpresa-3.mp3"
+],
+"sospiro": [
+"ramone-1-sospiro-1.mp3",
+"ramone-1-sospiro-2.mp3"
+],
+"dubbio": [
+"ramone-1-dubbio-1.mp3",
+"ramone-1-dubbio-2.mp3"
+],
+"dolore": [
+"ramone-1-dolore-1.mp3"
+],
+"respiro": [
+"ramone-1-respiro-1.mp3",
+"ramone-1-respiro-2.mp3"
+],
+"affanno": [
+"ramone-1-affanno-1.mp3"
+],
+"sbuffo": [
+"ramone-1-sbuffo-1.mp3"
+]
+},
+"blues-brothers-alto": {
+"sforzo": [
+"blues-brothers-alto-sforzo-1.mp3",
+"blues-brothers-alto-sforzo-2.mp3",
+"blues-brothers-alto-sforzo-3.mp3"
+],
+"sorpresa": [
+"blues-brothers-alto-sorpresa-1.mp3",
+"blues-brothers-alto-sorpresa-2.mp3",
+"blues-brothers-alto-sorpresa-3.mp3"
+],
+"sospiro": [
+"blues-brothers-alto-sospiro-1.mp3",
+"blues-brothers-alto-sospiro-2.mp3"
+],
+"dubbio": [
+"blues-brothers-alto-dubbio-1.mp3",
+"blues-brothers-alto-dubbio-2.mp3"
+],
+"dolore": [
+"blues-brothers-alto-dolore-1.mp3"
+],
+"respiro": [
+"blues-brothers-alto-respiro-1.mp3",
+"blues-brothers-alto-respiro-2.mp3"
+],
+"affanno": [
+"blues-brothers-alto-affanno-1.mp3"
+],
+"sbuffo": [
+"blues-brothers-alto-sbuffo-1.mp3"
+]
+},
+"blues-brothers-basso": {
+"sforzo": [
+"blues-brothers-basso-sforzo-1.mp3",
+"blues-brothers-basso-sforzo-2.mp3",
+"blues-brothers-basso-sforzo-3.mp3"
+],
+"sorpresa": [
+"blues-brothers-basso-sorpresa-1.mp3",
+"blues-brothers-basso-sorpresa-2.mp3",
+"blues-brothers-basso-sorpresa-3.mp3"
+],
+"sospiro": [
+"blues-brothers-basso-sospiro-1.mp3",
+"blues-brothers-basso-sospiro-2.mp3"
+],
+"dubbio": [
+"blues-brothers-basso-dubbio-1.mp3",
+"blues-brothers-basso-dubbio-2.mp3"
+],
+"dolore": [
+"blues-brothers-basso-dolore-1.mp3"
+],
+"respiro": [
+"blues-brothers-basso-respiro-1.mp3",
+"blues-brothers-basso-respiro-2.mp3"
+],
+"affanno": [
+"blues-brothers-basso-affanno-1.mp3"
+],
+"sbuffo": [
+"blues-brothers-basso-sbuffo-1.mp3"
+]
+},
+"controllore-del-treno": {
+"sforzo": [
+"controllore-del-treno-sforzo-1.mp3",
+"controllore-del-treno-sforzo-2.mp3",
+"controllore-del-treno-sforzo-3.mp3"
+],
+"sorpresa": [
+"controllore-del-treno-sorpresa-1.mp3",
+"controllore-del-treno-sorpresa-2.mp3",
+"controllore-del-treno-sorpresa-3.mp3"
+],
+"sospiro": [
+"controllore-del-treno-sospiro-1.mp3",
+"controllore-del-treno-sospiro-2.mp3"
+],
+"dubbio": [
+"controllore-del-treno-dubbio-1.mp3",
+"controllore-del-treno-dubbio-2.mp3"
+],
+"dolore": [
+"controllore-del-treno-dolore-1.mp3"
+],
+"respiro": [
+"controllore-del-treno-respiro-1.mp3",
+"controllore-del-treno-respiro-2.mp3"
+],
+"affanno": [
+"controllore-del-treno-affanno-1.mp3"
+],
+"sbuffo": [
+"controllore-del-treno-sbuffo-1.mp3"
+]
+},
+"doc-ritorno-al-futuro": {
+"sforzo": [
+"doc-ritorno-al-futuro-sforzo-1.mp3",
+"doc-ritorno-al-futuro-sforzo-2.mp3",
+"doc-ritorno-al-futuro-sforzo-3.mp3"
+],
+"sorpresa": [
+"doc-ritorno-al-futuro-sorpresa-1.mp3",
+"doc-ritorno-al-futuro-sorpresa-2.mp3",
+"doc-ritorno-al-futuro-sorpresa-3.mp3"
+],
+"sospiro": [
+"doc-ritorno-al-futuro-sospiro-1.mp3",
+"doc-ritorno-al-futuro-sospiro-2.mp3"
+],
+"dubbio": [
+"doc-ritorno-al-futuro-dubbio-1.mp3",
+"doc-ritorno-al-futuro-dubbio-2.mp3"
+],
+"dolore": [
+"doc-ritorno-al-futuro-dolore-1.mp3"
+],
+"respiro": [
+"doc-ritorno-al-futuro-respiro-1.mp3",
+"doc-ritorno-al-futuro-respiro-2.mp3"
+],
+"affanno": [
+"doc-ritorno-al-futuro-affanno-1.mp3"
+],
+"sbuffo": [
+"doc-ritorno-al-futuro-sbuffo-1.mp3"
+]
+},
+"graziano": {
+"sforzo": [
+"graziano-sforzo-1.mp3",
+"graziano-sforzo-2.mp3",
+"graziano-sforzo-3.mp3"
+],
+"sorpresa": [
+"graziano-sorpresa-1.mp3",
+"graziano-sorpresa-2.mp3",
+"graziano-sorpresa-3.mp3"
+],
+"sospiro": [
+"graziano-sospiro-1.mp3",
+"graziano-sospiro-2.mp3"
+],
+"dubbio": [
+"graziano-dubbio-1.mp3",
+"graziano-dubbio-2.mp3"
+],
+"dolore": [
+"graziano-dolore-1.mp3"
+],
+"respiro": [
+"graziano-respiro-1.mp3",
+"graziano-respiro-2.mp3"
+],
+"affanno": [
+"graziano-affanno-1.mp3"
+],
+"sbuffo": [
+"graziano-sbuffo-1.mp3"
+]
+},
+"igor": {
+"sforzo": [
+"igor-sforzo-1.mp3",
+"igor-sforzo-2.mp3",
+"igor-sforzo-3.mp3"
+],
+"sorpresa": [
+"igor-sorpresa-1.mp3",
+"igor-sorpresa-2.mp3",
+"igor-sorpresa-3.mp3"
+],
+"sospiro": [
+"igor-sospiro-1.mp3",
+"igor-sospiro-2.mp3"
+],
+"dubbio": [
+"igor-dubbio-1.mp3",
+"igor-dubbio-2.mp3"
+],
+"dolore": [
+"igor-dolore-1.mp3"
+],
+"respiro": [
+"igor-respiro-1.mp3",
+"igor-respiro-2.mp3"
+],
+"affanno": [
+"igor-affanno-1.mp3"
+],
+"sbuffo": [
+"igor-sbuffo-1.mp3"
+]
+},
+"kurt-cobain": {
+"sforzo": [
+"kurt-cobain-sforzo-1.mp3",
+"kurt-cobain-sforzo-2.mp3",
+"kurt-cobain-sforzo-3.mp3"
+],
+"sorpresa": [
+"kurt-cobain-sorpresa-1.mp3",
+"kurt-cobain-sorpresa-2.mp3",
+"kurt-cobain-sorpresa-3.mp3"
+],
+"sospiro": [
+"kurt-cobain-sospiro-1.mp3",
+"kurt-cobain-sospiro-2.mp3"
+],
+"dubbio": [
+"kurt-cobain-dubbio-1.mp3",
+"kurt-cobain-dubbio-2.mp3"
+],
+"dolore": [
+"kurt-cobain-dolore-1.mp3"
+],
+"respiro": [
+"kurt-cobain-respiro-1.mp3",
+"kurt-cobain-respiro-2.mp3"
+],
+"affanno": [
+"kurt-cobain-affanno-1.mp3"
+],
+"sbuffo": [
+"kurt-cobain-sbuffo-1.mp3"
+]
+},
+"lillo": {
+"sforzo": [
+"lillo-sforzo-1.mp3",
+"lillo-sforzo-2.mp3",
+"lillo-sforzo-3.mp3"
+],
+"sorpresa": [
+"lillo-sorpresa-1.mp3",
+"lillo-sorpresa-2.mp3",
+"lillo-sorpresa-3.mp3"
+],
+"sospiro": [
+"lillo-sospiro-1.mp3",
+"lillo-sospiro-2.mp3"
+],
+"dubbio": [
+"lillo-dubbio-1.mp3",
+"lillo-dubbio-2.mp3"
+],
+"dolore": [
+"lillo-dolore-1.mp3"
+],
+"respiro": [
+"lillo-respiro-1.mp3",
+"lillo-respiro-2.mp3"
+],
+"affanno": [
+"lillo-affanno-1.mp3"
+],
+"sbuffo": [
+"lillo-sbuffo-1.mp3"
+]
+},
+"greg": {
+"sforzo": [
+"greg-sforzo-1.mp3",
+"greg-sforzo-2.mp3",
+"greg-sforzo-3.mp3"
+],
+"sorpresa": [
+"greg-sorpresa-1.mp3",
+"greg-sorpresa-2.mp3",
+"greg-sorpresa-3.mp3"
+],
+"sospiro": [
+"greg-sospiro-1.mp3",
+"greg-sospiro-2.mp3"
+],
+"dubbio": [
+"greg-dubbio-1.mp3",
+"greg-dubbio-2.mp3"
+],
+"dolore": [
+"greg-dolore-1.mp3"
+],
+"respiro": [
+"greg-respiro-1.mp3",
+"greg-respiro-2.mp3"
+],
+"affanno": [
+"greg-affanno-1.mp3"
+],
+"sbuffo": [
+"greg-sbuffo-1.mp3"
+]
+},
+"macgyver": {
+"sforzo": [
+"macgyver-sforzo-1.mp3",
+"macgyver-sforzo-2.mp3",
+"macgyver-sforzo-3.mp3"
+],
+"sorpresa": [
+"macgyver-sorpresa-1.mp3",
+"macgyver-sorpresa-2.mp3",
+"macgyver-sorpresa-3.mp3"
+],
+"sospiro": [
+"macgyver-sospiro-1.mp3",
+"macgyver-sospiro-2.mp3"
+],
+"dubbio": [
+"macgyver-dubbio-1.mp3",
+"macgyver-dubbio-2.mp3"
+],
+"dolore": [
+"macgyver-dolore-1.mp3"
+],
+"respiro": [
+"macgyver-respiro-1.mp3",
+"macgyver-respiro-2.mp3"
+],
+"affanno": [
+"macgyver-affanno-1.mp3"
+],
+"sbuffo": [
+"macgyver-sbuffo-1.mp3"
+]
+},
+"mark-knopfler": {
+"sforzo": [
+"mark-knopfler-sforzo-1.mp3",
+"mark-knopfler-sforzo-2.mp3",
+"mark-knopfler-sforzo-3.mp3"
+],
+"sorpresa": [
+"mark-knopfler-sorpresa-1.mp3",
+"mark-knopfler-sorpresa-2.mp3",
+"mark-knopfler-sorpresa-3.mp3"
+],
+"sospiro": [
+"mark-knopfler-sospiro-1.mp3",
+"mark-knopfler-sospiro-2.mp3"
+],
+"dubbio": [
+"mark-knopfler-dubbio-1.mp3",
+"mark-knopfler-dubbio-2.mp3"
+],
+"dolore": [
+"mark-knopfler-dolore-1.mp3"
+],
+"respiro": [
+"mark-knopfler-respiro-1.mp3",
+"mark-knopfler-respiro-2.mp3"
+],
+"affanno": [
+"mark-knopfler-affanno-1.mp3"
+],
+"sbuffo": [
+"mark-knopfler-sbuffo-1.mp3"
+]
+},
+"marty-mcfly-ritorno-al-futuro": {
+"sforzo": [
+"marty-mcfly-ritorno-al-futuro-sforzo-1.mp3",
+"marty-mcfly-ritorno-al-futuro-sforzo-2.mp3",
+"marty-mcfly-ritorno-al-futuro-sforzo-3.mp3"
+],
+"sorpresa": [
+"marty-mcfly-ritorno-al-futuro-sorpresa-1.mp3",
+"marty-mcfly-ritorno-al-futuro-sorpresa-2.mp3",
+"marty-mcfly-ritorno-al-futuro-sorpresa-3.mp3"
+],
+"sospiro": [
+"marty-mcfly-ritorno-al-futuro-sospiro-1.mp3",
+"marty-mcfly-ritorno-al-futuro-sospiro-2.mp3"
+],
+"dubbio": [
+"marty-mcfly-ritorno-al-futuro-dubbio-1.mp3",
+"marty-mcfly-ritorno-al-futuro-dubbio-2.mp3"
+],
+"dolore": [
+"marty-mcfly-ritorno-al-futuro-dolore-1.mp3"
+],
+"respiro": [
+"marty-mcfly-ritorno-al-futuro-respiro-1.mp3",
+"marty-mcfly-ritorno-al-futuro-respiro-2.mp3"
+],
+"affanno": [
+"marty-mcfly-ritorno-al-futuro-affanno-1.mp3"
+],
+"sbuffo": [
+"marty-mcfly-ritorno-al-futuro-sbuffo-1.mp3"
+]
+},
+"neo": {
+"sforzo": [
+"neo-sforzo-1.mp3",
+"neo-sforzo-2.mp3",
+"neo-sforzo-3.mp3"
+],
+"sorpresa": [
+"neo-sorpresa-1.mp3",
+"neo-sorpresa-2.mp3",
+"neo-sorpresa-3.mp3"
+],
+"sospiro": [
+"neo-sospiro-1.mp3",
+"neo-sospiro-2.mp3"
+],
+"dubbio": [
+"neo-dubbio-1.mp3",
+"neo-dubbio-2.mp3"
+],
+"dolore": [
+"neo-dolore-1.mp3"
+],
+"respiro": [
+"neo-respiro-1.mp3",
+"neo-respiro-2.mp3"
+],
+"affanno": [
+"neo-affanno-1.mp3"
+],
+"sbuffo": [
+"neo-sbuffo-1.mp3"
+]
+},
+"michael-jackson": {
+"sforzo": [
+"michael-jackson-sforzo-1.mp3",
+"michael-jackson-sforzo-2.mp3",
+"michael-jackson-sforzo-3.mp3"
+],
+"sorpresa": [
+"michael-jackson-sorpresa-1.mp3",
+"michael-jackson-sorpresa-2.mp3",
+"michael-jackson-sorpresa-3.mp3"
+],
+"sospiro": [
+"michael-jackson-sospiro-1.mp3",
+"michael-jackson-sospiro-2.mp3"
+],
+"dubbio": [
+"michael-jackson-dubbio-1.mp3",
+"michael-jackson-dubbio-2.mp3"
+],
+"dolore": [
+"michael-jackson-dolore-1.mp3"
+],
+"respiro": [
+"michael-jackson-respiro-1.mp3",
+"michael-jackson-respiro-2.mp3"
+],
+"affanno": [
+"michael-jackson-affanno-1.mp3"
+],
+"sbuffo": [
+"michael-jackson-sbuffo-1.mp3"
+]
+},
+"prete": {
+"sforzo": [
+"prete-sforzo-1.mp3",
+"prete-sforzo-2.mp3",
+"prete-sforzo-3.mp3"
+],
+"sorpresa": [
+"prete-sorpresa-1.mp3",
+"prete-sorpresa-2.mp3",
+"prete-sorpresa-3.mp3"
+],
+"sospiro": [
+"prete-sospiro-1.mp3",
+"prete-sospiro-2.mp3"
+],
+"dubbio": [
+"prete-dubbio-1.mp3",
+"prete-dubbio-2.mp3"
+],
+"dolore": [
+"prete-dolore-1.mp3"
+],
+"respiro": [
+"prete-respiro-1.mp3",
+"prete-respiro-2.mp3"
+],
+"affanno": [
+"prete-affanno-1.mp3"
+],
+"sbuffo": [
+"prete-sbuffo-1.mp3"
+]
+},
+"anna": {
+"sforzo": [
+"anna-sforzo-1.mp3",
+"anna-sforzo-2.mp3",
+"anna-sforzo-3.mp3"
+],
+"sorpresa": [
+"anna-sorpresa-1.mp3",
+"anna-sorpresa-2.mp3",
+"anna-sorpresa-3.mp3"
+],
+"sospiro": [
+"anna-sospiro-1.mp3",
+"anna-sospiro-2.mp3"
+],
+"dubbio": [
+"anna-dubbio-1.mp3",
+"anna-dubbio-2.mp3"
+],
+"dolore": [
+"anna-dolore-1.mp3"
+],
+"respiro": [
+"anna-respiro-1.mp3",
+"anna-respiro-2.mp3"
+],
+"affanno": [
+"anna-affanno-1.mp3"
+],
+"sbuffo": [
+"anna-sbuffo-1.mp3"
+]
+},
+"carmen-san-diego": {
+"sforzo": [
+"carmen-san-diego-sforzo-1.mp3",
+"carmen-san-diego-sforzo-2.mp3",
+"carmen-san-diego-sforzo-3.mp3"
+],
+"sorpresa": [
+"carmen-san-diego-sorpresa-1.mp3",
+"carmen-san-diego-sorpresa-2.mp3",
+"carmen-san-diego-sorpresa-3.mp3"
+],
+"sospiro": [
+"carmen-san-diego-sospiro-1.mp3",
+"carmen-san-diego-sospiro-2.mp3"
+],
+"dubbio": [
+"carmen-san-diego-dubbio-1.mp3",
+"carmen-san-diego-dubbio-2.mp3"
+],
+"dolore": [
+"carmen-san-diego-dolore-1.mp3"
+],
+"respiro": [
+"carmen-san-diego-respiro-1.mp3",
+"carmen-san-diego-respiro-2.mp3"
+],
+"affanno": [
+"carmen-san-diego-affanno-1.mp3"
+],
+"sbuffo": [
+"carmen-san-diego-sbuffo-1.mp3"
+]
+},
+"lara-croft": {
+"sforzo": [
+"lara-croft-sforzo-1.mp3",
+"lara-croft-sforzo-2.mp3",
+"lara-croft-sforzo-3.mp3"
+],
+"sorpresa": [
+"lara-croft-sorpresa-1.mp3",
+"lara-croft-sorpresa-2.mp3",
+"lara-croft-sorpresa-3.mp3"
+],
+"sospiro": [
+"lara-croft-sospiro-1.mp3",
+"lara-croft-sospiro-2.mp3"
+],
+"dubbio": [
+"lara-croft-dubbio-1.mp3",
+"lara-croft-dubbio-2.mp3"
+],
+"dolore": [
+"lara-croft-dolore-1.mp3"
+],
+"respiro": [
+"lara-croft-respiro-1.mp3",
+"lara-croft-respiro-2.mp3"
+],
+"affanno": [
+"lara-croft-affanno-1.mp3"
+],
+"sbuffo": [
+"lara-croft-sbuffo-1.mp3"
+]
+},
+"poliziotta": {
+"sforzo": [
+"poliziotta-sforzo-1.mp3",
+"poliziotta-sforzo-2.mp3",
+"poliziotta-sforzo-3.mp3"
+],
+"sorpresa": [
+"poliziotta-sorpresa-1.mp3",
+"poliziotta-sorpresa-2.mp3",
+"poliziotta-sorpresa-3.mp3"
+],
+"sospiro": [
+"poliziotta-sospiro-1.mp3",
+"poliziotta-sospiro-2.mp3"
+],
+"dubbio": [
+"poliziotta-dubbio-1.mp3",
+"poliziotta-dubbio-2.mp3"
+],
+"dolore": [
+"poliziotta-dolore-1.mp3"
+],
+"respiro": [
+"poliziotta-respiro-1.mp3",
+"poliziotta-respiro-2.mp3"
+],
+"affanno": [
+"poliziotta-affanno-1.mp3"
+],
+"sbuffo": [
+"poliziotta-sbuffo-1.mp3"
+]
+},
+"ramone-2": {
+"sforzo": [
+"ramone-2-sforzo-1.mp3",
+"ramone-2-sforzo-2.mp3",
+"ramone-2-sforzo-3.mp3"
+],
+"sorpresa": [
+"ramone-2-sorpresa-1.mp3",
+"ramone-2-sorpresa-2.mp3",
+"ramone-2-sorpresa-3.mp3"
+],
+"sospiro": [
+"ramone-2-sospiro-1.mp3",
+"ramone-2-sospiro-2.mp3"
+],
+"dubbio": [
+"ramone-2-dubbio-1.mp3",
+"ramone-2-dubbio-2.mp3"
+],
+"dolore": [
+"ramone-2-dolore-1.mp3"
+],
+"respiro": [
+"ramone-2-respiro-1.mp3",
+"ramone-2-respiro-2.mp3"
+],
+"affanno": [
+"ramone-2-affanno-1.mp3"
+],
+"sbuffo": [
+"ramone-2-sbuffo-1.mp3"
+]
+},
+"ramone-3": {
+"sforzo": [
+"ramone-3-sforzo-1.mp3",
+"ramone-3-sforzo-2.mp3",
+"ramone-3-sforzo-3.mp3"
+],
+"sorpresa": [
+"ramone-3-sorpresa-1.mp3",
+"ramone-3-sorpresa-2.mp3",
+"ramone-3-sorpresa-3.mp3"
+],
+"sospiro": [
+"ramone-3-sospiro-1.mp3",
+"ramone-3-sospiro-2.mp3"
+],
+"dubbio": [
+"ramone-3-dubbio-1.mp3",
+"ramone-3-dubbio-2.mp3"
+],
+"dolore": [
+"ramone-3-dolore-1.mp3"
+],
+"respiro": [
+"ramone-3-respiro-1.mp3",
+"ramone-3-respiro-2.mp3"
+],
+"affanno": [
+"ramone-3-affanno-1.mp3"
+],
+"sbuffo": [
+"ramone-3-sbuffo-1.mp3"
+]
+},
+"ramone-4": {
+"sforzo": [
+"ramone-4-sforzo-1.mp3",
+"ramone-4-sforzo-2.mp3",
+"ramone-4-sforzo-3.mp3"
+],
+"sorpresa": [
+"ramone-4-sorpresa-1.mp3",
+"ramone-4-sorpresa-2.mp3",
+"ramone-4-sorpresa-3.mp3"
+],
+"sospiro": [
+"ramone-4-sospiro-1.mp3",
+"ramone-4-sospiro-2.mp3"
+],
+"dubbio": [
+"ramone-4-dubbio-1.mp3",
+"ramone-4-dubbio-2.mp3"
+],
+"dolore": [
+"ramone-4-dolore-1.mp3"
+],
+"respiro": [
+"ramone-4-respiro-1.mp3",
+"ramone-4-respiro-2.mp3"
+],
+"affanno": [
+"ramone-4-affanno-1.mp3"
+],
+"sbuffo": [
+"ramone-4-sbuffo-1.mp3"
+]
+},
+"leonardo": {
+"sforzo": [
+"leonardo-sforzo-1.mp3",
+"leonardo-sforzo-2.mp3",
+"leonardo-sforzo-3.mp3"
+],
+"sorpresa": [
+"leonardo-sorpresa-1.mp3",
+"leonardo-sorpresa-2.mp3",
+"leonardo-sorpresa-3.mp3"
+],
+"sospiro": [
+"leonardo-sospiro-1.mp3",
+"leonardo-sospiro-2.mp3"
+],
+"dubbio": [
+"leonardo-dubbio-1.mp3",
+"leonardo-dubbio-2.mp3"
+],
+"dolore": [
+"leonardo-dolore-1.mp3"
+],
+"respiro": [
+"leonardo-respiro-1.mp3",
+"leonardo-respiro-2.mp3"
+],
+"affanno": [
+"leonardo-affanno-1.mp3"
+],
+"sbuffo": [
+"leonardo-sbuffo-1.mp3"
+]
+},
+"gemella": {
+"sforzo": [
+"gemella-sforzo-1.mp3",
+"gemella-sforzo-2.mp3",
+"gemella-sforzo-3.mp3"
+],
+"sorpresa": [
+"gemella-sorpresa-1.mp3",
+"gemella-sorpresa-2.mp3",
+"gemella-sorpresa-3.mp3"
+],
+"sospiro": [
+"gemella-sospiro-1.mp3",
+"gemella-sospiro-2.mp3"
+],
+"dubbio": [
+"gemella-dubbio-1.mp3",
+"gemella-dubbio-2.mp3"
+],
+"dolore": [
+"gemella-dolore-1.mp3"
+],
+"respiro": [
+"gemella-respiro-1.mp3",
+"gemella-respiro-2.mp3"
+],
+"affanno": [
+"gemella-affanno-1.mp3"
+],
+"sbuffo": [
+"gemella-sbuffo-1.mp3"
+]
+}
+}

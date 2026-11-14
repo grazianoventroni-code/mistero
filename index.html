@@ -10,7 +10,7 @@
 <meta name="theme-color" content="#000000">
 <script>/* (12 nov) pulizia: a ogni versione nuova si tolgono service worker e memoria vecchi e si ricarica una volta.
    Un service worker rimasto da versioni precedenti serviva script e indice delle voci superati (le voci non si sentivano). BUILD0 lo aggiorna pubblica.py. */
-(function(){var BUILD0='14 nov 23:00';try{if(!('serviceWorker' in navigator)||localStorage.getItem('mistero-build')===BUILD0)return;localStorage.setItem('mistero-build',BUILD0);window.__pulizia=1;
+(function(){var BUILD0='14 nov 23:30';try{if(!('serviceWorker' in navigator)||localStorage.getItem('mistero-build')===BUILD0)return;localStorage.setItem('mistero-build',BUILD0);window.__pulizia=1;
  var t=setTimeout(function(){location.reload()},4000);
  Promise.all([navigator.serviceWorker.getRegistrations().then(function(rs){return Promise.all(rs.map(function(r){return r.unregister()}))}),
    window.caches?caches.keys().then(function(ks){return Promise.all(ks.map(function(k){return caches.delete(k)}))}):0]).then(function(){clearTimeout(t);location.reload()},function(){clearTimeout(t);location.reload()})}catch(e){}})();</script>
@@ -79,11 +79,11 @@ button:active{background:#1a2438;transform:translate(1px,1px)}
 <div id="probe" style="position:fixed;visibility:hidden;pointer-events:none;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)"></div>
 <div id="rot"><i></i><div>RUOTA IL TELEFONO<br>IN ORIZZONTALE</div></div>
 
-<script src="js/motore.js?v=14nov2300"></script>
-<script src="js/scena-demo.js?v=14nov2300"></script>
-<script src="js/scena-tutti.js?v=14nov2300"></script>
-<script src="js/scena-ramones.js?v=14nov2300"></script>
-<script src="js/scena-capitolo2.js?v=14nov2300"></script>
+<script src="js/motore.js?v=14nov2330"></script>
+<script src="js/scena-demo.js?v=14nov2330"></script>
+<script src="js/scena-tutti.js?v=14nov2330"></script>
+<script src="js/scena-ramones.js?v=14nov2330"></script>
+<script src="js/scena-capitolo2.js?v=14nov2330"></script>
 <script>
 (()=>{
 "use strict";
@@ -366,6 +366,17 @@ function voxLoad(u){if(!AU.ctx)return Promise.resolve(null);
   return VOX.buf[u]}
 function voxStop(){if(VOX.src){try{VOX.src.stop()}catch(e){}VOX.src=null}}
 function voxStart(b){const c=AU.ctx;if(c.state==='suspended')c.resume();const sr=c.createBufferSource(),gn=c.createGain();sr.buffer=b;gn.gain.value=1;sr.connect(gn);gn.connect(AU.master);sr.start(c.currentTime+.03);VOX.src=sr}
+/* ---- (14 nov) VERSI DEI PERSONAGGI: sforzo, sorpresa, sospiri, dubbi, respiri, affanni. Interiezioni brevissime (Eh! Uh! Ah… Hm…) e respiri, non parlato recitato.
+   Clip in audio/fiato (indice.json: {personaggio:{tipo:[file]}}), generate da _strumenti/genera_versi.py. Suonano solo se l'audio e' sbloccato e non e' muto. */
+const FIATO={idx:null,ult:0,ALIAS:{'protagonista-esterno':'protagonista-interno','anna-senza-giacca':'anna',gemella2:'gemella'}};
+fetch('audio/fiato/indice.json',{cache:'no-cache'}).then(r=>r.ok?r.json():null).then(j=>{FIATO.idx=j}).catch(()=>{});
+FIATO.suona=function(nome,tipo,prob=1,vol=.9,ritardo=0){
+  if(!this.idx||!AU.ctx||AU.muted||AU.ctx.state!=='running'||Math.random()>prob)return;
+  const d=this.idx[this.ALIAS[nome]||nome],l=d&&d[tipo];if(!l||!l.length)return;
+  const now=performance.now();if(now-this.ult<600)return;this.ult=now;
+  const u='audio/fiato/'+l[Math.floor(Math.random()*l.length)];
+  voxLoad(u).then(b=>{if(!b)return;const c=AU.ctx,sr=c.createBufferSource(),gn=c.createGain();sr.buffer=b;gn.gain.value=vol;sr.connect(gn);gn.connect(AU.master);sr.start(c.currentTime+.03+ritardo)})};
+window.FIATO=FIATO;
 let vox=null,sayDone=null;
 function closeSay(){clearInterval(typer);typer=null;clearTimeout(hideT);dlgEl.classList.remove('on');voxStop();vox=null;const f=sayDone;sayDone=null;if(f)f()}
 function nextChunk(){
@@ -1818,10 +1829,10 @@ class Actor{
   reachP(){return this.has('reach')?'reach':this.has('kneel_reach')?'kneel_reach':null}
   seats(){return ['sit_chair','sit_crossed','sit_floor','sit_sofa_read'].filter(n=>this.has(n))}
   play(list){this.seq=list.filter(a=>a[0]==='#'||this.has(a[0]));this.si=0;this.st=0;this.tx=this.ty=null;this.run=false;this.v=0}
-  sitDown(){const s=this.seats();if(!s.length||this.state==='sit')return;this.state='sit';this.play([[this.crouchP(),.14],[s[this.seatI%s.length],0]])}
-  standUp(){if(this.state!=='sit')return;this.state='rise';this.play([[this.crouchP(),.14],['#',0]])}
+  sitDown(){const s=this.seats();if(!s.length||this.state==='sit')return;this.state='sit';FIATO.suona(this.n,'sospiro',.55,.8,.25);this.play([[this.crouchP(),.14],[s[this.seatI%s.length],0]])}
+  standUp(){if(this.state!=='sit')return;this.state='rise';FIATO.suona(this.n,'sforzo',.6,.85);this.play([[this.crouchP(),.14],['#',0]])}
   nextSeat(){const s=this.seats();if(this.state!=='sit'||s.length<2)return;this.seatI=(this.seatI+1)%s.length;this.play([[s[this.seatI],0]])}
-  pickUp(){if(this.state==='sit'||this.seq)return;this.state='act';this.play([[this.crouchP(),.18],[this.reachP(),.8],[this.crouchP(),.18],['#',0]])}
+  pickUp(){if(this.state==='sit'||this.seq)return;this.state='act';FIATO.suona(this.n,'sforzo',.65,.85,.1);this.play([[this.crouchP(),.18],[this.reachP(),.8],[this.crouchP(),.18],['#',0]])}
   pointAt(){if(this.state==='sit'||this.seq)return;this.state='act';this.play([['point',1.5],['#',0]])}
   go(x,y,run){
     if(this.state==='sit'){this.pending=[x,y,!!run];this.standUp();return}
@@ -1965,7 +1976,7 @@ document.addEventListener('wheel',e=>{if(e.ctrlKey)e.preventDefault()},{passive:
 document.addEventListener('visibilitychange',()=>{if(document.hidden){if(SILENT_EL)SILENT_EL.pause()}else if(AU.ctx)unmuteSilentSwitch();if(AU.ctx){if(document.hidden)AU.ctx.suspend();else AU.ctx.resume()}});
 
 /* aggiornamento automatico: se sul server c'e' una versione piu' nuova di questa, ricarica una volta (cancella anche le copie salvate) */
-const BUILD='14 nov 23:00';
+const BUILD='14 nov 23:30';
 {const ve=document.getElementById('ver');if(ve)ve.textContent='v. '+BUILD;
  if(location.protocol.startsWith('http')){
   fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{
