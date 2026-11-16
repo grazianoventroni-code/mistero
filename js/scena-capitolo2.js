@@ -10,7 +10,7 @@
 "use strict";
 const M=A.motore;if(!M)return;
 const {registraScena,sfx}=M,{g,W,H,RS,R,ell,clamp,lerp,hash,mkImg,CHARS,setHint,fadeTo,setScene,scenes}=A;
-window.__C2=null;const C2={sveglio:false,specchio:false,pensato:false,visto:false,ascia:0,scavo:0,chiavi:false,tw:0};   // stato del capitolo 2
+window.__C2=null;const C2={ponteDetto:false,ponteVisto:false,sveglio:false,specchio:false,pensato:false,visto:false,ascia:0,scavo:0,chiavi:false,tw:0};   // stato del capitolo 2
 window.__C2=C2;const sm=x=>{x=clamp(x,0,1);return x*x*(3-2*x)};
 const pausa=s=>new Promise(r=>setTimeout(r,s*1000));
 /* (13 nov) i testi di Nick stanno in basso, nello stesso riquadro del capitolo 1, con la sua voce (clip Kokoro, indice voci-r2) */
@@ -264,13 +264,13 @@ registraScena({
    Prospettiva: l'orizzonte si ricava dai segnali (palo con base y=95, cartello in alto y=40: ~3,2 m) -> orizzonte y=68; Nick a y=95 ha scala 0,907 (30 px).
    Il furgone (sprite 348x223 = 5 m di lunghezza, disegnato a 94 px con un uomo di 33 px) con la base a y=112 ha 27,5 px/m -> scala 1,46 = 137x88 px.
    Doc (atlante: figura alta 128 px) e' dietro il bancone dello sportello: 1,75 m a 27,5 px/m = 48 px; si vede dal petto in su (il bancone lo copre). */
-const PONTE={furg:mkImg('img/emb/furgone_panini_hd.png'),YR:95,SR:.907,BASE:112};
+const PONTE={furg:mkImg('img/emb/furgone_panini_hd.png'),YR:95,SR:.907,BASE:108,verso:0,tv:4};
 function disegnaFurgone(gg,s){
   const im=PONTE.furg;if(!(im.complete&&im.naturalWidth))return;
   const yh=PROSP.orizzonte(PONTE.YR,PONTE.SR),ppm=(PONTE.BASE-yh)/PROSP.HC,k=ppm*5/348,w=348*k,h=223*k,x0=0,y0=PONTE.BASE+1-h;
   gg.drawImage(im,x0,y0,w,h);
   const doc=A.CHARS['doc-ritorno-al-futuro'];if(!doc||!doc.ready||!doc.img.naturalWidth)return;
-  const t=s.t,talk=(Math.sin(t*.7)>.35),n=talk?'talk_S_'+(1+Math.floor(t*6)%4):'idle_S_'+(1+Math.floor(t*1.2)%4),fr=doc.fr[n]||doc.fr.front;if(!fr)return;
+  const t=s.t,talk=PONTE.verso>0,n=talk?'talk_S_'+(1+Math.floor(t*6)%4):'idle_S_'+(1+Math.floor(t*1.2)%4),fr=doc.fr[n]||doc.fr.front;if(!fr)return;
   const ds=ppm*1.75/128,dw=doc.w*ds,dh=doc.h*ds,cx=x0+235*k,top=y0+68*k,fy=top-2*ds;   // la testa (riga 2 del fotogramma) sta sotto la tenda
   gg.save();gg.beginPath();gg.rect(x0+190*k,y0+60*k,112*k,(138-60)*k);gg.clip();
   gg.imageSmoothingEnabled=false;gg.drawImage(doc.img,fr.x,fr.y,doc.w,doc.h,cx-doc.ax*ds,fy,dw,dh);gg.restore()}
@@ -283,11 +283,32 @@ registraScena({
   ostacoli:[],
   rif:[PONTE.YR,PONTE.SR],audioPassi:false,
   ambiente:{stanza:0,vento:.45,foglie:.4,aria:.35,pioggia:0,fuoco:0},
-  aggiorna(s,dt){ambienteGiorno(dt,false);const d=s.attori['doc-ritorno-al-futuro'];if(d)d.visibile=false},
+  aggiorna(s,dt){ambienteGiorno(dt,false);const d=s.attori['doc-ritorno-al-futuro'];if(d)d.visibile=false;
+    // Doc non e' interagibile: fa solo dei versetti in sottofondo, con la sua voce
+    if(PONTE.verso>0)PONTE.verso-=dt;PONTE.tv-=dt;if(PONTE.tv<=0){PONTE.tv=5+Math.random()*7;PONTE.verso=1.1;const t=['sforzo','sorpresa','dubbio','sospiro','sforzo'];FIATO.suona('doc-ritorno-al-futuro',t[Math.floor(Math.random()*t.length)],1,.55)}
+    const p=s.giocatore;if(p&&C2.ponteDetto&&!C2.ponteVisto&&!s.occupato&&p.x<10){C2.ponteVisto=true;s.vaiScena('c2-ponte-vista',{x:226,y:112,dir:'W'})}},
   suggerimento:'',senzaEtichette:true,
   oggetti:[{baseY:PONTE.BASE,disegna(gg,s){disegnaFurgone(gg,s)}}],
-  punti:[{nome:'IL FURGONE DEI PANINI',rect:[0,26,138,88],cammina:{x:150,y:116,dir:'W'},guarda:'Il furgone dei panini.'}],
-  entra(s){fadeTo(0,2.5)}
+  entra(s){fadeTo(0,2.5);const p=s.giocatore;
+    if(C2.ponteVisto){s.sequenza(async()=>{await pausa(.5);await p.vaiA(70,116,false,'N');p.dir='N'})}   // torna di fronte al furgone
+    else s.sequenza(async()=>{await pausa(7);await dn(s,p,'Vediamo se il mio sogno aveva ragione.');C2.ponteDetto=true})}
+});
+
+/* la visuale del Ponte del Diavolo senza simbolo: a sinistra del furgone */
+registraScena({
+  id:'c2-ponte-vista',inventario:true,sfondo:'img/scene/ponte-senza-simboli.png',
+  giocatore:'protagonista-esterno',nomeGiocatore:'NICK',
+  partenza:{x:226,y:112,dir:'W'},
+  area:[[2,114],[100,114],[130,108],[238,104],[238,119],[2,119]],ostacoli:[],
+  rif:[112,1],audioPassi:false,
+  ambiente:{stanza:0,vento:.35,foglie:.2,aria:.4,pioggia:0,fuoco:0},
+  aggiorna(s,dt){ambienteGiorno(dt,false)},
+  suggerimento:'',senzaEtichette:true,
+  entra(s){fadeTo(0,2);const p=s.giocatore;
+    s.sequenza(async()=>{await pausa(.4);await p.vaiA(150,112,false,'W');p.dir='W';await pausa(2.2);
+      for(const t of ['Nulla…','Che stupido!','Sono venuto sin qui… cosa mi aspettavo di trovare?','Per uno stupido sogno…'])await dn(s,p,t);
+      FIATO.suona('protagonista-esterno','sospiro',1,.9);await pausa(.8);
+      s.vaiScena('c2-ponte',{x:6,y:116,dir:'E'})})}
 });
 
 /* da fine capitolo 1 (sogno) al capitolo 2 */
