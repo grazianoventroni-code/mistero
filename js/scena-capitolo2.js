@@ -128,12 +128,18 @@ function stella(gg,x,y,k){   // luccichio: croce di luce che pulsa
 /* ---------------- (16 nov) la gatta Mia: compare da destra, cammina tranquilla, si ferma al centro, si gira verso di noi, miagola, riprende e sparisce a sinistra ---------------- */
 const MIA={fatto:false};
 function vaiLibero(m,x,y){return new Promise(r=>{m.path=[[x,y]];m.arrivo=null;const iv=setInterval(()=>{if(!m.path.length){clearInterval(iv);r()}},60)})}
+/* (17 nov) quando Mia miagola Nick si toglie il cappello e si gratta la testa (pose cap_1..5 dall'atlante) */
+function gagCappello(s){const p=s.giocatore;if(!p||!p.has||!p.has('cap_1'))return;
+  p.fermaCamminata&&p.fermaCamminata(false);p.dir='S';p.axe=false;p.state='act';
+  p.seq=[['cap_1',.55],['cap_2',.5],['cap_3',.42],['cap_4',.42],['cap_3',.42],['cap_2',.42],['cap_4',.42],['cap_5',.7],['#',0]];p.si=0;p.st=0;
+  FIATO.suona('protagonista-esterno','sorpresa',1,1);setTimeout(()=>FIATO.suona('protagonista-esterno','dubbio',1,.9),1500)}
 async function passaMia(s){
   const m=s.attori&&s.attori.mia;if(!m){MIA.fatto=true;return}
   m.x=262;m.y=116;m.dir='W';m.corsa=false;m.vel=22;m.visibile=true;
   await vaiLibero(m,122,116);                       // attraversa fino al centro
   m.dir='S';await pausa(.7);                        // si gira verso chi guarda
   try{A.motore.suonaClip('audio/versi/miao_mia_v2.mp3')}catch(e){}
+  gagCappello(s);
   m.talking=true;const iv=setInterval(()=>{m.bocca=1+Math.floor(Math.random()*4)},120);await pausa(1.4);clearInterval(iv);m.talking=false;m.bocca=1;
   await pausa(.6);m.dir='W';
   await vaiLibero(m,-40,116);m.visibile=false;MIA.fatto=true}
@@ -172,7 +178,7 @@ registraScena({
   punti:[
     {nome:'LA POZZANGHERA',rect:[140,101,46,11],cammina:{x:156,y:110,dir:'E'},visibile:()=>C2.tw&&!C2.chiavi,usa:async(s,p)=>{
       if(!C2.ascia){A.say(C2.visto?"Come le recupero senza sporcarmi?":"Le chiavi dell'auto! Ma sono immerse nel fango. Come le recupero senza sporcarmi?");C2.visto=true}}},
-    {nome:'ASCIA',rect:[204,70,32,22],cammina:{x:206,y:104,dir:'E'},visibile:()=>C2.tw&&!C2.ascia&&!C2.chiavi,usa:async(s,p)=>{
+    {nome:'ASCIA',rect:[204,70,32,22],cammina:{x:206,y:104,dir:'E'},visibile:()=>C2.visto&&!C2.ascia&&!C2.chiavi,usa:async(s,p)=>{   // (17 nov) l'ascia si puo' usare solo DOPO aver capito che le chiavi sono nella pozzanghera (C2.visto)
       /* (16 nov) un solo tocco: Nick va all'ascia, la prende, va alla pozzanghera e scava, senza pause ne' frasi da aspettare */
       C2.visto=true;A.say("L'ascia! È lo strumento ideale.");
       p.dir='E';p.pickUp();await pausa(.45);C2.ascia=1;sfx.raccogli();A.sting('tonfo');await pausa(.55);
@@ -219,9 +225,9 @@ registraScena({
    Non e' piu' una scena disegnata dal gioco: e' un filmato (video/guida-alpina_r6.mp4, 10 s, H.264) fatto con _strumenti/film_guida.py
    sul dipinto strada-alpi.png: l'auto percorre la strada, la camera la segue. Si sovrappone all'area di gioco con la riproduzione nativa
    del telefono (muto, inline); il motore si sente col Web Audio del gioco. Se il filmato non parte si passa subito a «CONTINUA…». */
-const FILM_SRC='video/guida-alpina_r6.mp4',FILM_SRC2='video/guida-ponte_r4.mp4';   // (16 nov) secondo filmato: la strada lungo il fiume, verso il Ponte del Diavolo (stessa prospettiva e stesso moto, senza foglie)
+const FILM_SRC='video/guida-alpina_r6.mp4',FILM_SRC2='video/guida-ponte_r5.mp4';   // (16 nov) secondo filmato: la strada lungo il fiume, verso il Ponte del Diavolo (stessa prospettiva e stesso moto, senza foglie)
 const FILM_CURVE=[0.03, 0.09, 0.09, 0.09, 0.09, 0.09, 0.28, 0.3, 0.24, 0.36, 0.5, 0.48, 0.17, 0.3, 0.79, 1.21, 1.06, 0.34, 0.48, 1.2, 1.82, 1.96, 1.24, 0.23, 0.08, 0.86, 1.85, 0.83, 0.54, 2.08, 6.72, 23.71, 5.1, 4.03, 3.98, 3.98, 3.98, 3.98];   // quanto la strada gira, ogni 8 fotogrammi: guida il suono del motore
-const FILM_CURVE2=[0.71,0.71,0.69,0.66,0.64,0.63,0.63,0.63,0.62,0.62,0.62,0.62,0.62,0.62,0.62,0.62,0.62,0.62,0.62,0.62,0.62,0.62,0.62,0.62,0.62,0.62,0.62,0.62,0.62,0.62,0.62,0.62,0.62,0.62,0.62,0.62,0.62,0.62];
+const FILM_CURVE2=[0.71,0.7,0.64,0.63,0.62,0.62,0.62,0.62,0.62,0.62,0.62,0.62,0.62,0.62,0.62,0.62,0.6,0.58,0.59,0.6,0.62,0.64,0.67,0.7,0.73,0.78,0.83,0.9,0.99,1.13,1.34,1.76,3.08,4.15,4.2,4.21,4.21,4.21];
 const FILM={el:null,partito:false,finito:false,t0:0,i:0,curva:null};
 const FILM_LISTA=[{src:FILM_SRC,curva:FILM_CURVE},{src:FILM_SRC2,curva:FILM_CURVE2}];
 function filmAvvia(s,i){const v=filmEl();FILM.i=i;FILM.partito=false;FILM.finito=false;FILM.t0=performance.now();FILM.curva=FILM_LISTA[i].curva;
