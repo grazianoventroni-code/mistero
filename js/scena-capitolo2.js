@@ -243,7 +243,7 @@ function filmPosiziona(v){   // lo stesso rettangolo in cui il gioco disegna la 
   const r=A.cv.getBoundingClientRect(),w=A.wrap.getBoundingClientRect(),vw=A.view(),k=vw.k;
   v.style.left=(r.left-w.left+(r.width-vw.DW*k)/2+vw.OX*k)+'px';v.style.top=(r.top-w.top+(r.height-H*k)/2)+'px';v.style.width=(W*k)+'px';v.style.height=(H*k)+'px'}
 function filmFine(s){if(FILM.finito)return;FILM.finito=true;if(FILM.i<FILM_LISTA.length-1){FILM.finito=false;filmAvvia(s,FILM.i+1);return}   // (16 nov) a fine del primo filmato parte il secondo, senza tocchi
-  A.setEng&&A.setEng(0,false);A.musicStop(3);if(FILM.el)FILM.el.style.display='none';A.setHint('CONTINUA…',true)}
+  A.setEng&&A.setEng(0,false);A.musicStop(3);if(FILM.el)FILM.el.style.display='none';s.vaiScena('c2-ponte',{x:200,y:108,dir:'W'})}   // (17 nov) dopo i filmati: Nick e' fuori, al Ponte del Diavolo
 registraScena({
   id:'c2-strada',area:[[0,0],[2,0],[2,2],[0,2]],suggerimento:'',
   ambiente:{stanza:0,vento:.3,pioggia:0,fuoco:0},
@@ -258,6 +258,36 @@ registraScena({
     if(v.ended||(v.duration>0&&v.currentTime>=v.duration-.04))return filmFine(s);
     const cv_=FILM.curva||FILM_CURVE,c=cv_[Math.min(cv_.length-1,Math.floor(v.currentTime*30/8))]||0;
     A.engHz&&A.engHz(36+22*Math.min(1,c)+1.5*Math.sin(s.t*2.2))}   // (16 nov) il rombo segue la curva e non si ferma mai
+});
+
+/* ---------------- (17 nov) Ponte del Diavolo (var3): Nick e' fuori; a sinistra dei segnali, sulla strada, il furgone dei panini con Doc dentro ----------------
+   Prospettiva: l'orizzonte si ricava dai segnali (palo con base y=95, cartello in alto y=40: ~3,2 m) -> orizzonte y=68; Nick a y=95 ha scala 0,907 (30 px).
+   Il furgone (sprite 348x223 = 5 m di lunghezza, disegnato a 94 px con un uomo di 33 px) con la base a y=112 ha 27,5 px/m -> scala 1,46 = 137x88 px.
+   Doc (atlante: figura alta 128 px) e' dietro il bancone dello sportello: 1,75 m a 27,5 px/m = 48 px; si vede dal petto in su (il bancone lo copre). */
+const PONTE={furg:mkImg('img/emb/furgone_panini_hd.png'),YR:95,SR:.907,BASE:112};
+function disegnaFurgone(gg,s){
+  const im=PONTE.furg;if(!(im.complete&&im.naturalWidth))return;
+  const yh=PROSP.orizzonte(PONTE.YR,PONTE.SR),ppm=(PONTE.BASE-yh)/PROSP.HC,k=ppm*5/348,w=348*k,h=223*k,x0=0,y0=PONTE.BASE+1-h;
+  gg.drawImage(im,x0,y0,w,h);
+  const doc=A.CHARS['doc-ritorno-al-futuro'];if(!doc||!doc.ready||!doc.img.naturalWidth)return;
+  const t=s.t,talk=(Math.sin(t*.7)>.35),n=talk?'talk_S_'+(1+Math.floor(t*6)%4):'idle_S_'+(1+Math.floor(t*1.2)%4),fr=doc.fr[n]||doc.fr.front;if(!fr)return;
+  const ds=ppm*1.75/128,dw=doc.w*ds,dh=doc.h*ds,cx=x0+235*k,top=y0+68*k,fy=top-2*ds;   // la testa (riga 2 del fotogramma) sta sotto la tenda
+  gg.save();gg.beginPath();gg.rect(x0+190*k,y0+60*k,112*k,(138-60)*k);gg.clip();
+  gg.imageSmoothingEnabled=false;gg.drawImage(doc.img,fr.x,fr.y,doc.w,doc.h,cx-doc.ax*ds,fy,dw,dh);gg.restore()}
+registraScena({
+  id:'c2-ponte',inventario:true,sfondo:'img/scene/ponte-diavolo-var3.png',
+  giocatore:'protagonista-esterno',nomeGiocatore:'NICK',
+  attori:[{nome:'doc-ritorno-al-futuro',x:-50,y:-50,dir:'S',visibile:false}],   // solo per caricare l'atlante: Doc e' disegnato dentro il furgone
+  partenza:{x:200,y:108,dir:'W'},
+  area:[[2,114],[146,114],[146,99],[238,99],[238,119],[2,119]],
+  ostacoli:[],
+  rif:[PONTE.YR,PONTE.SR],audioPassi:false,
+  ambiente:{stanza:0,vento:.45,foglie:.4,aria:.35,pioggia:0,fuoco:0},
+  aggiorna(s,dt){ambienteGiorno(dt,false);const d=s.attori['doc-ritorno-al-futuro'];if(d)d.visibile=false},
+  suggerimento:'',senzaEtichette:true,
+  oggetti:[{baseY:PONTE.BASE,disegna(gg,s){disegnaFurgone(gg,s)}}],
+  punti:[{nome:'IL FURGONE DEI PANINI',rect:[0,26,138,88],cammina:{x:150,y:116,dir:'W'},guarda:'Il furgone dei panini.'}],
+  entra(s){fadeTo(0,2.5)}
 });
 
 /* da fine capitolo 1 (sogno) al capitolo 2 */
