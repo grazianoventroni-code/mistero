@@ -138,7 +138,7 @@ async function passaMia(s){
   m.x=262;m.y=116;m.dir='W';m.corsa=false;m.vel=22;m.visibile=true;
   await vaiLibero(m,122,116);                       // attraversa fino al centro
   m.dir='S';await pausa(.7);                        // si gira verso chi guarda
-  try{A.motore.suonaClip('audio/versi/miao_mia_v2.mp3')}catch(e){}
+  try{A.motore.suonaClip('audio/versi/miao_mia_v3.mp3')}catch(e){}
   gagCappello(s);
   m.talking=true;const iv=setInterval(()=>{m.bocca=1+Math.floor(Math.random()*4)},120);await pausa(1.4);clearInterval(iv);m.talking=false;m.bocca=1;
   await pausa(.6);m.dir='W';
