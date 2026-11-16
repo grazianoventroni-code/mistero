@@ -395,6 +395,7 @@ const bordoDx=y=>112+(y-45)/.37;
 const yZ=z=>PF.YH+PF.F*PF.HC/z;
 function corsia(z,f){const y=yZ(z),l=bordoSx(y),r=bordoDx(y);return [l+(r-l)*f,y]}
 const FP={};
+const MELA_IMG=mkImg('img/emb/mela_r1.png');   // (18 nov) la mela rossa che cade a Lara dopo l'Ehila'
 const LARA_WALK=mkImg('img/emb/lara_walk_r1.png');   // camminata vera (8 pose, gambe che alternano): sostituisce le walk_S dell'atlante, che erano 4 pose ripetute con la stessa gamba avanti
 function muovi(p,z,f,dir,fermo,dt){const [x,y]=corsia(z,f);p.x=x;p.y=y;p.dir=dir;
   if(fermo){p.state='idle';return}p.state='walk';p.v=1;p.bob=p.n==='lara-croft'?1.5:1.0;p.fase+=PF.V*(dt||1/30)/1.5}   // (18 nov) il ciclo del passo (due passi = 1,5 m) avanza con la distanza REALE percorsa: la camminata si vede anche in lontananza
@@ -404,16 +405,26 @@ registraScena({
   attori:[{nome:'lara-croft',etichetta:'LARA',x:140,y:60,dir:'S'}],
   area:[[0,0],[2,0],[2,2],[0,2]],rif:[100,2.016],audioPassi:false,
   ambiente:{stanza:0,vento:.35,foglie:.3,aria:.4,pioggia:0,fuoco:0},suggerimento:'',senzaEtichette:true,
-  entra(s){Object.assign(FP,{patch:false,t:0,zn:6.95,zl:33,incontro:false,laraFine:false,nickFermo:false,fine:false});s.occupato=true;document.getElementById('bHint').style.display='none';fadeTo(0,1.2)},
+  punti:[FP.melaPunto={nome:'',rect:[0,0,0,0],visibile:()=>!!FP.melaPronta&&!FP.melaRaccolta,cammina:{x:0,y:0,dir:'E'},usa:async(s,p)=>{
+    FP.melaRaccolta=true;p.dir='E';await pausa(.6);FP.mela=null;A.sting('scoperta',.5);A.giveItem('mela');C2.mela=true;await pausa(1.0);FP.fine=true;s.vaiScena('c2-scale',{x:150,y:60,dir:'S'})}}],
+  sopra(gg,s){const m=FP.mela;if(!m||!MELA_IMG.complete||!MELA_IMG.naturalWidth)return;
+    const w=Math.max(4,6*(m.y-40)/60),h0=.9*(m.y-40)/1.6,u=(FP.t-m.t0)/.5;let h=0;
+    if(u<0)return;if(u<1)h=h0*(1-u*u);else if(u<1.35)h=h0*.12*Math.sin(Math.PI*(u-1)/.35);
+    ell(m.x,m.y+.4,w*.5,1,'#000',.3);gg.save();gg.imageSmoothingEnabled=false;gg.drawImage(MELA_IMG,Math.round(m.x-w/2),Math.round(m.y-h-w+1),w,w);
+    if(FP.melaPronta&&!FP.melaRaccolta&&Math.sin(FP.t*5)>.3){gg.fillStyle='#fff';const cx=Math.round(m.x+w*.3),cy=Math.round(m.y-w-1);gg.fillRect(cx-2,cy,5,1);gg.fillRect(cx,cy-2,1,5)}
+    gg.restore()},
+  entra(s){Object.assign(FP,{mela:null,melaT:0,melaPronta:false,melaRaccolta:false,attesaMela:false,patch:false,t:0,zn:6.95,zl:33,incontro:false,laraFine:false,nickFermo:false,fine:false});s.occupato=true;document.getElementById('bHint').style.display='none';fadeTo(0,1.2)},
   aggiorna(s,dt){
     const n=s.giocatore,l=s.attori['lara-croft'];if(!n||!l)return;FP.t+=dt;
     if(!FP.patch&&LARA_WALK.complete&&LARA_WALK.naturalWidth&&l.c&&l.c.ready){FP.patch=true;const c0=l.c,fr={...c0.fr};for(let i=0;i<8;i++)fr['walk_S_'+(i+1)]={x:i*c0.w,y:0,w:c0.w,h:c0.h};l.c={...c0,img:LARA_WALK,fr}}
     if(FP.t<.7){muovi(n,FP.zn,.30,'N',true);muovi(l,FP.zl,.62,'S',true);return}
     if(!FP.nickFermo){FP.zn+=PF.V*dt;muovi(n,FP.zn,.30,'N',false,dt)}else{n.state='idle'}
     if(!FP.laraFine){FP.zl-=PF.V*dt;muovi(l,FP.zl,.62+.16*Math.max(0,Math.min(1,(yZ(FP.zl)-108)/14)),'S',false,dt);if(l.x>246){FP.laraFine=true;l.visibile=false}}
+    if(FP.melaT&&!FP.mela&&FP.t>=FP.melaT){FP.mela={x:l.x+1,y:l.y,t0:FP.t};setTimeout(()=>{A.tone(210,.09,'sine',.05,120,.2,.3);A.nburst(900,4,.02,.02,'bandpass',.2,.3)},500);setTimeout(()=>{A.tone(260,.05,'sine',.025,170,.2,.3)},690)}
+    if(FP.mela&&!FP.melaPronta&&!FP.melaRaccolta&&FP.t>=FP.mela.t0+.75){FP.melaPronta=true;const m=FP.mela,w=Math.max(4,6*(m.y-40)/60);FP.melaPunto.rect=[Math.round(m.x-7),Math.round(m.y-12),14,14];FP.melaPunto.cammina={x:n.x,y:n.y,dir:'E'}}
     if(!FP.incontro&&FP.zn>=FP.zl-.3){FP.incontro=true;FP.nickFermo=true;
-      s.dici(l,'Ehilà!',{clip:'audio/versi/lara_ehila_r1.mp3',frontale:false});   // (voce vera) Lara saluta e continua a camminare
-      s.sequenza(async()=>{await pausa(1.1);n.dir='S';await pausa(.7);await s.dici(n,'Eppure mi pare di averla già vista.',{});await pausa(1.4);FP.fine=true;s.vaiScena('c2-scale',{x:150,y:60,dir:'S'})})}}   // (18 nov) vaiScena fa gia' la sua dissolvenza: una dissolvenza in piu' bloccava il passaggio alle scale
+      s.dici(l,'Ehilà!',{clip:'audio/versi/lara_ehila_r1.mp3',frontale:false});FP.melaT=FP.t+.6;   // (voce vera) Lara saluta e continua a camminare
+      s.sequenza(async()=>{await pausa(1.1);n.dir='S';await pausa(.7);await s.dici(n,'Eppure mi pare di averla già vista.',{});await pausa(1.0);FP.attesaMela=true;const nx=n.x,ny=n.y;n.vaiA=async(x,y)=>x===nx&&y===ny})}}   // (18 nov) ora Nick puo' raccogliere la mela: il filmato prosegue verso le scale solo dopo   // (18 nov) vaiScena fa gia' la sua dissolvenza: una dissolvenza in piu' bloccava il passaggio alle scale
 });
 
 /* ---------------- (18 nov) FILMATO: Nick scende le scale (var1) ----------------
