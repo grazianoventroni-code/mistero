@@ -264,20 +264,53 @@ registraScena({
    Prospettiva: l'orizzonte si ricava dai segnali (palo con base y=95, cartello in alto y=40: ~3,2 m) -> orizzonte y=68; Nick a y=95 ha scala 0,907 (30 px).
    Il furgone (sprite 348x223 = 5 m di lunghezza, disegnato a 94 px con un uomo di 33 px) con la base a y=112 ha 27,5 px/m -> scala 1,46 = 137x88 px.
    Doc (atlante: figura alta 128 px) e' dietro il bancone dello sportello: 1,75 m a 27,5 px/m = 48 px; si vede dal petto in su (il bancone lo copre). */
-const PONTE={furg:mkImg('img/emb/furgone_panini_hd.png'),YR:95,SR:.907,BASE:108,RUOTE:114,verso:0,tv:4};
+const PONTE={furg:mkImg('img/emb/furgone_panini_hd.png'),YR:95,SR:.907,BASE:108,RUOTE:114,giu:0,fuse:0,muto:false,fus:mkImg('img/emb/fusibile_mano_r1.png'),verso:0,tv:4};
 function disegnaFurgone(gg,s){
   const im=PONTE.furg;if(!(im.complete&&im.naturalWidth))return;
   const yh=PROSP.orizzonte(PONTE.YR,PONTE.SR),ppm=(PONTE.BASE-yh)/PROSP.HC,k=ppm*5/348,w=348*k,h=223*k,x0=0,y0=PONTE.RUOTE-212*k;
   gg.drawImage(im,x0,y0,w,h);
   const doc=A.CHARS['doc-ritorno-al-futuro'];if(!doc||!doc.ready||!doc.img.naturalWidth)return;
-  const t=s.t,talk=PONTE.verso>0,n=talk?'talk_S_'+(1+Math.floor(t*6)%4):'idle_S_'+(1+Math.floor(t*1.2)%4),fr=doc.fr[n]||doc.fr.front;if(!fr)return;
-  const ds=ppm*1.75/128,dw=doc.w*ds,dh=doc.h*ds,cx=x0+235*k,top=y0+68*k,fy=top-2*ds;   // la testa (riga 2 del fotogramma) sta sotto la tenda
+  const t=s.t,talk=PONTE.verso>0||!!(s.attori['doc-ritorno-al-futuro']&&s.attori['doc-ritorno-al-futuro'].talking),n=talk?'talk_S_'+(1+Math.floor(t*6)%4):'idle_S_'+(1+Math.floor(t*1.2)%4),fr=doc.fr[n]||doc.fr.front;if(!fr)return;
+  const ds=ppm*1.75/128,dw=doc.w*ds,dh=doc.h*ds,cx=x0+235*k,top=y0+68*k,fy=top-2*ds+PONTE.giu*42;   // giu: 0 in piedi, 1 inginocchiato dietro il bancone
+  if(PONTE.giu>=1)return;   // la testa (riga 2 del fotogramma) sta sotto la tenda
   gg.save();gg.beginPath();gg.rect(x0+190*k,y0+60*k,112*k,(138-60)*k);gg.clip();
-  gg.imageSmoothingEnabled=false;gg.drawImage(doc.img,fr.x,fr.y,doc.w,doc.h,cx-doc.ax*ds,fy,dw,dh);gg.restore()}
+  gg.imageSmoothingEnabled=false;gg.drawImage(doc.img,fr.x,fr.y,doc.w,doc.h,cx-doc.ax*ds,fy,dw,dh);gg.restore();
+  if(PONTE.fuse>0&&PONTE.fus.complete&&PONTE.fus.naturalWidth)gg.drawImage(PONTE.fus,Math.round(cx-9*ds*0+ -3),Math.round(y0+112*k),PONTE.fus.naturalWidth,PONTE.fus.naturalHeight)}   // fusibile in mano a Doc
+/* rumori d'officina dietro il bancone: martellate, trapano, cacciavite, colpi metallici */
+function rumoriAttrezzi(dur){
+  const T=A.tone,N=A.nburst,t0=performance.now();
+  const colpo=()=>{const pan=-.2+Math.random()*.4;N(2400+Math.random()*3000,9,.07,.5,'bandpass',pan,.25);T(420+Math.random()*420,.08,'square',.12,200,pan,.2)};
+  const trapano=()=>{const pan=Math.random()*.3;T(700,.5,'sawtooth',.1,1500,pan,.2);N(3000,2,.5,.08,'bandpass',pan,.2)};
+  const pezzi=[];let t=.2;while(t<dur){const r=Math.random();if(r<.5){const n=2+Math.floor(Math.random()*3);for(let i=0;i<n;i++)pezzi.push([t+i*.28,colpo]);t+=n*.28+.5}else if(r<.75){pezzi.push([t,trapano]);t+=.9}else{pezzi.push([t,()=>{N(1800,5,.12,.3,'bandpass',0,.2);setTimeout(colpo,150)}]);t+=.6}}
+  for(const [tt,f] of pezzi)setTimeout(()=>{try{f()}catch(e){}},tt*1000)}
+async function giuDoc(a,b,dur){const n=Math.max(1,Math.round(dur/.04));for(let i=0;i<=n;i++){PONTE.giu=a+(b-a)*(i/n);await pausa(.04)}}
+async function scenaPanino(s){
+  const p=s.giocatore,d=s.attori['doc-ritorno-al-futuro'];PONTE.muto=true;
+  await pausa(.6);await p.vaiA(70,118,false,'S');p.dir='S';await pausa(.7);
+  await s.dici(p,'Ho fatto tutti quei chilometri per niente… Ma cosa mi è passato per la testa?',{});     // guarda verso il giocatore
+  await pausa(.4);p.dir='N';await pausa(.6);
+  await s.dici(p,'Ho anche una fame da lupi. Mi mangerò un panino.',{frontale:false});
+  await pausa(.5);await s.dici(p,'Un hamburger triplo con formaggio e cetriolini, per favore.',{frontale:false});
+  await s.dici(d,'Subito!',{});
+  await giuDoc(0,1,.7);                              // si inginocchia dietro il bancone e sparisce
+  rumoriAttrezzi(6.5);await pausa(1.2);
+  p.dir='S';gagCappello(s);await pausa(5.0);          // Nick guarda il giocatore e si toglie il cappello, come con la gatta
+  p.dir='N';await pausa(1.0);
+  await giuDoc(1,0,.6);
+  await s.dici(d,'Niente da fare, non arriva gas alla piastra. Il flusso canalizzatore sta facendo di nuovo le bizze.',{});
+  await s.dici(p,'Flusso canalizzatore? Ma di che parli? Io voglio il mio panino!',{frontale:false});
+  await s.dici(d,'È un macchinario di mia invenzione, serve a far arrivare il gas dall\'altra parte del ponte senza bisogno di tubi!',{});
+  await s.dici(p,'Non facevi prima a parcheggiare il furgone dall\'altra parte del ponte?',{frontale:false});
+  await s.dici(d,'Grande Giove! È un\'idea geniale! Ma così non avrei potuto testare il mio macchinario!',{});
+  await s.dici(p,'Vabbè, io ho fame, che si fa?',{frontale:false});
+  await s.dici(d,'Io non posso lasciare il furgone incustodito. Fammi un favore: vai dall\'altra parte del ponte, scendi le scale e…',{});
+  await giuDoc(0,1,.5);await pausa(.9);PONTE.fuse=1;await giuDoc(1,0,.5);   // sparisce un attimo e ricompare con un fusibile in mano
+  await s.dici(d,'Cambia questo fusibile al flusso canalizzatore, tutto riprenderà a funzionare come prima.',{});
+  A.sting('scoperta',.7);PONTE.fuse=0;A.giveItem('fusibile');C2.fusibile=true;PONTE.muto=false;PONTE.tv=4}
 registraScena({
   id:'c2-ponte',inventario:true,sfondo:'img/scene/ponte-diavolo-var3.png',
   giocatore:'protagonista-esterno',nomeGiocatore:'NICK',
-  attori:[{nome:'doc-ritorno-al-futuro',x:-50,y:-50,dir:'S',visibile:false}],   // solo per caricare l'atlante: Doc e' disegnato dentro il furgone
+  attori:[{nome:'doc-ritorno-al-futuro',etichetta:'DOC',x:-50,y:-50,dir:'S',visibile:false}],   // solo per caricare l'atlante: Doc e' disegnato dentro il furgone
   partenza:{x:200,y:108,dir:'W'},
   area:[[2,117],[146,117],[146,99],[238,99],[238,119],[2,119]],
   ostacoli:[],
@@ -286,7 +319,7 @@ registraScena({
   aggiorna(s,dt){ambienteGiorno(dt,false);const d=s.attori['doc-ritorno-al-futuro'];if(d)d.visibile=false;
     // Doc non e' interagibile: fa solo dei versetti in sottofondo, con la sua voce
     PONTE.tn=(PONTE.tn??6)-dt;if(PONTE.tn<=0&&!C2.ponteDetto){PONTE.tn=7+Math.random()*6;FIATO.suona('protagonista-esterno',Math.random()<.5?'dubbio':'sospiro',1,.8)}
-    if(PONTE.verso>0)PONTE.verso-=dt;PONTE.tv-=dt;if(PONTE.tv<=0){PONTE.tv=5+Math.random()*7;PONTE.verso=1.1;const t=['sforzo','sorpresa','dubbio','sospiro','sforzo'];FIATO.suona('doc-ritorno-al-futuro',t[Math.floor(Math.random()*t.length)],1,.55)}
+    if(PONTE.verso>0)PONTE.verso-=dt;PONTE.tv-=dt;if(PONTE.tv<=0&&!PONTE.muto){PONTE.tv=5+Math.random()*7;PONTE.verso=1.1;const t=['sforzo','sorpresa','dubbio','sospiro','sforzo'];FIATO.suona('doc-ritorno-al-futuro',t[Math.floor(Math.random()*t.length)],1,.55)}
     const p=s.giocatore;if(p&&C2.ponteDetto&&!C2.ponteVisto&&!s.occupato&&p.x<10){C2.ponteVisto=true;s.vaiScena('c2-ponte-vista',{x:226,y:112,dir:'W'})}},
   suggerimento:'',senzaEtichette:true,
   sopra(gg,s){if(C2.ponteDetto&&!C2.ponteVisto&&Math.floor(s.t*2.2)%2===0){   // freccia lampeggiante a sinistra: da li' si va al ponte
@@ -295,8 +328,8 @@ registraScena({
       gg.restore()}},
   oggetti:[{baseY:PONTE.RUOTE,disegna(gg,s){disegnaFurgone(gg,s)}}],
   entra(s){fadeTo(0,2.5);const p=s.giocatore;
-    if(C2.ponteVisto){s.sequenza(async()=>{await pausa(.5);await p.vaiA(70,118,false,'N');p.dir='N'})}   // torna di fronte al furgone
-    else s.sequenza(async()=>{await pausa(7);await dn(s,p,'Vediamo se il mio sogno aveva ragione.');C2.ponteDetto=true})}
+    if(C2.ponteVisto&&!C2.fusibile){s.sequenza(()=>scenaPanino(s))}   // tornato dal ponte: la scena del panino
+    else if(!C2.ponteVisto)s.sequenza(async()=>{await pausa(7);await dn(s,p,'Vediamo se il mio sogno aveva ragione.');C2.ponteDetto=true})}
 });
 
 /* la visuale del Ponte del Diavolo senza simbolo: a sinistra del furgone */

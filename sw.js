@@ -1,7 +1,7 @@
 // Service worker: il gioco funziona offline.
 // - i file del gioco (immagini, audio, icone) sono salvati alla prima apertura (sempre scaricati freschi: cache reload) e serviti dalla memoria del telefono;
 // - la pagina, gli script (.js), gli indici (.json) e questo file si chiedono prima alla rete (cosi' gli aggiornamenti arrivano subito) e, senza rete, si usa la copia salvata.
-const VERSION = "17 nov 19:40";
+const VERSION = "17 nov 21:00";
 const CACHE = "mistero-" + VERSION;
 const FILES = [
   "./",
@@ -587,6 +587,9 @@ const FILES = [
   "img/emb/furgone_panini_2x.png",
   "img/emb/furgone_panini_a.png",
   "img/emb/furgone_panini_hd.png",
+  "img/emb/fusibile_icona_r1.png",
+  "img/emb/fusibile_mano_r1.png",
+  "img/emb/fusibile_r1.png",
   "img/emb/img_cab.png",
   "img/emb/img_cappello_sedia_r1.png",
   "img/emb/img_cappotto_sedia_r2.png",
@@ -612,6 +615,7 @@ const FILES = [
   "img/emb/img_walkbook24_r1.png",
   "img/emb/img_wheel_164.png",
   "img/emb/img_woman.png",
+  "img/emb/macchinario_flusso_hd_r1.png",
   "img/emb/panda_fianco_dx.png",
   "img/emb/panda_fianco_dx_hd.png",
   "img/emb/panda_fianco_sx.png",

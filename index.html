@@ -10,7 +10,7 @@
 <meta name="theme-color" content="#000000">
 <script>/* (12 nov) pulizia: a ogni versione nuova si tolgono service worker e memoria vecchi e si ricarica una volta.
    Un service worker rimasto da versioni precedenti serviva script e indice delle voci superati (le voci non si sentivano). BUILD0 lo aggiorna pubblica.py. */
-(function(){var BUILD0='17 nov 19:40';try{if(!('serviceWorker' in navigator)||localStorage.getItem('mistero-build')===BUILD0)return;localStorage.setItem('mistero-build',BUILD0);window.__pulizia=1;
+(function(){var BUILD0='17 nov 21:00';try{if(!('serviceWorker' in navigator)||localStorage.getItem('mistero-build')===BUILD0)return;localStorage.setItem('mistero-build',BUILD0);window.__pulizia=1;
  var t=setTimeout(function(){location.reload()},4000);
  Promise.all([navigator.serviceWorker.getRegistrations().then(function(rs){return Promise.all(rs.map(function(r){return r.unregister()}))}),
    window.caches?caches.keys().then(function(ks){return Promise.all(ks.map(function(k){return caches.delete(k)}))}):0]).then(function(){clearTimeout(t);location.reload()},function(){clearTimeout(t);location.reload()})}catch(e){}})();</script>
@@ -79,11 +79,11 @@ button:active{background:#1a2438;transform:translate(1px,1px)}
 <div id="probe" style="position:fixed;visibility:hidden;pointer-events:none;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)"></div>
 <div id="rot"><i></i><div>RUOTA IL TELEFONO<br>IN ORIZZONTALE</div></div>
 
-<script src="js/motore.js?v=17nov1940"></script>
-<script src="js/scena-demo.js?v=17nov1940"></script>
-<script src="js/scena-tutti.js?v=17nov1940"></script>
-<script src="js/scena-ramones.js?v=17nov1940"></script>
-<script src="js/scena-capitolo2.js?v=17nov1940"></script>
+<script src="js/motore.js?v=17nov2100"></script>
+<script src="js/scena-demo.js?v=17nov2100"></script>
+<script src="js/scena-tutti.js?v=17nov2100"></script>
+<script src="js/scena-ramones.js?v=17nov2100"></script>
+<script src="js/scena-capitolo2.js?v=17nov2100"></script>
 <script>
 (()=>{
 "use strict";
@@ -1072,6 +1072,11 @@ function chiaviTex(kind){const im=CHIAVI_IMG[kind],k='c'+kind;if(CHIAVI_IMG.cv[k
   const c=document.createElement('canvas'),ok=im.complete&&im.naturalWidth>0;c.width=ok?im.naturalWidth:24;c.height=ok?im.naturalHeight:14;if(ok){c.getContext('2d').drawImage(im,0,0)}CHIAVI_IMG.cv[k]={c,ok};return c}
 ITEMS.chiavi={name:"Chiavi dell'auto",spr:()=>'CHIAVI',zoom:3,
   text:()=>"Le chiavi dell'Alfa, con il biscione sul portachiavi. Le trascino sull'auto."};
+/* (17 nov) fusibile del Flusso Canalizzatore (da fusibile.avif): primo piano e icona dell'inventario */
+ITEMS.fusibile={name:'Fusibile',spr:()=>'FUSIBILE',zoom:3,text:()=>"Un fusibile di vetro con i due cappucci d'argento. Doc dice che va cambiato al Flusso Canalizzatore, dall'altra parte del ponte."};
+const FUS_IMG={big:mkImg('img/emb/fusibile_r1.png'),ico:mkImg('img/emb/fusibile_icona_r1.png'),cv:{}};
+function fusTex(kind){const im=FUS_IMG[kind],k='f'+kind;if(FUS_IMG.cv[k]&&FUS_IMG.cv[k].ok)return FUS_IMG.cv[k].c;
+  const c=document.createElement('canvas'),ok=im.complete&&im.naturalWidth>0;c.width=ok?im.naturalWidth:24;c.height=ok?im.naturalHeight:8;if(ok){c.getContext('2d').drawImage(im,0,0)}FUS_IMG.cv[k]={c,ok};return c}
 const CU={id:null,t0:0},CU_BOOK={x:56,y:12,w:128,h:86};   // area del libro in primo piano (110x70 al centro, con margine)
 /* cestino: palla di carta in primo piano -> si apre e svela la chiave -> la chiave va nell'inventario */
 function paintPaper(){
@@ -1089,7 +1094,7 @@ function paperTap(x,y){
   if(S.paperStage===1&&inR(PAPER_KEY,x,y)){S.paperStage=2;S.keyTaken=true;giveItem('key');closeCU();say(TEXTB.binKey);return}
   closeCU()}
 const itemText=id=>{const t=ITEMS[id].text;return typeof t==='function'?t():t};
-function itemTex(id){const k=ITEMS[id].spr();if(k==='LOG'){return logTex()}if(k==='CHIAVI')return chiaviTex('big');return sprTex(k)}
+function itemTex(id){const k=ITEMS[id].spr();if(k==='LOG'){return logTex()}if(k==='CHIAVI')return chiaviTex('big');if(k==='FUSIBILE')return fusTex('big');return sprTex(k)}
 function iconOf(id){
   if(id==='matches')return {t:sprTex('matchbox_small'),sc:1.5};
   if(id==='log'){return {t:logTex(),sc:2}}
@@ -1097,6 +1102,7 @@ function iconOf(id){
   if(id==='book')return {t:sprTex('book_locked_small'),sc:1};
   if(id==='key')return {t:sprTex('key_small'),sc:1};
   if(id==='chiavi')return {t:chiaviTex('ico'),sc:1};
+  if(id==='fusibile')return {t:fusTex('ico'),sc:1};
   return {t:sprTex('comic_small'),sc:2}}
 function openCU(id){CU.id=id;CU.t0=NOW;say(itemText(id))}
 const hintEl=document.getElementById('hint');
@@ -2094,7 +2100,7 @@ document.addEventListener('wheel',e=>{if(e.ctrlKey)e.preventDefault()},{passive:
 document.addEventListener('visibilitychange',()=>{if(document.hidden){if(SILENT_EL)SILENT_EL.pause()}else if(AU.ctx)unmuteSilentSwitch();if(AU.ctx){if(document.hidden)AU.ctx.suspend();else AU.ctx.resume()}});
 
 /* aggiornamento automatico: se sul server c'e' una versione piu' nuova di questa, ricarica una volta (cancella anche le copie salvate) */
-const BUILD='17 nov 19:40';
+const BUILD='17 nov 21:00';
 {const ve=document.getElementById('ver');if(ve)ve.textContent='v. '+BUILD;
  if(location.protocol.startsWith('http')){
   fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{
