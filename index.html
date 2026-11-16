@@ -10,7 +10,7 @@
 <meta name="theme-color" content="#000000">
 <script>/* (12 nov) pulizia: a ogni versione nuova si tolgono service worker e memoria vecchi e si ricarica una volta.
    Un service worker rimasto da versioni precedenti serviva script e indice delle voci superati (le voci non si sentivano). BUILD0 lo aggiorna pubblica.py. */
-(function(){var BUILD0='16 nov 12:00';try{if(!('serviceWorker' in navigator)||localStorage.getItem('mistero-build')===BUILD0)return;localStorage.setItem('mistero-build',BUILD0);window.__pulizia=1;
+(function(){var BUILD0='16 nov 18:00';try{if(!('serviceWorker' in navigator)||localStorage.getItem('mistero-build')===BUILD0)return;localStorage.setItem('mistero-build',BUILD0);window.__pulizia=1;
  var t=setTimeout(function(){location.reload()},4000);
  Promise.all([navigator.serviceWorker.getRegistrations().then(function(rs){return Promise.all(rs.map(function(r){return r.unregister()}))}),
    window.caches?caches.keys().then(function(ks){return Promise.all(ks.map(function(k){return caches.delete(k)}))}):0]).then(function(){clearTimeout(t);location.reload()},function(){clearTimeout(t);location.reload()})}catch(e){}})();</script>
@@ -79,11 +79,11 @@ button:active{background:#1a2438;transform:translate(1px,1px)}
 <div id="probe" style="position:fixed;visibility:hidden;pointer-events:none;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)"></div>
 <div id="rot"><i></i><div>RUOTA IL TELEFONO<br>IN ORIZZONTALE</div></div>
 
-<script src="js/motore.js?v=16nov1200"></script>
-<script src="js/scena-demo.js?v=16nov1200"></script>
-<script src="js/scena-tutti.js?v=16nov1200"></script>
-<script src="js/scena-ramones.js?v=16nov1200"></script>
-<script src="js/scena-capitolo2.js?v=16nov1200"></script>
+<script src="js/motore.js?v=16nov1800"></script>
+<script src="js/scena-demo.js?v=16nov1800"></script>
+<script src="js/scena-tutti.js?v=16nov1800"></script>
+<script src="js/scena-ramones.js?v=16nov1800"></script>
+<script src="js/scena-capitolo2.js?v=16nov1800"></script>
 <script>
 (()=>{
 "use strict";
@@ -170,10 +170,16 @@ function audioInit(){
   AU.rainLP=c.createBiquadFilter();AU.rainLP.type='lowpass';AU.rainLP.frequency.value=7000;
   AU.rainG=c.createGain();AU.rainG.gain.value=0;
   rs.connect(hp);hp.connect(AU.rainLP);AU.rainLP.connect(AU.rainG);AU.rainG.connect(AU.master);rs.start();
-  const o=c.createOscillator();o.type='sawtooth';o.frequency.value=45;
-  const lp=c.createBiquadFilter();lp.type='lowpass';lp.frequency.value=170;
-  AU.engG=c.createGain();AU.engG.gain.value=0;AU.engO=o;
-  o.connect(lp);lp.connect(AU.engG);AU.engG.connect(AU.master);o.start();
+  /* (16 nov) MOTORE con corpo: gli altoparlanti del telefono non riproducono i 40 Hz, quindi il rombo e' fatto di armoniche (dente di sega saturata e filtrata, quadra a doppia frequenza)
+     piu' un fruscio grave modulato dalla frequenza di scoppio; engHz(hz) regola tutto insieme */
+  AU.engG=c.createGain();AU.engG.gain.value=0;AU.engG.connect(AU.master);
+  const o=c.createOscillator();o.type='sawtooth';o.frequency.value=40;AU.engO=o;
+  const ws=c.createWaveShaper();{const n=1024,cv=new Float32Array(n);for(let i=0;i<n;i++){const x=i/(n-1)*2-1;cv[i]=Math.tanh(3.2*x)}ws.curve=cv}
+  const lp=c.createBiquadFilter();lp.type='lowpass';lp.frequency.value=720;lp.Q.value=1.1;o.connect(ws);ws.connect(lp);lp.connect(AU.engG);
+  const o2=c.createOscillator();o2.type='square';o2.frequency.value=80.4;AU.engO2=o2;const g2=c.createGain();g2.gain.value=.3;const lp2=c.createBiquadFilter();lp2.type='lowpass';lp2.frequency.value=480;o2.connect(lp2);lp2.connect(g2);g2.connect(AU.engG);
+  const ns=loopNoise(),bp=c.createBiquadFilter();bp.type='bandpass';bp.frequency.value=170;bp.Q.value=.8;const am=c.createGain();am.gain.value=.5;const ng=c.createGain();ng.gain.value=.9;
+  const lfo=c.createOscillator();lfo.frequency.value=20;AU.engL=lfo;const lg=c.createGain();lg.gain.value=.5;lfo.connect(lg);lg.connect(am.gain);ns.connect(bp);bp.connect(am);am.connect(ng);ng.connect(AU.engG);
+  ns.start();lfo.start();o2.start();o.start();
   const fs=loopNoise(),fb=c.createBiquadFilter();fb.type='bandpass';fb.frequency.value=700;fb.Q.value=.5;
   AU.fireG=c.createGain();AU.fireG.gain.value=0;fs.connect(fb);fb.connect(AU.fireG);AU.fireG.connect(AU.master);fs.start();
   loadAudioFiles();
@@ -192,7 +198,8 @@ function loadAudioFiles(){
 function setRain(l,ind){if(!AU.ctx)return;AU.rl=l;AU.rind=ind;const t=AU.ctx.currentTime;
   AU.rainG.gain.setTargetAtTime(AU.rainFReady?0:l*(ind?.12:.3),t,.4);AU.rainLP.frequency.setTargetAtTime(ind?650:7000,t,.3);
   if(AU.rainFReady){AU.rainFG.gain.setTargetAtTime(l*(ind?.6:1.7),t,.4);AU.rainFLP.frequency.setTargetAtTime(ind?850:9000,t,.3)}}
-function setEng(v,on){if(!AU.ctx)return;const t=AU.ctx.currentTime;AU.engG.gain.setTargetAtTime(on?.04+.03*v:0,t,.3);AU.engO.frequency.setTargetAtTime(36+v*30,t,.3)}
+function engHz(hz,tau=.15){if(!AU.ctx||!AU.engO)return;const t=AU.ctx.currentTime;AU.engO.frequency.setTargetAtTime(hz,t,tau);AU.engO2.frequency.setTargetAtTime(hz*2.01,t,tau);AU.engL.frequency.setTargetAtTime(hz*.55,t,tau)}
+function setEng(v,on){if(!AU.ctx)return;const t=AU.ctx.currentTime;AU.engG.gain.setTargetAtTime(on?.11+.07*v:0,t,.3);engHz(30+v*34,.3)}
 function setFire(k){if(!AU.ctx)return;AU.fireG.gain.setTargetAtTime(k*(.015+.05*Math.random()),AU.ctx.currentTime,.05)}
 const TH_SEG=[[.15,6.6],[10.5,17.2],[24.1,34.6]];let thLast=-1;
 function thunder(v=1){
@@ -377,19 +384,19 @@ function schedMattino(step,t){
   if(s%4===2){const m=ch[(s/4|0)%4]+12;note({t,f:mf(m),dur:.3,vol:.05,type:'triangle',cut:3200,att:.005,rel:.45,send:.45,rev:.5,pan:(s%8?.6:-.6)})}
   if(s===0&&hash(step)>.35)note({t:t+.2,f:mf(ch[2]+24),dur:1.6,vol:.03,type:'sine',cut:4000,att:.02,rel:1.4,send:.5,rev:.7,pan:hash(step*3)-.5})
 }
-/* (16 nov) musica di viaggio autunnale, anni '80: la minore malinconica (Am-F-C-G), basso a ottavi, arpeggio, rullante gentile, melodia con eco */
-const V_CH=[[57,60,64],[53,57,60],[48,55,60],[55,59,62]];
-const V_BASS=[33,29,36,31];
-const V_MEL=[[[0,81,4],[4,84,4],[8,83,4],[12,81,4]],[[0,81,6],[6,79,2],[8,77,8]],[[0,79,4],[4,84,4],[8,88,6],[14,86,2]],[[0,83,6],[6,79,2],[8,81,8]]];
+/* (16 nov) musica di viaggio: tutta d'ATMOSFERA (nebbia, autunno, un po' di malinconia): accordi larghi e lenti, basso lungo, poche note di melodia rarefatte con molta eco e riverbero, nessun battito ne' ritmo */
+const V_CH=[[57,60,64,71],[53,57,60,64],[50,57,60,64],[52,55,59,62]];   // Am9, Fmaj7, Dm9, Em7
+const V_BASS=[33,29,26,28];
 function schedViaggio(step,t){
   const sd=MU.sd,bar=Math.floor(step/16)%4,s=step%16,ch=V_CH[bar],loop=Math.floor(step/64);
-  if(s===0)for(const m of ch)note({t,f:mf(m),dur:16*sd-.05,vol:.04,type:'sawtooth',det:[-9,9],cut:1300,att:.5,rel:.8,send:.2,rev:.4,pan:(m%3-1)*.4});
-  if(s%2===0)note({t,f:mf(V_BASS[bar]+(s%8===6?12:0)),dur:1.6*sd,vol:.2,type:'sawtooth',cut:520,q:2,rel:.08,det:[0,5]});
-  const ar=[0,1,2,1,0,1,2,1];if(s%2===1||loop>=1)note({t,f:mf(ch[ar[s%8]]+12),dur:.9*sd,vol:.05,type:'triangle',cut:2400,att:.004,rel:.15,send:.3,rev:.3,pan:Math.sin(step*.7)*.6});
-  if(s===0||s===8)mKick(t,.34);if(s===4||s===12)mNoise(t,2100,.8,.16,.15,'bandpass',.4);if(s%2===0)mNoise(t,7800,1,.03,.03,'highpass',0);
-  if(loop>=1){for(const [st,m,len] of V_MEL[bar])if(st===s)note({t,f:mf(m),dur:len*sd-.04,vol:.07,type:'sawtooth',det:[-6,6],cut:2300,att:.04,rel:.3,vib:6,send:.6,rev:.5,pan:.2})}
+  if(s===0){for(const m of ch)note({t,f:mf(m),dur:16*sd-.2,vol:.034,type:'sawtooth',det:[-10,10],cut:760,att:2.4,rel:2.4,send:.25,rev:.55,pan:(m%4-1.5)*.35});
+    note({t,f:mf(V_BASS[bar]),dur:15*sd,vol:.16,type:'sine',cut:420,att:.6,rel:1.6});
+    note({t:t+.3,f:mf(ch[3]+12),dur:16*sd,vol:.012,type:'sine',cut:3000,att:3,rel:3,vib:14,rev:.9,pan:hash(step)*1.2-.6})}   // sibilo sottile in alto
+  if(s===8&&bar%2===1)note({t,f:mf(V_BASS[bar]+12),dur:6*sd,vol:.07,type:'triangle',cut:600,att:.4,rel:1.2});
+  if(loop>=1){const mel=[[2,81,5],[10,79,3],[13,76,3]];for(const [st,m,len] of mel)if(st===s&&hash(step*1.7+bar)>.25)note({t,f:mf(m+(bar%2?-2:0)),dur:len*sd,vol:.05,type:'triangle',cut:2200,att:.12,rel:1.4,vib:5,send:.7,rev:.8,pan:hash(step)-.5})}
+  if(loop>=1&&s===6&&hash(step*2.3)>.55)mBell(t,ch[1]+24,.03,4.5);
 }
-const THEMES={baita:{bpm:60,fn:schedBaita,vol:.75},mattino:{bpm:72,fn:schedMattino,vol:.7},viaggio:{bpm:100,fn:schedViaggio,vol:.85},drive:{bpm:72,fn:schedDrive,vol:.85},mystery:{bpm:58,fn:schedMystery,vol:.7},sogno:{bpm:42,fn:schedDream,vol:.75}};
+const THEMES={baita:{bpm:60,fn:schedBaita,vol:.75},mattino:{bpm:72,fn:schedMattino,vol:.7},viaggio:{bpm:56,fn:schedViaggio,vol:.8},drive:{bpm:72,fn:schedDrive,vol:.85},mystery:{bpm:58,fn:schedMystery,vol:.7},sogno:{bpm:42,fn:schedDream,vol:.75}};
 function musicStop(fade=2){
   if(!MU.name)return;const old=MU.bus,c=AU.ctx;clearInterval(MU.timer);MU.name=null;
   if(old&&c){old.out.gain.setTargetAtTime(0,c.currentTime,fade/3);setTimeout(()=>{try{old.out.disconnect()}catch(e){}},fade*1000+4500)}
@@ -428,12 +435,12 @@ function voxStart(b){const c=AU.ctx;if(c.state==='suspended')c.resume();const sr
 /* ---- (14 nov) VERSI DEI PERSONAGGI: sforzo, sorpresa, sospiri, dubbi, respiri, affanni. Interiezioni brevissime (Eh! Uh! Ah… Hm…) e respiri, non parlato recitato.
    Clip in audio/fiato (indice.json: {personaggio:{tipo:[file]}}), generate da _strumenti/genera_versi.py. Suonano solo se l'audio e' sbloccato e non e' muto. */
 const FIATO={idx:null,ult:0,ALIAS:{'protagonista-esterno':'protagonista-interno','anna-senza-giacca':'anna',gemella2:'gemella'}};
-fetch('audio/fiato-r4/indice.json',{cache:'no-cache'}).then(r=>r.ok?r.json():null).then(j=>{FIATO.idx=j}).catch(()=>{});
+fetch('audio/fiato-r5/indice.json',{cache:'no-cache'}).then(r=>r.ok?r.json():null).then(j=>{FIATO.idx=j}).catch(()=>{});
 FIATO.suona=function(nome,tipo,prob=1,vol=.9,ritardo=0){
   if(!this.idx||!AU.ctx||AU.muted||AU.ctx.state!=='running'||Math.random()>prob)return;
   const d=this.idx[this.ALIAS[nome]||nome],l=d&&d[tipo];if(!l||!l.length)return;
   const now=performance.now();if(now-this.ult<600)return;this.ult=now;
-  const u='audio/fiato-r4/'+l[Math.floor(Math.random()*l.length)];
+  const u='audio/fiato-r5/'+l[Math.floor(Math.random()*l.length)];
   voxLoad(u).then(b=>{if(!b)return;const c=AU.ctx,sr=c.createBufferSource(),gn=c.createGain();sr.buffer=b;gn.gain.value=vol;sr.connect(gn);gn.connect(AU.master);sr.start(c.currentTime+.03+ritardo)})};
 window.FIATO=FIATO;
 let vox=null,sayDone=null;
@@ -2083,7 +2090,7 @@ document.addEventListener('wheel',e=>{if(e.ctrlKey)e.preventDefault()},{passive:
 document.addEventListener('visibilitychange',()=>{if(document.hidden){if(SILENT_EL)SILENT_EL.pause()}else if(AU.ctx)unmuteSilentSwitch();if(AU.ctx){if(document.hidden)AU.ctx.suspend();else AU.ctx.resume()}});
 
 /* aggiornamento automatico: se sul server c'e' una versione piu' nuova di questa, ricarica una volta (cancella anche le copie salvate) */
-const BUILD='16 nov 12:00';
+const BUILD='16 nov 18:00';
 {const ve=document.getElementById('ver');if(ve)ve.textContent='v. '+BUILD;
  if(location.protocol.startsWith('http')){
   fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{
@@ -2099,7 +2106,7 @@ if('serviceWorker' in navigator&&location.protocol.startsWith('http')&&!['localh
 window.__dbg={say,sayP,VOX,prova,CHARS,storm,SOGNO_T,AU,thunder,setRain,sprTex,itemTex,bagno,openCU,giveItem,combine,refreshInv,takeLog,ITEMS,IDR,CU,AU,MU,S,drive,outside,inside,sogno,startDream,setScene,fade,go:n=>{fade.a=0;fade.to=0;setScene(n)},scenes};
 /* estensioni (js/*.js): ricevono le funzioni del gioco e possono registrare nuove scene */
 {const wrapEl=document.getElementById('wrap');
- const API={g,W,H,RS,R,txt,ell,clamp,lerp,hash,inPoly,nearOnPoly,Actor,loadChar,CHARS,say,setHint,fade,fadeTo,setScene,scenes,mkImg,AU,tone,nburst,spazio,uscita,sting,giveItem,removeItem,ITEMS,musicStart,musicStop,sfx,setRain,setFire,musicStart,musicStop,cv,wrap:wrapEl,S,refreshInv,audioInit,sayP,voxUrl,voxLoad,setEng,
+ const API={g,W,H,RS,R,txt,ell,clamp,lerp,hash,inPoly,nearOnPoly,Actor,loadChar,CHARS,say,setHint,fade,fadeTo,setScene,scenes,mkImg,AU,tone,nburst,spazio,uscita,sting,engHz,giveItem,removeItem,ITEMS,musicStart,musicStop,sfx,setRain,setFire,musicStart,musicStop,cv,wrap:wrapEl,S,refreshInv,audioInit,sayP,voxUrl,voxLoad,setEng,
    view:()=>{const r=cv.getBoundingClientRect();return {k:Math.min(r.width/DW,r.height/H),DW,OX}},now:()=>NOW};
  for(const f of (window.__ext||[])){try{f(API)}catch(e){console.error('estensione',e)}}}
 const boot=()=>{fade.a=1;fade.to=1;const dm=/[?&]demo/.test(location.search)&&scenes.demo,mg=(location.search.match(/[?&](tutti|uomini|donne|bambini|animali|furgone|ramones|capitolo2)(?=[&=#]|$)/)||[])[1],tt=mg&&scenes[mg];

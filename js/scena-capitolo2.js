@@ -204,9 +204,9 @@ registraScena({
    Non e' piu' una scena disegnata dal gioco: e' un filmato (video/guida-alpina_r6.mp4, 10 s, H.264) fatto con _strumenti/film_guida.py
    sul dipinto strada-alpi.png: l'auto percorre la strada, la camera la segue. Si sovrappone all'area di gioco con la riproduzione nativa
    del telefono (muto, inline); il motore si sente col Web Audio del gioco. Se il filmato non parte si passa subito a «CONTINUA…». */
-const FILM_SRC='video/guida-alpina_r6.mp4',FILM_SRC2='video/guida-ponte_r1.mp4';   // (16 nov) secondo filmato: la strada lungo il fiume, verso il Ponte del Diavolo (stessa prospettiva e stesso moto, senza foglie)
+const FILM_SRC='video/guida-alpina_r6.mp4',FILM_SRC2='video/guida-ponte_r2.mp4';   // (16 nov) secondo filmato: la strada lungo il fiume, verso il Ponte del Diavolo (stessa prospettiva e stesso moto, senza foglie)
 const FILM_CURVE=[0.03, 0.09, 0.09, 0.09, 0.09, 0.09, 0.28, 0.3, 0.24, 0.36, 0.5, 0.48, 0.17, 0.3, 0.79, 1.21, 1.06, 0.34, 0.48, 1.2, 1.82, 1.96, 1.24, 0.23, 0.08, 0.86, 1.85, 0.83, 0.54, 2.08, 6.72, 23.71, 5.1, 4.03, 3.98, 3.98, 3.98, 3.98];   // quanto la strada gira, ogni 8 fotogrammi: guida il suono del motore
-const FILM_CURVE2=[0.03,0.1,0.11,0.11,0.11,0.11,0.15,0.72,0.78,0.77,0.75,0.74,0.73,0.72,0.71,0.7,0.69,0.68,0.67,0.66,0.66,0.65,0.64,0.64,0.63,0.63,0.62,0.62,0.62,0.64,0.69,0.9,1.71,1.89,1.9,1.9,1.9,1.9];
+const FILM_CURVE2=[0.71,0.71,0.69,0.66,0.64,0.63,0.63,0.63,0.62,0.62,0.62,0.62,0.62,0.62,0.62,0.62,0.62,0.62,0.62,0.62,0.62,0.62,0.62,0.62,0.62,0.62,0.62,0.62,0.62,0.62,0.62,0.62,0.62,0.62,0.62,0.62,0.62,0.62];
 const FILM={el:null,partito:false,finito:false,t0:0,i:0,curva:null};
 const FILM_LISTA=[{src:FILM_SRC,curva:FILM_CURVE},{src:FILM_SRC2,curva:FILM_CURVE2}];
 function filmAvvia(s,i){const v=filmEl();FILM.i=i;FILM.partito=false;FILM.finito=false;FILM.t0=performance.now();FILM.curva=FILM_LISTA[i].curva;
@@ -229,14 +229,14 @@ registraScena({
   disegnaSfondo(gg){R(0,0,W,H,'#000')},
   entra(s){
     A.say('');s.occupato=true;document.getElementById('bHint').style.display='none';filmAvvia(s,0);
-    A.setEng&&A.setEng(.9,true);A.musicStart('viaggio',3)},   // (16 nov) musica di viaggio autunnale, anni '80, sotto il filmato
+    A.setEng&&A.setEng(.7,true);A.musicStart('viaggio',3)},   // (16 nov) musica di viaggio autunnale, anni '80, sotto il filmato
   aggiorna(s,dt){
     const v=FILM.el;if(!v||FILM.finito)return;filmPosiziona(v);
     if(v.currentTime>.05)FILM.partito=true;
     if(!FILM.partito&&performance.now()-FILM.t0>6000)return filmFine(s);   // non e' partito: si va avanti
     if(v.ended||(v.duration>0&&v.currentTime>=v.duration-.04))return filmFine(s);
     const cv_=FILM.curva||FILM_CURVE,c=cv_[Math.min(cv_.length-1,Math.floor(v.currentTime*30/8))]||0;
-    if(A.AU.engO&&A.AU.ctx)A.AU.engO.frequency.setTargetAtTime(50+24*Math.min(1,c)+4*Math.sin(s.t*3),A.AU.ctx.currentTime,.12)}
+    A.engHz&&A.engHz(36+22*Math.min(1,c)+1.5*Math.sin(s.t*2.2))}   // (16 nov) il rombo segue la curva e non si ferma mai
 });
 
 /* da fine capitolo 1 (sogno) al capitolo 2 */
