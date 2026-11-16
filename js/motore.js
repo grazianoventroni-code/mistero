@@ -117,7 +117,7 @@ class Pers extends Actor{
   constructor(nome,x,y,scena){
     super(nome,x,y);this.scena=scena;this.path=[];this.fase=0;this.vel=27;this.corsa=false;this.arrivo=null;this.passoN=0;
     this.bocca=0;this.piede=0;this.nome=nome;this.colore='#e8dfc0';this.visibile=true}
-  scala(){return this.scena?this.scena.scala(this.y):1.5}
+  scala(){return (this.scena?this.scena.scala(this.y):1.5)*(this.k||1)}   // (18 nov) this.k = fattore di grandezza dell'attore (es. la capra)
   altezza(){const c=this.c;return c&&c.ready?c.h/RS*this.scala():40}   // altezza in px logici
   vaiA(x,y,corri=false,dir=null){
     if(this.state==='sit'){this.standUp()}
@@ -379,7 +379,7 @@ class Scena{
     const nomi=[...new Set([...(this.cfg.attori||[]).map(a=>a.nome),this.cfg.giocatore].filter(Boolean))];
     Promise.all(nomi.map(loadChar)).then(()=>{
       this.attori={};
-      for(const a of this.cfg.attori||[]){const p=new Pers(a.nome,a.x,a.y,this);p.dir=a.dir||'S';p.etichetta=a.etichetta||a.nome.toUpperCase().replace(/-/g,' ');if(a.vel)p.vel=a.vel;this.attori[a.id||a.nome]=p;if(a.siedi)p.state='sit'}
+      for(const a of this.cfg.attori||[]){const p=new Pers(a.nome,a.x,a.y,this);p.dir=a.dir||'S';p.etichetta=a.etichetta||a.nome.toUpperCase().replace(/-/g,' ');if(a.vel)p.vel=a.vel;if(a.k)p.k=a.k;this.attori[a.id||a.nome]=p;if(a.siedi)p.state='sit'}
       if(this.cfg.giocatore){const s=this.cfg.partenza||{x:40,y:105,dir:'E'},p=new Pers(this.cfg.giocatore,arr?arr.x:s.x,arr?arr.y:s.y,this);p.dir=arr?arr.dir||'E':s.dir||'E';p.etichetta=this.cfg.nomeGiocatore||'';this.attori._io=p;this.giocatore=p}
       this.oggetti=(this.cfg.oggetti||[]).map(o=>({...o,img:o.img?mkImg(o.img):null}));
       this.pronto=true;if(arr&&arr.cammina)this.giocatore.vaiA(arr.cammina.x,arr.cammina.y,false,arr.cammina.dir);
