@@ -391,8 +391,8 @@ const bordoDx=y=>112+(y-45)/.37;
 const yZ=z=>PF.YH+PF.F*PF.HC/z;
 function corsia(z,f){const y=yZ(z),l=bordoSx(y),r=bordoDx(y);return [l+(r-l)*f,y]}
 const FP={};
-function muovi(p,z,f,dir,fermo){const [x,y]=corsia(z,f),dx=x-p.x,dy=y-p.y,d=Math.hypot(dx,dy);p.x=x;p.y=y;p.dir=dir;
-  if(fermo){p.state='idle';return}p.state='walk';p.fase+=d/Math.max(14,p.altezza()*.78)}
+function muovi(p,z,f,dir,fermo,dt){const [x,y]=corsia(z,f);p.x=x;p.y=y;p.dir=dir;
+  if(fermo){p.state='idle';return}p.state='walk';p.fase+=PF.V*(dt||1/30)/1.5}   // (18 nov) il ciclo del passo (due passi = 1,5 m) avanza con la distanza REALE percorsa: la camminata si vede anche in lontananza
 registraScena({
   id:'c2-ponte-film',sfondo:'img/scene/ponte-diavolo-var2.png',
   giocatore:'protagonista-esterno',nomeGiocatore:'NICK',partenza:{x:188,y:116,dir:'N'},
@@ -403,11 +403,11 @@ registraScena({
   aggiorna(s,dt){
     const n=s.giocatore,l=s.attori['lara-croft'];if(!n||!l)return;FP.t+=dt;
     if(FP.t<.7){muovi(n,FP.zn,.30,'N',true);muovi(l,FP.zl,.72,'S',true);return}
-    if(!FP.nickFermo){FP.zn+=PF.V*dt;muovi(n,FP.zn,.30,'N',false)}else{n.state='idle'}
-    if(!FP.laraFine){FP.zl-=PF.V*dt;muovi(l,FP.zl,.72,'S',false);if(l.x>246){FP.laraFine=true;l.visibile=false}}
+    if(!FP.nickFermo){FP.zn+=PF.V*dt;muovi(n,FP.zn,.30,'N',false,dt)}else{n.state='idle'}
+    if(!FP.laraFine){FP.zl-=PF.V*dt;muovi(l,FP.zl,.72,'S',false,dt);if(l.x>246){FP.laraFine=true;l.visibile=false}}
     if(!FP.incontro&&FP.zn>=FP.zl-.5){FP.incontro=true;FP.nickFermo=true;
       s.dici(l,'Ehilà!',{clip:'audio/versi/lara_ehila_r1.mp3',frontale:false});   // (voce vera) Lara saluta e continua a camminare
-      s.sequenza(async()=>{await pausa(1.1);n.dir='S';await pausa(.7);await s.dici(n,'Eppure mi pare di averla già vista.',{});await pausa(1.4);FP.fine=true;fadeTo(1,1.2,()=>{s.vaiScena('c2-scale',{x:150,y:60,dir:'S'})})})}}
+      s.sequenza(async()=>{await pausa(1.1);n.dir='S';await pausa(.7);await s.dici(n,'Eppure mi pare di averla già vista.',{});await pausa(1.4);FP.fine=true;s.vaiScena('c2-scale',{x:150,y:60,dir:'S'})})}}   // (18 nov) vaiScena fa gia' la sua dissolvenza: una dissolvenza in piu' bloccava il passaggio alle scale
 });
 
 /* ---------------- (18 nov) FILMATO: Nick scende le scale (var1) ----------------

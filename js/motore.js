@@ -343,7 +343,7 @@ const Dialogo={
     this.chiudi();return true},
   chiudi(){const c=this.cor;if(!c)return;if(c.tts)speechSynthesis.cancel();if(c.clip)c.clip.pause();if(c.att){c.att.talking=false;c.att.bocca=1}
     this.cor=null;this.el.classList.remove('on');const dl=document.getElementById('dlg');if(dl&&!this.coda.length)dl.classList.remove('on');c.r.res(true);this.prossima()},
-  azzera(){while(this.coda.length)this.coda.pop().res(false);if(this.cor){const c=this.cor;if(c.att){c.att.talking=false;c.att.bocca=1}if(c.clip)c.clip.pause();c.r.res(false);this.cor=null}if(this.el)this.el.classList.remove('on');{const dl=document.getElementById('dlg');if(dl)dl.classList.remove('on')}if(this.scelteEl){this.scelteEl.remove();this.scelteEl=null}if(window.speechSynthesis)speechSynthesis.cancel()}};
+  azzera(){const eraAttivo=!!this.cor||this.coda.length>0;while(this.coda.length)this.coda.pop().res(false);if(this.cor){const c=this.cor;if(c.att){c.att.talking=false;c.att.bocca=1}if(c.clip)c.clip.pause();c.r.res(false);this.cor=null}if(this.el)this.el.classList.remove('on');if(eraAttivo){const dl=document.getElementById('dlg');if(dl)dl.classList.remove('on')}if(this.scelteEl){this.scelteEl.remove();this.scelteEl=null}if(window.speechSynthesis)speechSynthesis.cancel()}};
 
 /* (14 nov) pulsante del parlato tolto: il gioco ha solo testi */
 
