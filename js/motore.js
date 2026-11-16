@@ -184,6 +184,7 @@ const VOCI={ // profilo di voce per personaggio: f0 in Hz, forma d'onda, battute
   'anna-senza-giacca':{sx:'f',f0:265,forma:'triangle',cps:31,mod:.14,tp:1.15,tr:1.03,col:'#e0a8d0'},
   lillo:{sx:'m',f0:128,forma:'sawtooth',cps:27,mod:.12,tp:.7,tr:.95,col:'#b8c8a0'},
   greg:{sx:'m',f0:172,forma:'triangle',cps:30,mod:.08,tp:.95,tr:1,col:'#b8a0d8'},
+  'lara-croft':{sx:'f',f0:285,forma:'triangle',cps:30,mod:.1,tp:1.2,tr:1,col:'#d9a07a'},
   gemella:{sx:'f',f0:360,forma:'sine',cps:27,mod:.08,tp:1.5,tr:.95,col:'#a8c8f0'},
   'doc-ritorno-al-futuro':{sx:'m',f0:210,forma:'square',cps:34,mod:.30,tp:1.1,tr:1.12,col:'#f0e8d0'},
   default:{sx:'m',f0:185,forma:'triangle',cps:30,mod:.10,tp:1,tr:1,col:'#e8dfc0'}};

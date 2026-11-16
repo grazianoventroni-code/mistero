@@ -338,7 +338,8 @@ async function scenaPanino(s){
   for(let i=0;i<=8;i++){PONTE.nk=i/8;await pausa(.04)}await pausa(.25);   // Nick (di spalle) allunga la mano e prende il fusibile
   PONTE.fuse=0;PONTE.nkFuse=true;for(let i=8;i>=0;i--){PONTE.nk=i/8;await pausa(.05)}   // lo porta alla tasca dell'impermeabile
   for(let i=10;i>=0;i--){PONTE.br=i/10;await pausa(.04)}PONTE.nkFuse=false;await pausa(.3);
-  A.sting('scoperta',.7);A.giveItem('fusibile');C2.fusibile=true;PONTE.muto=false;PONTE.tv=4}
+  A.sting('scoperta',.7);A.giveItem('fusibile');C2.fusibile=true;PONTE.muto=false;PONTE.tv=4;
+  await pausa(1.6);s.vaiScena('c2-ponte-film',{x:188,y:116,dir:'N'})}   // si avvia verso il ponte: filmato
 registraScena({
   id:'c2-ponte',inventario:true,sfondo:'img/scene/ponte-diavolo-var3.png',
   giocatore:'protagonista-esterno',nomeGiocatore:'NICK',
@@ -379,6 +380,58 @@ registraScena({
       for(const t of ['Nulla…','Che stupido!','Sono venuto sin qui… cosa mi aspettavo di trovare?','Per uno stupido sogno…'])await dn(s,p,t);
       FIATO.suona('protagonista-esterno','sospiro',1,.9);await pausa(.8);
       s.vaiScena('c2-ponte',{x:6,y:118,dir:'E'})})}
+});
+
+/* ---------------- (18 nov) FILMATO: il Ponte del Diavolo (var2) ----------------
+   Vista dall'imbocco: la strada del ponte sale e si restringe verso il fondo. Camera a foro stenopeico: orizzonte y=40 (punto di fuga del ponte), F=330, 1,6 m;
+   ogni punto del pavimento e' (profondita' Z in m, corsia f tra bordo sinistro e destro): y = 40 + F*1,6/Z, x = bordo sx(y) + (bordo dx - bordo sx)*f.
+   Lara cammina verso di noi sul lato destro (f=.72), Nick va nel verso opposto sul lato sinistro (f=.30), a 1,6 m/s: scala e passo seguono la prospettiva
+   (rif [100,2.016] = orizzonte 40). Si incontrano a meta' ponte: Lara dice "Ehilà!" (voce vera) e prosegue fino a sparire a destra; Nick si ferma, si volta e commenta. */
+const PF={F:330,HC:1.6,YH:40,V:1.6};
+const BORDO_SX=[[40,102],[48,108],[60,113],[75,128],[90,136],[120,138]];
+function bordoSx(y){const P=BORDO_SX;if(y<=P[0][0])return P[0][1];for(let i=1;i<P.length;i++)if(y<=P[i][0])return P[i-1][1]+(P[i][1]-P[i-1][1])*(y-P[i-1][0])/(P[i][0]-P[i-1][0]);return P[P.length-1][1]}
+const bordoDx=y=>112+(y-45)/.37;
+const yZ=z=>PF.YH+PF.F*PF.HC/z;
+function corsia(z,f){const y=yZ(z),l=bordoSx(y),r=bordoDx(y);return [l+(r-l)*f,y]}
+const FP={};
+function muovi(p,z,f,dir,fermo){const [x,y]=corsia(z,f),dx=x-p.x,dy=y-p.y,d=Math.hypot(dx,dy);p.x=x;p.y=y;p.dir=dir;
+  if(fermo){p.state='idle';return}p.state='walk';p.fase+=d/Math.max(14,p.altezza()*.78)}
+registraScena({
+  id:'c2-ponte-film',sfondo:'img/scene/ponte-diavolo-var2.png',
+  giocatore:'protagonista-esterno',nomeGiocatore:'NICK',partenza:{x:188,y:116,dir:'N'},
+  attori:[{nome:'lara-croft',etichetta:'LARA',x:140,y:60,dir:'S'}],
+  area:[[0,0],[2,0],[2,2],[0,2]],rif:[100,2.016],audioPassi:false,
+  ambiente:{stanza:0,vento:.35,foglie:.3,aria:.4,pioggia:0,fuoco:0},suggerimento:'',senzaEtichette:true,
+  entra(s){Object.assign(FP,{t:0,zn:6.95,zl:33,incontro:false,laraFine:false,nickFermo:false,fine:false});s.occupato=true;document.getElementById('bHint').style.display='none';fadeTo(0,1.2)},
+  aggiorna(s,dt){
+    const n=s.giocatore,l=s.attori['lara-croft'];if(!n||!l)return;FP.t+=dt;
+    if(FP.t<.7){muovi(n,FP.zn,.30,'N',true);muovi(l,FP.zl,.72,'S',true);return}
+    if(!FP.nickFermo){FP.zn+=PF.V*dt;muovi(n,FP.zn,.30,'N',false)}else{n.state='idle'}
+    if(!FP.laraFine){FP.zl-=PF.V*dt;muovi(l,FP.zl,.72,'S',false);if(l.x>246){FP.laraFine=true;l.visibile=false}}
+    if(!FP.incontro&&FP.zn>=FP.zl-.5){FP.incontro=true;FP.nickFermo=true;
+      s.dici(l,'Ehilà!',{clip:'audio/versi/lara_ehila_r1.mp3',frontale:false});   // (voce vera) Lara saluta e continua a camminare
+      s.sequenza(async()=>{await pausa(1.1);n.dir='S';await pausa(.7);await s.dici(n,'Eppure mi pare di averla già vista.',{});await pausa(1.4);FP.fine=true;fadeTo(1,1.2,()=>{s.vaiScena('c2-scale',{x:150,y:60,dir:'S'})})})}}
+});
+
+/* ---------------- (18 nov) FILMATO: Nick scende le scale (var1) ----------------
+   Vista dall'alto, di taglio: la camera guarda in giu' verso un pianerottolo e una scalinata che scende verso il basso a sinistra. Pose nuove di Nick (6 fotogrammi, 3/4 davanti-sinistra
+   visto da circa 55 gradi sopra: nick_scale_r1.png da ChatGPT, _strumenti/c2_nick_scale.py). Altezza di Nick: ~22 px in cima (lontano) fino a ~38 px in fondo (vicino); il passo avanza
+   con la distanza percorsa e a ogni gradino il corpo si abbassa. */
+const NS={img:mkImg('img/emb/nick_scale_r1.png'),t:0,fine:false};
+const NS_PERCORSO=[[124,40],[121,62],[112,80],[98,88],[78,99],[56,111],[34,123],[10,135]];
+function nsPos(d){let acc=0;for(let i=1;i<NS_PERCORSO.length;i++){const a=NS_PERCORSO[i-1],b=NS_PERCORSO[i],L=Math.hypot(b[0]-a[0],b[1]-a[1]);if(d<=acc+L){const u=(d-acc)/L;return [a[0]+(b[0]-a[0])*u,a[1]+(b[1]-a[1])*u,i]}acc+=L}const e=NS_PERCORSO[NS_PERCORSO.length-1];return [e[0],e[1],NS_PERCORSO.length]}
+registraScena({
+  id:'c2-scale',sfondo:'img/scene/ponte-diavolo-var1.png',area:[[0,0],[2,0],[2,2],[0,2]],suggerimento:'',senzaEtichette:true,
+  ambiente:{stanza:0,vento:.25,foglie:.1,aria:.3,pioggia:0,fuoco:0},
+  entra(s){NS.t=0;NS.fine=false;s.occupato=true;document.getElementById('bHint').style.display='none';A.say('');fadeTo(0,1.2)},
+  aggiorna(s,dt){if(NS.t<0)return;NS.t+=dt;if(!NS.fine&&NS.t>13){NS.fine=true;fadeTo(1,1.4,()=>{A.setHint('CONTINUA…',true)})}},
+  sopra(gg,s){
+    const im=NS.img;if(!(im.complete&&im.naturalWidth))return;const v=13.5,d=Math.max(0,NS.t-.8)*v,[x,y0,seg]=nsPos(d);
+    if(NS.t<.8&&false)return;
+    const sulleScale=seg>=3,passo=d/16,fr=Math.floor(passo*6)%6,dip=sulleScale?Math.abs(Math.sin(passo*Math.PI*6/2))*1.3:Math.abs(Math.sin(passo*Math.PI*6/2))*.5;
+    const hLog=22+(y0-40)*.17,sc=hLog/34,ox=x,oy=y0+dip*sc;
+    ell(ox,oy+.6,7*sc,2*sc,'#000',.35);
+    gg.save();gg.imageSmoothingEnabled=false;const w=120/RS*sc,h=150/RS*sc;gg.drawImage(im,fr*120,0,120,150,Math.round(ox-w/2),Math.round(oy-h+sc),w,h);gg.restore()}
 });
 
 /* da fine capitolo 1 (sogno) al capitolo 2 */
