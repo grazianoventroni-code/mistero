@@ -311,6 +311,7 @@ async function giuDoc(a,b,dur){const n=Math.max(1,Math.round(dur/.04));for(let i
 async function scenaPanino(s){
   const p=s.giocatore,d=s.attori['doc-ritorno-al-futuro'];PONTE.muto=true;
   await pausa(.6);await p.vaiA(54,118,false,'S');p.dir='S';await pausa(.7);
+  if(!/[?&]consegna/.test(location.search)){   // link diretto ?c2-ponte&consegna: parte dalla consegna del fusibile
   await s.dici(p,'Ho fatto tutti quei chilometri per niente… Ma cosa mi è passato per la testa?',{});     // guarda verso il giocatore
   await pausa(.4);p.dir='N';await pausa(.6);
   await s.dici(p,'Ho anche una fame da lupi. Mi mangerò un panino.',{frontale:false});
@@ -329,6 +330,8 @@ async function scenaPanino(s){
   await s.dici(p,'Vabbè, io ho fame, che si fa?',{frontale:false});
   await s.dici(d,'Io non posso lasciare il furgone incustodito. Fammi un favore: vai dall\'altra parte del ponte, scendi le scale e…',{});
   await giuDoc(0,1,.5);rumoriAttrezzi(1.3,false);await pausa(1.4);await giuDoc(1,0,.5);   // sparisce un attimo (rovista) e ricompare con un fusibile in mano
+  }
+  else await giuDoc(0,1,.1),await giuDoc(1,0,.4);
   PONTE.df=0;await pausa(.5);PONTE.df=1;await pausa(.45);   // Doc tende il braccio con il fusibile in mano
   await s.dici(d,'Cambia questo fusibile al flusso canalizzatore, tutto riprenderà a funzionare come prima.',{});
   p.visibile=false;PONTE.nf=0;await pausa(.3);PONTE.nf=1;await pausa(.5);   // poi Nick, sempre di spalle, tende il braccio...
@@ -357,7 +360,7 @@ registraScena({
       gg.restore()}},
   oggetti:[{baseY:PONTE.RUOTE,disegna(gg,s){disegnaFurgone(gg,s)}}],
   entra(s){fadeTo(0,2.5);const p=s.giocatore;
-    if(/[?&]panino/.test(location.search)&&!C2.fusibile)C2.ponteVisto=true;   // link diretto ?c2-ponte&panino: salta alla scena del panino e del fusibile
+    if(/[?&](panino|consegna)/.test(location.search)&&!C2.fusibile)C2.ponteVisto=true;   // link diretto ?c2-ponte&panino: salta alla scena del panino e del fusibile
     if(C2.ponteVisto&&!C2.fusibile){s.sequenza(()=>scenaPanino(s))}   // tornato dal ponte: la scena del panino
     else if(!C2.ponteVisto)s.sequenza(async()=>{await pausa(1.0);C2.ponteDetto=true;await dn(s,p,'Vediamo se il mio sogno aveva ragione.')})},   // subito: parla e compare la freccia
   punti:[{nome:'',rect:[0,36,56,46],cammina:{x:5,y:118,dir:'W'},visibile:()=>C2.ponteDetto&&!C2.ponteVisto,usa:async(s,p)=>{C2.ponteVisto=true;s.vaiScena('c2-ponte-vista',{x:226,y:112,dir:'W'})}}]
