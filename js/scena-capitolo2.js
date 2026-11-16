@@ -386,7 +386,7 @@ registraScena({
 /* ---------------- (18 nov) FILMATO: il Ponte del Diavolo (var2) ----------------
    Vista dall'imbocco: la strada del ponte sale e si restringe verso il fondo. Camera a foro stenopeico: orizzonte y=40 (punto di fuga del ponte), F=330, 1,6 m;
    ogni punto del pavimento e' (profondita' Z in m, corsia f tra bordo sinistro e destro): y = 40 + F*1,6/Z, x = bordo sx(y) + (bordo dx - bordo sx)*f.
-   Lara cammina verso di noi sul lato destro (f=.72), Nick va nel verso opposto sul lato sinistro (f=.30), a 1,6 m/s: scala e passo seguono la prospettiva
+   Lara cammina verso di noi sul lato destro (f=.62), Nick va nel verso opposto sul lato sinistro (f=.30), a 1,6 m/s: scala e passo seguono la prospettiva
    (rif [100,2.016] = orizzonte 40). Si incontrano a meta' ponte: Lara dice "Ehilà!" (voce vera) e prosegue fino a sparire a destra; Nick si ferma, si volta e commenta. */
 const PF={F:330,HC:1.6,YH:40,V:1.6};
 const BORDO_SX=[[40,102],[48,108],[60,113],[75,128],[90,136],[120,138]];
@@ -408,9 +408,9 @@ registraScena({
   aggiorna(s,dt){
     const n=s.giocatore,l=s.attori['lara-croft'];if(!n||!l)return;FP.t+=dt;
     if(!FP.patch&&LARA_WALK.complete&&LARA_WALK.naturalWidth&&l.c&&l.c.ready){FP.patch=true;const c0=l.c,fr={...c0.fr};for(let i=0;i<8;i++)fr['walk_S_'+(i+1)]={x:i*c0.w,y:0,w:c0.w,h:c0.h};l.c={...c0,img:LARA_WALK,fr}}
-    if(FP.t<.7){muovi(n,FP.zn,.30,'N',true);muovi(l,FP.zl,.72,'S',true);return}
+    if(FP.t<.7){muovi(n,FP.zn,.30,'N',true);muovi(l,FP.zl,.62,'S',true);return}
     if(!FP.nickFermo){FP.zn+=PF.V*dt;muovi(n,FP.zn,.30,'N',false,dt)}else{n.state='idle'}
-    if(!FP.laraFine){FP.zl-=PF.V*dt;muovi(l,FP.zl,.72,'S',false,dt);if(l.x>246){FP.laraFine=true;l.visibile=false}}
+    if(!FP.laraFine){FP.zl-=PF.V*dt;muovi(l,FP.zl,.62+.16*Math.max(0,Math.min(1,(yZ(FP.zl)-108)/14)),'S',false,dt);if(l.x>246){FP.laraFine=true;l.visibile=false}}
     if(!FP.incontro&&FP.zn>=FP.zl-.3){FP.incontro=true;FP.nickFermo=true;
       s.dici(l,'Ehilà!',{clip:'audio/versi/lara_ehila_r1.mp3',frontale:false});   // (voce vera) Lara saluta e continua a camminare
       s.sequenza(async()=>{await pausa(1.1);n.dir='S';await pausa(.7);await s.dici(n,'Eppure mi pare di averla già vista.',{});await pausa(1.4);FP.fine=true;s.vaiScena('c2-scale',{x:150,y:60,dir:'S'})})}}   // (18 nov) vaiScena fa gia' la sua dissolvenza: una dissolvenza in piu' bloccava il passaggio alle scale
