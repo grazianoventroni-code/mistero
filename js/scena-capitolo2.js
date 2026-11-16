@@ -465,13 +465,13 @@ registraScena({
    Il tavolo e' quello dello sfondo (a sinistra, piedi a y~95). Accanto al tavolo, PIU' VICINO ALLO SCHERMO (y 107), il macchinario con il Flusso Canalizzatore
    (generatore con il pannello sul fianco sinistro); la capra e' legata al tavolo con una corda. Prospettiva: orizzonte y=40 (rif [100,2.016]), px/m=(y-40)/1,6.
    Per ora SOLO la messa in scena: la logica della capra (cariche, corda, soluzione) va definita con l'utente. */
-const CAPRA={mac:mkImg('img/emb/macchinario_flusso_r2.png'),MX:60,MY:112,TX:49,TY:73,GX:98,GY:99};
+const CAPRA={mac:mkImg('img/emb/macchinario_flusso_r2.png'),MX:50,MY:112,TX:49,TY:73,GX:98,GY:99};
 registraScena({
   id:'c2-capra',inventario:true,sfondo:'img/scene/ponte-diavolo-var5.png',
   giocatore:'protagonista-esterno',nomeGiocatore:'NICK',partenza:{x:176,y:109,dir:'W'},
   attori:[{nome:'capra',etichetta:'CAPRA',x:CAPRA.GX,y:CAPRA.GY,dir:'S',k:.8}],
   area:[[2,100],[90,78],[170,78],[238,100],[238,119],[2,119]],
-  ostacoli:[[[14,88],[54,88],[54,96],[14,96]],[[34,107],[86,107],[86,114],[34,114]]],
+  ostacoli:[[[14,88],[54,88],[54,96],[14,96]],[[24,107],[76,107],[76,114],[24,114]]],
   rif:[100,2.016],audioPassi:false,
   ambiente:{stanza:0,vento:.2,foglie:.1,aria:.3,pioggia:0,fuoco:0},suggerimento:'',senzaEtichette:true,
   oggetti:[
@@ -482,7 +482,7 @@ registraScena({
       const x0=CAPRA.TX,y0=CAPRA.TY,x1=Math.round(c.x-4),y1=Math.round(c.y-c.altezza()*.55);
       g.save();g.fillStyle='#d2b27a';for(let i=0;i<=24;i++){const u=i/24,x=x0+(x1-x0)*u,y=y0+(y1-y0)*u+Math.sin(Math.PI*u)*7;g.fillRect(Math.round(x),Math.round(y),1,1)}g.restore()}}
   ],
-  punti:[{nome:'',rect:[30,72,58,42],cammina:{x:148,y:111,dir:'W'},usa:async(s,p)=>{CAPRA_CARICA(s,p)}}],
+  punti:[{nome:'',rect:[20,72,58,42],cammina:{x:148,y:111,dir:'W'},usa:async(s,p)=>{CAPRA_CARICA(s,p)}}],
   entra(s){   // (18 nov) arriva con tutto l'inventario: libro, fusibile e mela (anche da link diretto)
     const S=A.S;if(S&&S.inv){let m=false;for(const id of ['book','fusibile','mela'])if(!S.inv.includes(id)){S.inv.push(id);m=true}S.bookOpen=true;C2.fusibile=true;C2.mela=true;if(m&&A.refreshInv)A.refreshInv()}
     fadeTo(0,1.6)}
