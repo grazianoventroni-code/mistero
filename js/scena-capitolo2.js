@@ -437,7 +437,7 @@ registraScena({
   aggiorna(s,dt){NS.t+=dt;if(!NS.fine&&NS.t>.8+NS_TOT+2.2){NS.fine=true;fadeTo(1,1.4,()=>{A.setHint('CONTINUA…',true)})}},
   sopra(gg,s){
     const im=NS.img;if(!(im.complete&&im.naturalWidth))return;const tt=Math.max(0,NS.t-.8),d=nsDist(tt),[x,y0,seg]=nsPos(d),camminando=tt>0&&tt<NS_TOT-.05;
-    const hLog=22+(y0-40)*.17,sc=hLog/34,w=120/RS*sc,h=150/RS*sc;
+    const hLog=32+(y0-40)*.22,sc=hLog/34,w=120/RS*sc,h=150/RS*sc;
     const passoR=d/15,passoD=d/19,rampa=d<NS_DTURN;   // una mezza falcata ogni ~7,5 px sulla rampa (un gradino), ~9,5 px sul piano
     const dip=camminando?(rampa?Math.abs(Math.sin(passoR*Math.PI*2))*1.7:Math.abs(Math.sin(passoD*Math.PI*2))*.6):0;
     const ox=x,oy=y0+dip*sc;ell(ox,oy+.6,7*sc,2*sc,'#000',.35);
