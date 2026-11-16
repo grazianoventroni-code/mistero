@@ -260,6 +260,12 @@ window.Borbotta=function(nome,testo,opz={}){
   if(!vi.length)return;const tot=opz.durata||vi.length*.11,gap=tot/vi.length;
   vi.forEach((i,k)=>setTimeout(()=>notaBorb(nome,p,letters[i],passoBorb(nome,k/vi.length,fine)+(opz.alt||0),gap*1.05,vol,'ptksf'.includes(letters[i-1]||'')),k*gap*1000))};
 
+/* borbottio per i testi del narratore/Nick (say): chiamata a ogni carattere che compare; una nota per vocale, durata fino alla vocale successiva */
+window.BorbChar=function(nome,tx,i,perMs){
+  const ch=(tx[i]||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');if(!FORM[ch])return;
+  const p=VOCI[nome]||VOCI.default;let k=i+1;while(k<tx.length&&!FORM[(tx[k]||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'')])k++;
+  const gap=Math.min(.2,Math.max(.06,(k-i)*perMs/1000*1.05));
+  notaBorb(nome,p,ch,passoBorb(nome,i/Math.max(1,tx.length),tx.trim().slice(-1)),gap,.18,'ptksf'.includes((tx[i-1]||'').toLowerCase()))};
 const Dialogo={
   coda:[],cor:null,el:null,scelteEl:null,
   attivo(){return !!this.cor||this.coda.length>0||!!this.scelteEl},
