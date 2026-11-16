@@ -357,6 +357,7 @@ registraScena({
       gg.restore()}},
   oggetti:[{baseY:PONTE.RUOTE,disegna(gg,s){disegnaFurgone(gg,s)}}],
   entra(s){fadeTo(0,2.5);const p=s.giocatore;
+    if(/[?&]panino/.test(location.search)&&!C2.fusibile)C2.ponteVisto=true;   // link diretto ?c2-ponte&panino: salta alla scena del panino e del fusibile
     if(C2.ponteVisto&&!C2.fusibile){s.sequenza(()=>scenaPanino(s))}   // tornato dal ponte: la scena del panino
     else if(!C2.ponteVisto)s.sequenza(async()=>{await pausa(1.0);C2.ponteDetto=true;await dn(s,p,'Vediamo se il mio sogno aveva ragione.')})},   // subito: parla e compare la freccia
   punti:[{nome:'',rect:[0,36,56,46],cammina:{x:5,y:118,dir:'W'},visibile:()=>C2.ponteDetto&&!C2.ponteVisto,usa:async(s,p)=>{C2.ponteVisto=true;s.vaiScena('c2-ponte-vista',{x:226,y:112,dir:'W'})}}]
