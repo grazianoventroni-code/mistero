@@ -384,6 +384,8 @@ class Scena{
       if(Math.abs(x-a.x)<w&&y<a.y+2&&y>a.y-h)return {tipo:'attore',o:a,rect:[a.x-w,a.y-h,w*2,h],nome:a.etichetta}}
     for(const h of this.cfg.punti||[]){if(h.visibile&&!h.visibile(this))continue;const r=h.rect;if(r&&x>=r[0]&&x<r[0]+r[2]&&y>=r[1]&&y<r[1]+r[3])return {tipo:'punto',o:h,rect:r,nome:h.nome}}
     return null}
+  canSkip(){return !!(this.cfg.canSkip&&this.cfg.canSkip(this))}   // (17 nov) pulsante SALTA per le scene con filmato
+  skip(){if(this.canSkip())this.cfg.skip(this)}
   move(x,y){if(!this.pronto)return;const t=this.trova(x,y);this.hover=t;if(this.cfg.senzaEtichette)return;setHint(t&&t.nome?t.nome:(this.cfg.suggerimento||''))}   // (16 nov) senzaEtichette: niente nomi sugli oggetti
   dropItem(id,x,y){if(this.cfg.dropItem)return this.cfg.dropItem(this,id,x,y);sfx.no()}   // oggetto dell'inventario lasciato sulla scena
   hintTargets(id){return this.cfg.hintTargets?this.cfg.hintTargets(this,id):[]}
