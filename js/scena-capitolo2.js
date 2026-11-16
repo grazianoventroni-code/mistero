@@ -264,7 +264,9 @@ registraScena({
    Prospettiva: l'orizzonte si ricava dai segnali (palo con base y=95, cartello in alto y=40: ~3,2 m) -> orizzonte y=68; Nick a y=95 ha scala 0,907 (30 px).
    Il furgone (sprite 348x223 = 5 m di lunghezza, disegnato a 94 px con un uomo di 33 px) con la base a y=112 ha 27,5 px/m -> scala 1,46 = 137x88 px.
    Doc (atlante: figura alta 128 px) e' dietro il bancone dello sportello: 1,75 m a 27,5 px/m = 48 px; si vede dal petto in su (il bancone lo copre). */
-const PONTE={furg:mkImg('img/emb/furgone_panini_hd.png'),YR:95,SR:.907,BASE:108,RUOTE:114,giu:0,fuse:0,muto:false,fus:mkImg('img/emb/fusibile_mano_r1.png'),verso:0,tv:4};
+const PONTE={furg:mkImg('img/emb/furgone_panini_hd.png'),YR:95,SR:.907,BASE:108,RUOTE:114,giu:0,fuse:0,br:0,nk:0,fx:0,fy:0,col:null,muto:false,fus:mkImg('img/emb/fusibile_mano_r1.png'),verso:0,tv:4};
+window.__PONTE=PONTE;
+function linea(gg,x0,y0,x1,y1,w,c){gg.strokeStyle=c;gg.lineWidth=w;gg.lineCap='square';gg.beginPath();gg.moveTo(Math.round(x0),Math.round(y0));gg.lineTo(Math.round(x1),Math.round(y1));gg.stroke()}
 function disegnaFurgone(gg,s){
   const im=PONTE.furg;if(!(im.complete&&im.naturalWidth))return;
   const yh=PROSP.orizzonte(PONTE.YR,PONTE.SR),ppm=(PONTE.BASE-yh)/PROSP.HC,k=ppm*5/348,w=348*k,h=223*k,x0=0,y0=PONTE.RUOTE-212*k;
@@ -275,27 +277,53 @@ function disegnaFurgone(gg,s){
   if(PONTE.giu>=1)return;   // la testa (riga 2 del fotogramma) sta sotto la tenda
   gg.save();gg.beginPath();gg.rect(x0+190*k,y0+60*k,112*k,(138-60)*k);gg.clip();
   gg.imageSmoothingEnabled=false;gg.drawImage(doc.img,fr.x,fr.y,doc.w,doc.h,cx-doc.ax*ds,fy,dw,dh);gg.restore();
-  if(PONTE.fuse>0&&PONTE.fus.complete&&PONTE.fus.naturalWidth)gg.drawImage(PONTE.fus,Math.round(cx-9*ds*0+ -3),Math.round(y0+112*k),PONTE.fus.naturalWidth,PONTE.fus.naturalHeight)}   // fusibile in mano a Doc
-/* rumori d'officina dietro il bancone: martellate, trapano, cacciavite, colpi metallici */
-function rumoriAttrezzi(dur){
-  const T=A.tone,N=A.nburst,t0=performance.now();
-  const colpo=()=>{const pan=-.2+Math.random()*.4;N(2400+Math.random()*3000,9,.07,.5,'bandpass',pan,.25);T(420+Math.random()*420,.08,'square',.12,200,pan,.2)};
-  const trapano=()=>{const pan=Math.random()*.3;T(700,.5,'sawtooth',.1,1500,pan,.2);N(3000,2,.5,.08,'bandpass',pan,.2)};
-  const pezzi=[];let t=.2;while(t<dur){const r=Math.random();if(r<.5){const n=2+Math.floor(Math.random()*3);for(let i=0;i<n;i++)pezzi.push([t+i*.28,colpo]);t+=n*.28+.5}else if(r<.75){pezzi.push([t,trapano]);t+=.9}else{pezzi.push([t,()=>{N(1800,5,.12,.3,'bandpass',0,.2);setTimeout(colpo,150)}]);t+=.6}}
-  for(const [tt,f] of pezzi)setTimeout(()=>{try{f()}catch(e){}},tt*1000)}
+  // braccio di Doc teso verso Nick (manica del camice + mano), con il fusibile in mano
+  PONTE.sh=[cx-6,top+15];PONTE.mano=[70,85];
+  if(PONTE.br>0){const sx=PONTE.sh[0],sy=PONTE.sh[1],hx=sx+(PONTE.mano[0]-sx)*PONTE.br,hy=sy+(PONTE.mano[1]-sy)*PONTE.br;
+    linea(gg,sx,sy,hx,hy,3,'#6f6a5e');linea(gg,sx,sy,hx,hy,2,'#ece7d8');gg.fillStyle='#d9a88a';gg.fillRect(Math.round(hx)-1,Math.round(hy)-1,3,3);
+    if(PONTE.fuse>0&&PONTE.fus.complete&&PONTE.fus.naturalWidth)gg.drawImage(PONTE.fus,Math.round(hx)-2,Math.round(hy)-3)}   // fusibile in mano a Doc
+  else if(PONTE.fuse>0&&PONTE.fus.complete&&PONTE.fus.naturalWidth)gg.drawImage(PONTE.fus,Math.round(cx-9),Math.round(y0+112*k))}
+/* (17 nov) rumori d'ACCIAIERIA dietro il bancone: ronzio di fondo, magli che battono sull'incudine (colpo secco + campana metallica con parziali non armonici + tonfo grave),
+   trapano a percussione, smerigliatrice con scintille, tintinnii di chiavi e lamiere. Tutti sintetizzati (Web Audio), con riverbero. forte=true: il primo, fragoroso. */
+function rumoriAttrezzi(dur,forte){
+  const T=A.tone,N=A.nburst,R_=Math.random,vf=forte?1:.45;
+  const campana=(base,vol,pan)=>{for(const [m,v,d] of [[1,1,.55],[2.76,.7,.4],[5.4,.5,.28],[8.93,.35,.18]])T(base*m,d*(forte?1.2:.8),'sine',.16*vol*v*vf,base*m*.985,pan,.35)};
+  const maglio=(pan)=>{N(1800+R_()*900,.7,.045,.9*vf,'bandpass',pan,.3);N(5200,2.5,.05,.5*vf,'highpass',pan,.3);T(95,.2,'sine',.5*vf,45,pan,.2);campana(430+R_()*260,1,pan);if(forte&&R_()<.6)setTimeout(()=>campana(900+R_()*500,.5,-pan),60)};
+  const trapano=(pan)=>{for(let i=0;i<9;i++)setTimeout(()=>{T(620+i*40,.1,'sawtooth',.13*vf,680+i*40,pan,.15);T(1240+i*80,.1,'square',.045*vf,1300+i*80,pan,.15);N(2800,1.6,.06,.1*vf,'bandpass',pan,.1)},i*85)};   // a percussione: raffiche rapide
+  const smeriglio=(pan)=>{T(2300,1.1,'sawtooth',.07*vf,2900,pan,.2);N(5200,.9,1.1,.14*vf,'bandpass',pan,.2);for(let i=0;i<9;i++)setTimeout(()=>N(7000+R_()*3000,3,.03,.18*vf,'highpass',pan,.1),i*110)};
+  const tintinnio=(pan)=>{campana(1500+R_()*1500,.35,pan);setTimeout(()=>campana(1900+R_()*1200,.25,-pan),110)};
+  const lamiera=(pan)=>{N(900,.6,.5,.35*vf,'bandpass',pan,.4);for(let i=0;i<6;i++)setTimeout(()=>N(1500+R_()*3000,5,.05,.3*vf,'bandpass',pan,.3),i*70)};
+  // rombo di fondo (fornace / macchinario): rumore grave che dura tutta la scena
+  const fondo=()=>{for(let k=0;k<Math.ceil(dur/.5);k++)setTimeout(()=>{N(140,.8,.7,.28*vf,'lowpass',0,.1);T(52+R_()*4,.6,'sawtooth',.06*vf,50,0,.1)},k*500)};fondo();
+  let t=.1,ritmo=forte?.5:.7;
+  while(t<dur){const r=R_(),pan=(R_()*2-1)*.35;
+    if(r<.46){const n=forte?3+Math.floor(R_()*4):2+Math.floor(R_()*2);for(let i=0;i<n;i++)setTimeout(()=>maglio(pan),(t+i*ritmo*.55)*1000);t+=n*ritmo*.55+.25}
+    else if(r<.64){setTimeout(()=>trapano(pan),t*1000);t+=.95}
+    else if(r<.78){setTimeout(()=>smeriglio(pan),t*1000);t+=1.25}
+    else if(r<.9){setTimeout(()=>tintinnio(pan),t*1000);t+=.5}
+    else{setTimeout(()=>lamiera(pan),t*1000);t+=.7}
+    ritmo=Math.max(.32,ritmo*.97)}}
+/* braccio di Nick (visto di spalle) che prende il fusibile da Doc e lo mette in tasca: disegnato sopra lo sprite, nel colore dell'impermeabile */
+function coloreCappotto(){if(PONTE.col)return PONTE.col;const c=A.CHARS['protagonista-esterno'];if(!c||!c.ready||!c.img.naturalWidth||!c.fr.back)return '#8d8a78';
+  try{const cv=document.createElement('canvas');cv.width=c.w;cv.height=c.h;const x=cv.getContext('2d');x.drawImage(c.img,c.fr.back.x,c.fr.back.y,c.w,c.h,0,0,c.w,c.h);const d=x.getImageData(Math.round(c.ax),Math.round(c.h*.55),1,1).data;PONTE.col=`rgb(${d[0]},${d[1]},${d[2]})`}catch(e){PONTE.col='#8d8a78'}return PONTE.col}
+function braccioNick(gg,s){const p=s.giocatore;if(!p||PONTE.nk<=0&&!PONTE.nkFuse)return;
+  const sc=p.scala?p.scala():1.5,h=p.altezza?p.altezza():50,sx=p.x+h*.16,sy=p.y-h*.76,hip=[p.x+h*.14,p.y-h*.36],reach=PONTE.mano||[77,84];
+  const e=PONTE.nk,hx=hip[0]+(reach[0]-hip[0])*e,hy=hip[1]+(reach[1]-hip[1])*e;
+  linea(gg,sx,sy,hx,hy,Math.max(3,h*.075),'#2b2820');linea(gg,sx,sy,hx,hy,Math.max(2,h*.055),coloreCappotto());gg.fillStyle='#d9a88a';gg.fillRect(Math.round(hx)-1,Math.round(hy)-1,3,3);
+  if(PONTE.nkFuse&&PONTE.fus.complete&&PONTE.fus.naturalWidth)gg.drawImage(PONTE.fus,Math.round(hx)-3,Math.round(hy)-2)}
 async function giuDoc(a,b,dur){const n=Math.max(1,Math.round(dur/.04));for(let i=0;i<=n;i++){PONTE.giu=a+(b-a)*(i/n);await pausa(.04)}}
 async function scenaPanino(s){
   const p=s.giocatore,d=s.attori['doc-ritorno-al-futuro'];PONTE.muto=true;
-  await pausa(.6);await p.vaiA(70,118,false,'S');p.dir='S';await pausa(.7);
+  await pausa(.6);await p.vaiA(56,118,false,'S');p.dir='S';await pausa(.7);
   await s.dici(p,'Ho fatto tutti quei chilometri per niente… Ma cosa mi è passato per la testa?',{});     // guarda verso il giocatore
   await pausa(.4);p.dir='N';await pausa(.6);
   await s.dici(p,'Ho anche una fame da lupi. Mi mangerò un panino.',{frontale:false});
   await pausa(.5);await s.dici(p,'Un hamburger triplo con formaggio e cetriolini, per favore.',{frontale:false});
   await s.dici(d,'Subito!',{});
   await giuDoc(0,1,.7);                              // si inginocchia dietro il bancone e sparisce
-  rumoriAttrezzi(6.5);await pausa(1.2);
-  p.dir='S';gagCappello(s);await pausa(5.0);          // Nick guarda il giocatore e si toglie il cappello, come con la gatta
-  p.dir='N';await pausa(1.0);
+  rumoriAttrezzi(10,true);await pausa(2.2);
+  p.dir='S';gagCappello(s);await pausa(5.2);          // Nick guarda il giocatore e si toglie il cappello, come con la gatta
+  p.dir='N';await pausa(2.8);
   await giuDoc(1,0,.6);
   await s.dici(d,'Niente da fare, non arriva gas alla piastra. Il flusso canalizzatore sta facendo di nuovo le bizze.',{});
   await s.dici(p,'Flusso canalizzatore? Ma di che parli? Io voglio il mio panino!',{frontale:false});
@@ -304,9 +332,13 @@ async function scenaPanino(s){
   await s.dici(d,'Grande Giove! È un\'idea geniale! Ma così non avrei potuto testare il mio macchinario!',{});
   await s.dici(p,'Vabbè, io ho fame, che si fa?',{frontale:false});
   await s.dici(d,'Io non posso lasciare il furgone incustodito. Fammi un favore: vai dall\'altra parte del ponte, scendi le scale e…',{});
-  await giuDoc(0,1,.5);await pausa(.9);PONTE.fuse=1;await giuDoc(1,0,.5);   // sparisce un attimo e ricompare con un fusibile in mano
+  await giuDoc(0,1,.5);rumoriAttrezzi(1.3,false);await pausa(1.4);PONTE.fuse=1;await giuDoc(1,0,.5);   // sparisce un attimo (rovista) e ricompare con un fusibile in mano
+  for(let i=0;i<=10;i++){PONTE.br=i/10;await pausa(.04)}   // Doc allunga il braccio con il fusibile verso Nick
   await s.dici(d,'Cambia questo fusibile al flusso canalizzatore, tutto riprenderà a funzionare come prima.',{});
-  A.sting('scoperta',.7);PONTE.fuse=0;A.giveItem('fusibile');C2.fusibile=true;PONTE.muto=false;PONTE.tv=4}
+  for(let i=0;i<=8;i++){PONTE.nk=i/8;await pausa(.04)}await pausa(.25);   // Nick (di spalle) allunga la mano e prende il fusibile
+  PONTE.fuse=0;PONTE.nkFuse=true;for(let i=8;i>=0;i--){PONTE.nk=i/8;await pausa(.05)}   // lo porta alla tasca dell'impermeabile
+  for(let i=10;i>=0;i--){PONTE.br=i/10;await pausa(.04)}PONTE.nkFuse=false;await pausa(.3);
+  A.sting('scoperta',.7);A.giveItem('fusibile');C2.fusibile=true;PONTE.muto=false;PONTE.tv=4}
 registraScena({
   id:'c2-ponte',inventario:true,sfondo:'img/scene/ponte-diavolo-var3.png',
   giocatore:'protagonista-esterno',nomeGiocatore:'NICK',
@@ -322,7 +354,7 @@ registraScena({
     if(PONTE.verso>0)PONTE.verso-=dt;PONTE.tv-=dt;if(PONTE.tv<=0&&!PONTE.muto){PONTE.tv=5+Math.random()*7;PONTE.verso=1.1;const t=['sforzo','sorpresa','dubbio','sospiro','sforzo'];FIATO.suona('doc-ritorno-al-futuro',t[Math.floor(Math.random()*t.length)],1,.55)}
     const p=s.giocatore;if(p&&C2.ponteDetto&&!C2.ponteVisto&&!s.occupato&&p.x<10){C2.ponteVisto=true;s.vaiScena('c2-ponte-vista',{x:226,y:112,dir:'W'})}},
   suggerimento:'',senzaEtichette:true,
-  sopra(gg,s){if(C2.ponteDetto&&!C2.ponteVisto&&Math.floor(s.t*2.2)%2===0){   // freccia lampeggiante a sinistra: da li' si va al ponte
+  sopra(gg,s){braccioNick(gg,s);if(C2.ponteDetto&&!C2.ponteVisto&&Math.floor(s.t*2.2)%2===0){   // freccia lampeggiante a sinistra: da li' si va al ponte
       const dx=Math.round(Math.sin(s.t*5)*1.5);gg.save();gg.translate(dx,0);
       for(const [c,o] of [['#05060a',1],['#ffd23a',0]]){gg.fillStyle=c;gg.beginPath();gg.moveTo(3-o,52);gg.lineTo(14,45-o);gg.lineTo(14,49);gg.lineTo(25+o,49);gg.lineTo(25+o,55);gg.lineTo(14,55);gg.lineTo(14,59+o);gg.closePath();gg.fill()}
       gg.restore()}},

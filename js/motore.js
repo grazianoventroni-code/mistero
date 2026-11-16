@@ -225,6 +225,40 @@ function suonaClip(u,vol=1){
   return o}
 if(window.speechSynthesis){speechSynthesis.getVoices();speechSynthesis.onvoiceschanged=()=>{Voce.voci=speechSynthesis.getVoices()}}
 
+/* ---- (17 nov) BORBOTTIO: al posto del parlato ogni personaggio "borbotta" in modo buffo, sillaba per sillaba, seguendo la durata della frase (alla Animal Crossing / Banjo-Kazooie).
+   Una nota per vocale: onda a dente di sega con due formanti (a e i o u), piccolo glissando, vibrato e altezze su una scala pentatonica che sale e scende a caso;
+   le consonanti secche (p t k s f) aggiungono un colpetto di rumore. La frase finisce piu' in basso, la domanda sale, l'esclamazione e' piu' vivace. */
+const PENTA=[0,2,4,7,9,12,14,16];
+const PROFILO_BORB={'doc-ritorno-al-futuro':{f:1.55,vib:.045,vel:1.25,gl:.12,pan:.25},'protagonista-esterno':{f:1,vib:.015,vel:1,gl:.06,pan:-.15},'protagonista-interno':{f:1,vib:.015,vel:1,gl:.06,pan:-.15},
+  default:{f:1,vib:.02,vel:1,gl:.07,pan:0}};
+const BORB={};   // stato per personaggio: indice nella scala
+function notaBorb(nome,p,v,rel,dur,vol,consonante){
+  if(!AU.ctx||AU.muted||AU.ctx.state!=='running')return;
+  const c=AU.ctx,t=c.currentTime+.01,pf=PROFILO_BORB[nome]||PROFILO_BORB.default,F=FORM[v]||FORM.a,fem=p.sx==='f'?1.18:1;
+  const f0=p.f0*pf.f*Math.pow(2,rel/12)*fem,d=Math.max(.05,Math.min(.2,dur));
+  const o=c.createOscillator(),gn=c.createGain(),f1=c.createBiquadFilter(),f2=c.createBiquadFilter(),g1=c.createGain(),g2=c.createGain(),lf=c.createOscillator(),lg=c.createGain();
+  o.type='sawtooth';o.frequency.setValueAtTime(f0*(1-pf.gl),t);o.frequency.exponentialRampToValueAtTime(f0*(1+pf.gl*.6),t+d*.8);
+  lf.frequency.value=5.5+Math.random()*1.5;lg.gain.value=f0*pf.vib;lf.connect(lg);lg.connect(o.frequency);
+  f1.type='bandpass';f1.frequency.value=F[0]*fem;f1.Q.value=4;f2.type='bandpass';f2.frequency.value=F[1]*fem;f2.Q.value=5;g1.gain.value=1.1;g2.gain.value=.7;
+  gn.gain.setValueAtTime(.0001,t);gn.gain.linearRampToValueAtTime(vol,t+.012);gn.gain.setValueAtTime(vol*.9,t+d*.6);gn.gain.exponentialRampToValueAtTime(.0001,t+d);
+  o.connect(f1);o.connect(f2);f1.connect(g1);f2.connect(g2);g1.connect(gn);g2.connect(gn);
+  let out=gn;if(c.createStereoPanner){const pn=c.createStereoPanner();pn.pan.value=pf.pan+(Math.random()*.2-.1);gn.connect(pn);out=pn}out.connect(AU.master);
+  o.start(t);lf.start(t);o.stop(t+d+.03);lf.stop(t+d+.03);
+  if(consonante&&AU.buf){const s=c.createBufferSource(),fl=c.createBiquadFilter(),ng=c.createGain();s.buffer=AU.buf;fl.type='bandpass';fl.frequency.value=3200+Math.random()*2500;fl.Q.value=1.2;
+    ng.gain.setValueAtTime(vol*.5,t);ng.gain.exponentialRampToValueAtTime(.0001,t+.03);s.connect(fl);fl.connect(ng);ng.connect(AU.master);s.start(t,Math.random()*.5);s.stop(t+.04)}}
+/* una nota: altezza che segue il contorno della frase (frazione 0..1 del testo), con una passeggiata casuale sulla scala */
+function passoBorb(nome,frazione,fine){
+  const st=BORB[nome]||(BORB[nome]={i:2});st.i=Math.max(0,Math.min(PENTA.length-1,st.i+[-2,-1,-1,0,1,1,2][Math.floor(Math.random()*7)]));
+  let rel=PENTA[st.i]-3-frazione*3.5;   // declinazione
+  if(fine==='?'&&frazione>.78)rel+=(frazione-.78)*30;if(fine==='!')rel+=Math.random()*3;
+  return rel}
+/* borbotta un testo con la durata data (secondi), indipendentemente dal Dialogo (versi, gag): sillabe separate da spazi */
+window.Borbotta=function(nome,testo,opz={}){
+  const p=VOCI[nome]||VOCI[({'doc':'doc-ritorno-al-futuro'})[nome]]||VOCI.default,vol=opz.vol??.2,fine=(testo.trim().slice(-1));
+  const letters=[...testo.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'')],vi=[];letters.forEach((ch,i)=>{if('aeiou'.includes(ch))vi.push(i)});
+  if(!vi.length)return;const tot=opz.durata||vi.length*.11,gap=tot/vi.length;
+  vi.forEach((i,k)=>setTimeout(()=>notaBorb(nome,p,letters[i],passoBorb(nome,k/vi.length,fine)+(opz.alt||0),gap*1.05,vol,'ptksf'.includes(letters[i-1]||'')),k*gap*1000))};
+
 const Dialogo={
   coda:[],cor:null,el:null,scelteEl:null,
   attivo(){return !!this.cor||this.coda.length>0||!!this.scelteEl},
@@ -237,7 +271,7 @@ const Dialogo={
     .scelte{position:absolute;left:50%;bottom:4%;transform:translateX(-50%);z-index:6;display:flex;flex-direction:column;gap:.4em;max-width:80%}
     .scelte button{text-align:left;text-transform:none;letter-spacing:.01em;font-size:inherit;padding:.5em .9em;pointer-events:auto}`;
     document.head.appendChild(st);
-    const d=document.createElement('div');d.className='nuv';wrap.appendChild(d);this.el=d},
+    const d=document.createElement('div');d.className='nuv';wrap.appendChild(d);d.style.display='none';this.el=d},
   /* ---- API ---- */
   parla(att,testo,opz={}){return new Promise(res=>{this.coda.push({att,testo,opz,res});if(!this.cor)this.prossima()})},
   narra(testo,sec){say(testo);return new Promise(r=>setTimeout(r,(sec||(2.2+testo.length*.055))*1000))},
@@ -252,7 +286,7 @@ const Dialogo={
     this.creaDOM();const att=r.att,p=VOCI[att&&att.nome]||VOCI.default,tx=r.testo;
     // testo a capo gestito dal browser; qui si calcolano solo tempi e vocali
     this.cor={r,att,p,tx,n:0,acc:0,t:0,fine:false,att2:0,tts:null,clip:null,mouthT:0};
-    if(att&&window.FIATO&&!r.opz.animale&&att.nome!=='gemella')FIATO.suona(att.n,/\?\s*$/.test(tx)?'dubbio':/!\s*$/.test(tx)?'sorpresa':Math.random()<.5?'sospiro':'dubbio',.7,.85);   // (14 nov) un'interiezione brevissima prima del testo
+    // (17 nov) niente interiezione prima della battuta: ora la battuta e' accompagnata dal borbottio (vedi aggiorna)
     if(att){att.talking=true;att.bocca=1;if(!att.seq&&att.state!=='sit'&&r.opz.frontale!==false&&att.c&&att.c.fr&&att.c.fr.talk_S_1){att.dir='S'}}
     const nm=r.opz.nome||(att&&att.etichetta)||'';this.nome=nm;this.col=r.opz.colore||p.col;
     this.el.style.setProperty('--bc',this.col);this.el.style.borderColor=this.col;this.el.style.fontSize=this.fontPx()+'px';
@@ -266,19 +300,11 @@ const Dialogo={
       this.cor.cps=15*u.rate}
     this.disegnaTesto()},
   /* testo visibile: macchina da scrivere */
-  disegnaTesto(){const c=this.cor;if(!c)return;const vis=c.tx.slice(0,Math.floor(c.n));
-    const nome=this.nome?`<span class="nm" style="color:${this.col}">${this.nome}</span>`:'';
-    this.el.innerHTML=nome+vis.replace(/</g,'&lt;')+(c.fine?'':'<i class="cur">&#9646;</i>');
-    const hid=c.tx.slice(Math.floor(c.n)); // riempie lo spazio del testo non ancora scritto per non far saltare la forma della nuvola
-    if(hid){const sp=document.createElement('span');sp.style.visibility='hidden';sp.textContent=hid;this.el.appendChild(sp)}},
-  posiziona(){if(!this.el||!this.cor)return;const c=this.cor,v=view();
-    let hx=W/2,hy=30;if(c.att&&c.att.testa){const t=c.att.testa();hx=t.x;hy=t.y-4}
-    const r=cv.getBoundingClientRect(),wr=wrap.getBoundingClientRect(),k=v.k;
-    const px=(r.left-wr.left)+(r.width-v.DW*k)/2+(hx+v.OX)*k,py=(r.top-wr.top)+(r.height-H*k)/2+hy*k;
-    const bw=this.el.offsetWidth,bh=this.el.offsetHeight,half=bw/2,margin=6;
-    const cx=clamp(px,half+margin,wrap.clientWidth-half-margin),top=py-bh;
-    this.el.style.left=cx+'px';this.el.style.top=Math.max(bh+margin,py)+'px';
-    this.el.style.setProperty('--tail',clamp(50+(px-cx)/bw*100,12,88)+'%');this.el.classList.add('on')},
+  disegnaTesto(){const c=this.cor;if(!c)return;const vis=c.tx.slice(0,Math.floor(c.n));   // (17 nov) mai fumetti: la battuta sta nella didascalia sotto lo schermo, "NOME: battuta"
+    const dlg=document.getElementById('dlg'),tx=document.getElementById('txt');if(!dlg||!tx)return;
+    const nome=this.nome?`<span style="color:${this.col}">${this.nome}:</span> `:'';
+    tx.innerHTML=nome+vis.replace(/</g,'&lt;')+(c.fine?'':'<i class="cur">&#9646;</i>');dlg.classList.add('on')},
+  posiziona(){const dlg=document.getElementById('dlg');if(dlg&&this.cor)dlg.classList.add('on')},
   aggiorna(dt){const c=this.cor;if(!c)return;
     c.t+=dt;
     if(!c.fine){
@@ -294,9 +320,10 @@ const Dialogo={
         if('.!?:;'.includes(ch))c.pausa=.22;else if(ch===',')c.pausa=.11;
         if(/[a-z]/.test(f)){
           const mo=BOCCA[f]||1;if(c.att)c.att.bocca=mo;c.mouthT=.09;
-          if(Voce.modo!=='muto'&&!c.tts&&!c.clip&&!c.r.opz.animale){const fine=c.tx.length-i<=Math.max(4,c.tx.length*.2);const q=/\?\s*$/.test(c.tx)&&fine?1+.35*(1-(c.tx.length-i)/Math.max(4,c.tx.length*.2)):1;
-            const decl=1-.1*(i/Math.max(1,c.tx.length));
-            if(FORM[f]||(i%2===0&&'bdgptkmnlrsfvc'.includes(f)))blip(c.p,FORM[f]?f:'',decl*q*(/!\s*$/.test(c.tx)?1.08:1),.045)}}
+          if(!c.tts&&!c.clip&&!c.r.opz.animale&&c.att&&c.att.nome!=='gemella'&&FORM[f]){   // una nota per vocale, di durata pari alla distanza dalla vocale successiva
+            let k=i+1;while(k<c.tx.length&&!FORM[(c.tx[k]||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'')])k++;
+            const gap=Math.min(.2,Math.max(.06,(k-i)/Math.max(10,c.cps)*1.05)),fine=c.tx.trim().slice(-1);
+            notaBorb(c.att.nome,c.p,f,passoBorb(c.att.nome,i/Math.max(1,c.tx.length),fine),gap,.2,'ptksf'.includes(((c.tx[i-1]||'').toLowerCase())))}}
         else if(ch===' '){if(c.att)c.att.bocca=1}}
       if(c.clip&&c.clip.currentTime>0){/* con la clip la bocca segue l'ampiezza: vedi analizzatore, qui basta il testo */}
       if(c.mouthT>0){c.mouthT-=dt;if(c.mouthT<=0&&c.att)c.att.bocca=1}
@@ -308,8 +335,8 @@ const Dialogo={
     if(!c.fine){c.n=c.tx.length;c.fine=true;c.att2=0;if(c.att){c.att.talking=false;c.att.bocca=1}if(c.tts)speechSynthesis.cancel();if(c.clip)c.clip.pause();this.disegnaTesto();return true}
     this.chiudi();return true},
   chiudi(){const c=this.cor;if(!c)return;if(c.tts)speechSynthesis.cancel();if(c.clip)c.clip.pause();if(c.att){c.att.talking=false;c.att.bocca=1}
-    this.cor=null;this.el.classList.remove('on');c.r.res(true);this.prossima()},
-  azzera(){while(this.coda.length)this.coda.pop().res(false);if(this.cor){const c=this.cor;if(c.att){c.att.talking=false;c.att.bocca=1}if(c.clip)c.clip.pause();c.r.res(false);this.cor=null}if(this.el)this.el.classList.remove('on');if(this.scelteEl){this.scelteEl.remove();this.scelteEl=null}if(window.speechSynthesis)speechSynthesis.cancel()}};
+    this.cor=null;this.el.classList.remove('on');const dl=document.getElementById('dlg');if(dl&&!this.coda.length)dl.classList.remove('on');c.r.res(true);this.prossima()},
+  azzera(){while(this.coda.length)this.coda.pop().res(false);if(this.cor){const c=this.cor;if(c.att){c.att.talking=false;c.att.bocca=1}if(c.clip)c.clip.pause();c.r.res(false);this.cor=null}if(this.el)this.el.classList.remove('on');{const dl=document.getElementById('dlg');if(dl)dl.classList.remove('on')}if(this.scelteEl){this.scelteEl.remove();this.scelteEl=null}if(window.speechSynthesis)speechSynthesis.cancel()}};
 
 /* (14 nov) pulsante del parlato tolto: il gioco ha solo testi */
 

@@ -10,7 +10,7 @@
 <meta name="theme-color" content="#000000">
 <script>/* (12 nov) pulizia: a ogni versione nuova si tolgono service worker e memoria vecchi e si ricarica una volta.
    Un service worker rimasto da versioni precedenti serviva script e indice delle voci superati (le voci non si sentivano). BUILD0 lo aggiorna pubblica.py. */
-(function(){var BUILD0='17 nov 21:00';try{if(!('serviceWorker' in navigator)||localStorage.getItem('mistero-build')===BUILD0)return;localStorage.setItem('mistero-build',BUILD0);window.__pulizia=1;
+(function(){var BUILD0='17 nov 22:30';try{if(!('serviceWorker' in navigator)||localStorage.getItem('mistero-build')===BUILD0)return;localStorage.setItem('mistero-build',BUILD0);window.__pulizia=1;
  var t=setTimeout(function(){location.reload()},4000);
  Promise.all([navigator.serviceWorker.getRegistrations().then(function(rs){return Promise.all(rs.map(function(r){return r.unregister()}))}),
    window.caches?caches.keys().then(function(ks){return Promise.all(ks.map(function(k){return caches.delete(k)}))}):0]).then(function(){clearTimeout(t);location.reload()},function(){clearTimeout(t);location.reload()})}catch(e){}})();</script>
@@ -79,11 +79,11 @@ button:active{background:#1a2438;transform:translate(1px,1px)}
 <div id="probe" style="position:fixed;visibility:hidden;pointer-events:none;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)"></div>
 <div id="rot"><i></i><div>RUOTA IL TELEFONO<br>IN ORIZZONTALE</div></div>
 
-<script src="js/motore.js?v=17nov2100"></script>
-<script src="js/scena-demo.js?v=17nov2100"></script>
-<script src="js/scena-tutti.js?v=17nov2100"></script>
-<script src="js/scena-ramones.js?v=17nov2100"></script>
-<script src="js/scena-capitolo2.js?v=17nov2100"></script>
+<script src="js/motore.js?v=17nov2230"></script>
+<script src="js/scena-demo.js?v=17nov2230"></script>
+<script src="js/scena-tutti.js?v=17nov2230"></script>
+<script src="js/scena-ramones.js?v=17nov2230"></script>
+<script src="js/scena-capitolo2.js?v=17nov2230"></script>
 <script>
 (()=>{
 "use strict";
@@ -440,12 +440,20 @@ function voxStart(b){const c=AU.ctx;if(c.state==='suspended')c.resume();const sr
    Clip in audio/fiato (indice.json: {personaggio:{tipo:[file]}}), generate da _strumenti/genera_versi.py. Suonano solo se l'audio e' sbloccato e non e' muto. */
 const FIATO={idx:null,ult:0,ALIAS:{'protagonista-esterno':'protagonista-interno','anna-senza-giacca':'anna',gemella2:'gemella'}};
 fetch('audio/fiato-r5/indice.json',{cache:'no-cache'}).then(r=>r.ok?r.json():null).then(j=>{FIATO.idx=j}).catch(()=>{});
-FIATO.suona=function(nome,tipo,prob=1,vol=.9,ritardo=0){
+/* (17 nov) interiezioni = borbottii buffi (Borbotta in motore.js) al posto delle vecchie clip vocali; respiri, affanni e sbuffi restano rumore di fiato */
+const SNIP={sforzo:[['eh op',.38,3],['uh eh',.36,2],['oh ap',.4,4]],sorpresa:[['oh',.26,6],['ah eh',.36,5],['eh oh',.36,4]],sospiro:[['aa uf',.7,-3],['oh a',.6,-2]],dubbio:[['ehm',.4,1],['mm eh',.5,2],['eh mm',.5,0]],dolore:[['ai i',.36,5]],
+  scavo:[['uf',.2,2],['hep hep',.34,4],['op uh',.34,3],['eh uf',.36,1],['uh oh ap',.5,3]]};
+FIATO.suonaClip=function(nome,tipo,prob=1,vol=.9,ritardo=0){
   if(!this.idx||!AU.ctx||AU.muted||AU.ctx.state!=='running'||Math.random()>prob)return;
   const d=this.idx[this.ALIAS[nome]||nome],l=d&&d[tipo];if(!l||!l.length)return;
   const now=performance.now();if(now-this.ult<600)return;this.ult=now;
   const u='audio/fiato-r5/'+l[Math.floor(Math.random()*l.length)];
   voxLoad(u).then(b=>{if(!b)return;const c=AU.ctx,sr=c.createBufferSource(),gn=c.createGain();sr.buffer=b;gn.gain.value=vol;sr.connect(gn);gn.connect(AU.master);sr.start(c.currentTime+.03+ritardo)})};
+FIATO.suona=function(nome,tipo,prob=1,vol=.9,ritardo=0){
+  const sn=SNIP[tipo];if(!sn||!window.Borbotta){return this.suonaClip(nome,tipo,prob,vol,ritardo)}
+  if(!AU.ctx||AU.muted||AU.ctx.state!=='running'||Math.random()>prob)return;
+  const now=performance.now();if(now-this.ult<600)return;this.ult=now;const [t,d,alt]=sn[Math.floor(Math.random()*sn.length)];
+  setTimeout(()=>window.Borbotta(this.ALIAS[nome]&&nome!=='protagonista-esterno'?this.ALIAS[nome]:nome,t,{durata:d,alt,vol:.2*vol/.9}),ritardo*1000)};
 window.FIATO=FIATO;
 let vox=null,sayDone=null;
 function closeSay(){clearInterval(typer);typer=null;clearTimeout(hideT);dlgEl.classList.remove('on');voxStop();vox=null;const f=sayDone;sayDone=null;if(f)f()}
@@ -2100,7 +2108,7 @@ document.addEventListener('wheel',e=>{if(e.ctrlKey)e.preventDefault()},{passive:
 document.addEventListener('visibilitychange',()=>{if(document.hidden){if(SILENT_EL)SILENT_EL.pause()}else if(AU.ctx)unmuteSilentSwitch();if(AU.ctx){if(document.hidden)AU.ctx.suspend();else AU.ctx.resume()}});
 
 /* aggiornamento automatico: se sul server c'e' una versione piu' nuova di questa, ricarica una volta (cancella anche le copie salvate) */
-const BUILD='17 nov 21:00';
+const BUILD='17 nov 22:30';
 {const ve=document.getElementById('ver');if(ve)ve.textContent='v. '+BUILD;
  if(location.protocol.startsWith('http')){
   fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{
