@@ -124,12 +124,26 @@ function disegnaAscia(gg,hx,hy,ang,flip){   // l'ascia e' presa per il fondo del
 function stella(gg,x,y,k){   // luccichio: croce di luce che pulsa
   if(k<=0)return;const L=Math.round(1+k*3);gg.globalAlpha=Math.min(1,.35+k);
   R(x-L,y,L*2+1,1,'#fff6d0');R(x,y-L,1,L*2+1,'#fff6d0');R(x,y,1,1,'#ffffff');gg.globalAlpha=1}
+
+/* ---------------- (16 nov) la gatta Mia: compare da destra, cammina tranquilla, si ferma al centro, si gira verso di noi, miagola, riprende e sparisce a sinistra ---------------- */
+const MIA={fatto:false};
+function vaiLibero(m,x,y){return new Promise(r=>{m.path=[[x,y]];m.arrivo=null;const iv=setInterval(()=>{if(!m.path.length){clearInterval(iv);r()}},60)})}
+async function passaMia(s){
+  const m=s.attori&&s.attori.mia;if(!m){MIA.fatto=true;return}
+  m.x=262;m.y=116;m.dir='W';m.corsa=false;m.vel=22;m.visibile=true;
+  await vaiLibero(m,122,116);                       // attraversa fino al centro
+  m.dir='S';await pausa(.7);                        // si gira verso chi guarda
+  try{A.motore.suonaClip('audio/versi/miao_mia_v2.mp3')}catch(e){}
+  m.talking=true;const iv=setInterval(()=>{m.bocca=1+Math.floor(Math.random()*4)},120);await pausa(1.4);clearInterval(iv);m.talking=false;m.bocca=1;
+  await pausa(.6);m.dir='W';
+  await vaiLibero(m,-40,116);m.visibile=false;MIA.fatto=true}
 const FANGO=[];   // schizzi di fango durante lo scavo
 
 registraScena({
   id:'c2-esterno',inventario:true,
   giocatore:'protagonista-esterno',nomeGiocatore:'NICK',
   partenza:{x:152,y:98,dir:'S'},
+  attori:[{nome:'mia',etichetta:'MIA',x:262,y:116,dir:'W'}],   // (16 nov) la gatta Mia attraversa la scena prima della partenza
   area:[[2,96],[238,96],[238,119],[2,119]],
   ostacoli:[[[2,99],[78,99],[78,114],[2,114]],[[204,96],[232,96],[232,101],[204,101]]],
   rif:[107,1.047],audioPassi:false,   // (15 nov) prospettiva: a y=107 Nick ha scala 1,047 (33 px) -> orizzonte y~75,8; la scala cresce scendendo, come l'auto   // (12 nov) fuori dalla baita i passi non fanno rumore
@@ -152,7 +166,7 @@ registraScena({
   /* le chiavi (dopo lo scavo) stanno nell'inventario: si trascinano sull'auto */
   hintTargets:(s,id)=>id==='chiavi'&&AUTO.sc?[[Math.round(AUTO.sc.x0),Math.round(AUTO.sc.y0),Math.round(AUTO.sc.x1-AUTO.sc.x0),Math.round(AUTO.sc.y1-AUTO.sc.y0)]]:[],
   dropItem:(s,id,x,y)=>{
-    const c=AUTO.sc;if(id!=='chiavi'||!c||s.occupato||x<c.x0-3||x>c.x1+3||y<c.y0-3||y>c.y1+3){A.sfx.no();return}
+    const c=AUTO.sc;if(id!=='chiavi'||!c||s.occupato||!MIA.fatto||x<c.x0-3||x>c.x1+3||y<c.y0-3||y>c.y1+3){A.sfx.no();return}
     const p=s.giocatore;A.removeItem('chiavi');sfx.chiavi();
     s.sequenza(async()=>{await p.vaiA(Math.min(94,c.x1+10),110,false,'W');p.dir='W';await pausa(.35);sfx.portaApre&&sfx.portaApre();s.vaiScena('c2-auto')})},
   punti:[
@@ -165,12 +179,12 @@ registraScena({
       const ok=await p.vaiA(150,110,false,'E');if(!ok)return;p.dir='E';
       // smuove la terra: ascia sollevata (crouch) e abbassata sul fango (reach), con schizzi di fango
       C2.ascia=2;const N=4;p.state='act';p.seq=[];for(let i=0;i<N;i++)p.seq.push(['crouch',.32],['reach',.42]);p.seq.push(['crouch',.4],['#',0]);p.seq=p.seq.filter(a=>a[0]==='#'||p.has(a[0]));p.si=0;p.st=0;
-      for(let i=0;i<N;i++){await pausa(.32+.12);sfx.passo('fango',1);A.nburst(rnd(380,560),1.0,.16,.05,'lowpass',.1,.15);for(let j=0;j<6;j++)FANGO.push({x:POZ.x-2+Math.random()*4,y:POZ.y,vx:(Math.random()-.3)*30,vy:-25-Math.random()*25,t:0,c:Math.random()<.5?'#4a3424':'#2e2016'});await pausa(.3)}
+      for(let i=0;i<N;i++){await pausa(.32+.12);sfx.passo('fango',1);A.nburst(rnd(380,560),1.0,.16,.05,'lowpass',.1,.15);FIATO.suona('protagonista-esterno','scavo',.9,1);for(let j=0;j<6;j++)FANGO.push({x:POZ.x-2+Math.random()*4,y:POZ.y,vx:(Math.random()-.3)*30,vy:-25-Math.random()*25,t:0,c:Math.random()<.5?'#4a3424':'#2e2016'});await pausa(.3)}
       C2.chiavi=true;sfx.chiavi();A.sting('scoperta');A.giveItem('chiavi');   // le chiavi finiscono nell'inventario
       await pausa(.6);C2.ascia=0;
-      A.say("Le chiavi! Ora posso andare.")}}],
+      A.say("Le chiavi! Ora posso andare.");passaMia(s)}}],
   entra(s){
-    const p=s.giocatore;FANGO.length=0;A.musicStop(4);
+    const p=s.giocatore;FANGO.length=0;A.musicStop(4);MIA.fatto=false;if(s.attori&&s.attori.mia)s.attori.mia.visibile=false;
     s.sequenza(async()=>{
       await pausa(1.0);await p.vaiA(150,106,false,'S');p.dir='S';
       sfx.stoffa();await pausa(.5);sfx.stoffa();await pausa(.3);A.sting('scintilla');
@@ -185,6 +199,7 @@ registraScena({
     // dal parabrezza: il bosco e i monti dello stesso sfondo di giorno, ingranditi
     if(BG_EST2.complete&&BG_EST2.naturalWidth)gg.drawImage(BG_EST2,0,26,120,60,0,0,W,H);else R(0,0,W,H,'#6a9ac8');
     if(IMG_CAR.complete&&IMG_CAR.naturalWidth)gg.drawImage(IMG_CAR,0,0);
+    {const d=A.drive;if(d&&d.gauges){d.gauges(.9+.12*Math.sin(s.t*3.1));d.radio(s.t)}}   // (16 nov) quadro strumenti e autoradio accesi, come nella guida notturna
     if(IMG_WHEEL.complete&&IMG_WHEEL.naturalWidth){const hw=IMG_WHEEL.naturalWidth,hh=IMG_WHEEL.naturalHeight,ws=.62,dw=Math.round(hw*ws),dh=Math.round(hh*ws),cy=Math.round(hh*.47*ws);
       gg.save();gg.translate(68,97);const wx0=-Math.round(dw/2),wy0=-cy;gg.drawImage(IMG_WHEEL,wx0,wy0,dw,dh);gg.drawImage(IMG_WHEEL,0,hh-1,hw,1,wx0,wy0+dh,dw,70);gg.restore()}
     gg.globalAlpha=.10;R(0,0,W,H,'#ffe0a0');gg.globalAlpha=1},   // luce del giorno nell'abitacolo
@@ -204,7 +219,7 @@ registraScena({
    Non e' piu' una scena disegnata dal gioco: e' un filmato (video/guida-alpina_r6.mp4, 10 s, H.264) fatto con _strumenti/film_guida.py
    sul dipinto strada-alpi.png: l'auto percorre la strada, la camera la segue. Si sovrappone all'area di gioco con la riproduzione nativa
    del telefono (muto, inline); il motore si sente col Web Audio del gioco. Se il filmato non parte si passa subito a «CONTINUA…». */
-const FILM_SRC='video/guida-alpina_r6.mp4',FILM_SRC2='video/guida-ponte_r2.mp4';   // (16 nov) secondo filmato: la strada lungo il fiume, verso il Ponte del Diavolo (stessa prospettiva e stesso moto, senza foglie)
+const FILM_SRC='video/guida-alpina_r6.mp4',FILM_SRC2='video/guida-ponte_r4.mp4';   // (16 nov) secondo filmato: la strada lungo il fiume, verso il Ponte del Diavolo (stessa prospettiva e stesso moto, senza foglie)
 const FILM_CURVE=[0.03, 0.09, 0.09, 0.09, 0.09, 0.09, 0.28, 0.3, 0.24, 0.36, 0.5, 0.48, 0.17, 0.3, 0.79, 1.21, 1.06, 0.34, 0.48, 1.2, 1.82, 1.96, 1.24, 0.23, 0.08, 0.86, 1.85, 0.83, 0.54, 2.08, 6.72, 23.71, 5.1, 4.03, 3.98, 3.98, 3.98, 3.98];   // quanto la strada gira, ogni 8 fotogrammi: guida il suono del motore
 const FILM_CURVE2=[0.71,0.71,0.69,0.66,0.64,0.63,0.63,0.63,0.62,0.62,0.62,0.62,0.62,0.62,0.62,0.62,0.62,0.62,0.62,0.62,0.62,0.62,0.62,0.62,0.62,0.62,0.62,0.62,0.62,0.62,0.62,0.62,0.62,0.62,0.62,0.62,0.62,0.62];
 const FILM={el:null,partito:false,finito:false,t0:0,i:0,curva:null};
