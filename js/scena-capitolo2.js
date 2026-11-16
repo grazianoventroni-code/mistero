@@ -465,25 +465,42 @@ registraScena({
    Il tavolo e' quello dello sfondo (a sinistra, piedi a y~95). Accanto al tavolo, PIU' VICINO ALLO SCHERMO (y 107), il macchinario con il Flusso Canalizzatore
    (generatore con il pannello sul fianco sinistro); la capra e' legata al tavolo con una corda. Prospettiva: orizzonte y=40 (rif [100,2.016]), px/m=(y-40)/1,6.
    Per ora SOLO la messa in scena: la logica della capra (cariche, corda, soluzione) va definita con l'utente. */
-const CAPRA={mac:mkImg('img/emb/macchinario_flusso_hd_r1.png'),MX:52,MY:110,TX:49,TY:73,GX:80,GY:98};
+const CAPRA={mac:mkImg('img/emb/macchinario_flusso_r2.png'),MX:60,MY:112,TX:49,TY:73,GX:98,GY:99};
 registraScena({
-  id:'c2-capra',sfondo:'img/scene/ponte-diavolo-var5.png',
+  id:'c2-capra',inventario:true,sfondo:'img/scene/ponte-diavolo-var5.png',
   giocatore:'protagonista-esterno',nomeGiocatore:'NICK',partenza:{x:176,y:109,dir:'W'},
   attori:[{nome:'capra',etichetta:'CAPRA',x:CAPRA.GX,y:CAPRA.GY,dir:'S',k:.8}],
   area:[[2,100],[90,78],[170,78],[238,100],[238,119],[2,119]],
-  ostacoli:[[[14,88],[54,88],[54,96],[14,96]],[[36,105],[69,105],[69,112],[36,112]]],
+  ostacoli:[[[14,88],[54,88],[54,96],[14,96]],[[34,107],[86,107],[86,114],[34,114]]],
   rif:[100,2.016],audioPassi:false,
   ambiente:{stanza:0,vento:.2,foglie:.1,aria:.3,pioggia:0,fuoco:0},suggerimento:'',senzaEtichette:true,
   oggetti:[
     {baseY:CAPRA.MY,disegna(g){const im=CAPRA.mac;if(!(im.complete&&im.naturalWidth))return;   // macchinario: 0,75 m di larghezza alla profondita' dei suoi piedi
-      const w=.75*(CAPRA.MY-40)/1.6,h=w*im.naturalHeight/im.naturalWidth;ell(CAPRA.MX,CAPRA.MY+.5,w*.5,1.6,'#000',.35);
+      const w=1.2*(CAPRA.MY-40)/1.6,h=w*im.naturalHeight/im.naturalWidth;ell(CAPRA.MX,CAPRA.MY+.5,w*.5,1.6,'#000',.35);
       g.save();g.imageSmoothingEnabled=true;g.imageSmoothingQuality='high';g.drawImage(im,Math.round(CAPRA.MX-w/2),Math.round(CAPRA.MY-h+1),Math.round(w),Math.round(h));g.restore()}},
     {baseY:CAPRA.GY-1,disegna(g,s){const c=s.attori&&s.attori.capra;if(!c)return;   // corda: dal collo della capra alla gamba del tavolo, con un po' di pancia
       const x0=CAPRA.TX,y0=CAPRA.TY,x1=Math.round(c.x-4),y1=Math.round(c.y-c.altezza()*.55);
       g.save();g.fillStyle='#d2b27a';for(let i=0;i<=24;i++){const u=i/24,x=x0+(x1-x0)*u,y=y0+(y1-y0)*u+Math.sin(Math.PI*u)*7;g.fillRect(Math.round(x),Math.round(y),1,1)}g.restore()}}
   ],
-  entra(s){fadeTo(0,1.6)}
+  punti:[{nome:'',rect:[30,72,58,42],cammina:{x:148,y:111,dir:'W'},usa:async(s,p)=>{CAPRA_CARICA(s,p)}}],
+  entra(s){   // (18 nov) arriva con tutto l'inventario: libro, fusibile e mela (anche da link diretto)
+    const S=A.S;if(S&&S.inv){let m=false;for(const id of ['book','fusibile','mela'])if(!S.inv.includes(id)){S.inv.push(id);m=true}S.bookOpen=true;C2.fusibile=true;C2.mela=true;if(m&&A.refreshInv)A.refreshInv()}
+    fadeTo(0,1.6)}
 });
+/* Nick fa per avvicinarsi al macchinario: la capra bela, si gira, CARICA (fino al limite della corda) e Nick si spaventa e salta all'indietro. Poi la capra torna al suo posto. */
+async function CAPRA_CARICA(s,p){
+  const g=s.attori.capra;if(!g)return;
+  await p.vaiA(132,111,false,'W');p.dir='W';await pausa(.25);
+  g.dir='E';await pausa(.35);
+  try{A.motore.suonaClip('audio/versi/bela_v2.mp3')}catch(e){}
+  g.talking=true;const iv=setInterval(()=>{g.bocca=1+Math.floor(Math.random()*4)},110);await pausa(.9);clearInterval(iv);g.talking=false;g.bocca=1;
+  g.seq=[['rear',.3],['#',0]];g.state='act';g.si=0;g.st=0;await pausa(.3);g.seq=null;
+  g.corsa=true;g.vel=95;const x0=g.x,y0=g.y;const carica=g.vaiA(120,104,true);
+  setTimeout(()=>{       // Nick si spaventa: verso di sorpresa e salto indietro
+    FIATO.suona('protagonista-esterno','sorpresa',1,1);p.state='idle';p.dir='W';const xs=p.x,ys=p.y;let t=0;
+    const iv2=setInterval(()=>{t+=.03;const u=Math.min(1,t/.42);p.x=xs+16*u;p.y=ys-Math.sin(Math.PI*u)*4;if(u>=1){clearInterval(iv2);p.y=ys}},30)},180);
+  await carica;g.seq=[['butt',.35],['#',0]];g.state='act';g.si=0;g.st=0;await pausa(.5);g.seq=null;
+  g.corsa=false;g.vel=22;await g.vaiA(x0,y0,false);g.dir='S';await pausa(.4)}
 
 /* (18 nov) il LIBRO resta nell'inventario per tutta la durata del gioco: ogni scena del capitolo 2 controlla che ci sia (anche se si entra da un link diretto) */
 function assicuraLibro(){const S=A.S;if(S&&S.inv&&!S.inv.includes('book')){S.inv.unshift('book');S.bookOpen=true;if(A.refreshInv)A.refreshInv()}}
