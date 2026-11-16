@@ -397,7 +397,7 @@ function corsia(z,f){const y=yZ(z),l=bordoSx(y),r=bordoDx(y);return [l+(r-l)*f,y
 const FP={};
 const LARA_WALK=mkImg('img/emb/lara_walk_r1.png');   // camminata vera (8 pose, gambe che alternano): sostituisce le walk_S dell'atlante, che erano 4 pose ripetute con la stessa gamba avanti
 function muovi(p,z,f,dir,fermo,dt){const [x,y]=corsia(z,f);p.x=x;p.y=y;p.dir=dir;
-  if(fermo){p.state='idle';return}p.state='walk';p.fase+=PF.V*(dt||1/30)/1.5}   // (18 nov) il ciclo del passo (due passi = 1,5 m) avanza con la distanza REALE percorsa: la camminata si vede anche in lontananza
+  if(fermo){p.state='idle';return}p.state='walk';p.v=1;p.bob=p.n==='lara-croft'?1.5:1.0;p.fase+=PF.V*(dt||1/30)/1.5}   // (18 nov) il ciclo del passo (due passi = 1,5 m) avanza con la distanza REALE percorsa: la camminata si vede anche in lontananza
 registraScena({
   id:'c2-ponte-film',sfondo:'img/scene/ponte-diavolo-var2.png',
   giocatore:'protagonista-esterno',nomeGiocatore:'NICK',partenza:{x:188,y:116,dir:'N'},
@@ -426,20 +426,33 @@ const NS_PERCORSO=[[138,117],[104,101],[76,87],[86,77],[104,67],[121,60]];   // 
 const NS_RAMPA=2;   // indice del punto in cui finisce la rampa (qui Nick gira)
 function nsPos(d){let acc=0;for(let i=1;i<NS_PERCORSO.length;i++){const a=NS_PERCORSO[i-1],b=NS_PERCORSO[i],L=Math.hypot(b[0]-a[0],b[1]-a[1]);if(d<=acc+L){const u=(d-acc)/L;return [a[0]+(b[0]-a[0])*u,a[1]+(b[1]-a[1])*u,i-1,acc]}acc+=L}const e=NS_PERCORSO[NS_PERCORSO.length-1];return [e[0],e[1],NS_PERCORSO.length,acc]}
 const NS_LUNG=NS_PERCORSO.reduce((t,p,i)=>i?t+Math.hypot(p[0]-NS_PERCORSO[i-1][0],p[1]-NS_PERCORSO[i-1][1]):0,0);
+const NS_V=13.5,NS_T1=1.1,NS_T2=1.2,NS_TC=(NS_LUNG-NS_V*(NS_T1+NS_T2)/2)/NS_V,NS_TOT=NS_T1+NS_TC+NS_T2;   // partenza e arresto morbidi: accelera, va a regime, rallenta
+const NS_DTURN=NS_PERCORSO.slice(0,NS_RAMPA+1).reduce((t,p,i)=>i?t+Math.hypot(p[0]-NS_PERCORSO[i-1][0],p[1]-NS_PERCORSO[i-1][1]):0,0);
+function nsDist(t){if(t<=0)return 0;if(t<NS_T1)return NS_V*t*t/(2*NS_T1);if(t<NS_T1+NS_TC)return NS_V*NS_T1/2+NS_V*(t-NS_T1);
+  const u=t-NS_T1-NS_TC;if(u<NS_T2)return NS_V*NS_T1/2+NS_V*NS_TC+NS_V*(u-u*u/(2*NS_T2));return NS_LUNG}
 registraScena({
   id:'c2-scale',sfondo:'img/scene/ponte-diavolo-var1.png',area:[[0,0],[2,0],[2,2],[0,2]],suggerimento:'',senzaEtichette:true,
   ambiente:{stanza:0,vento:.25,foglie:.1,aria:.3,pioggia:0,fuoco:0},
   entra(s){NS.t=0;NS.fine=false;s.occupato=true;document.getElementById('bHint').style.display='none';A.say('');fadeTo(0,1.2)},
-  aggiorna(s,dt){NS.t+=dt;if(!NS.fine&&NS.t>.8+NS_LUNG/13.5+2.5){NS.fine=true;fadeTo(1,1.4,()=>{A.setHint('CONTINUA…',true)})}},
+  aggiorna(s,dt){NS.t+=dt;if(!NS.fine&&NS.t>.8+NS_TOT+2.2){NS.fine=true;fadeTo(1,1.4,()=>{A.setHint('CONTINUA…',true)})}},
   sopra(gg,s){
-    const im=NS.img;if(!(im.complete&&im.naturalWidth))return;const v=13.5,d=Math.min(NS_LUNG,Math.max(0,NS.t-.8)*v),[x,y0,seg]=nsPos(d),camminando=d<NS_LUNG-.1&&NS.t>.8;
-    const rampa=seg<NS_RAMPA,passo=d/(rampa?15:19),ph=camminando?Math.floor(passo*4)%4:0,fr=(rampa?0:4)+ph;
-    const dip=camminando?(rampa?Math.abs(Math.sin(passo*Math.PI*4/2))*1.6:Math.abs(Math.sin(passo*Math.PI*4/2))*.5):0;
-    const hLog=22+(y0-40)*.17,sc=hLog/34,ox=x,oy=y0+dip*sc;
-    ell(ox,oy+.6,7*sc,2*sc,'#000',.35);
-    gg.save();gg.imageSmoothingEnabled=false;const w=120/RS*sc,h=150/RS*sc;gg.drawImage(im,fr*120,0,120,150,Math.round(ox-w/2),Math.round(oy-h+sc),w,h);gg.restore()}
+    const im=NS.img;if(!(im.complete&&im.naturalWidth))return;const tt=Math.max(0,NS.t-.8),d=nsDist(tt),[x,y0,seg]=nsPos(d),camminando=tt>0&&tt<NS_TOT-.05;
+    const hLog=22+(y0-40)*.17,sc=hLog/34,w=120/RS*sc,h=150/RS*sc;
+    const passoR=d/15,passoD=d/19,rampa=d<NS_DTURN;   // una mezza falcata ogni ~7,5 px sulla rampa (un gradino), ~9,5 px sul piano
+    const dip=camminando?(rampa?Math.abs(Math.sin(passoR*Math.PI*2))*1.7:Math.abs(Math.sin(passoD*Math.PI*2))*.6):0;
+    const ox=x,oy=y0+dip*sc;ell(ox,oy+.6,7*sc,2*sc,'#000',.35);
+    const disegna=(f,a)=>{gg.globalAlpha=a;gg.imageSmoothingEnabled=false;gg.drawImage(im,f*120,0,120,150,Math.round(ox-w/2),Math.round(oy-h+sc),w,h)};
+    gg.save();
+    const fP=camminando||d<NS_DTURN?Math.floor(passoR*4)%4:0,fD=4+(camminando?Math.floor(passoD*4)%4:0);
+    if(d<NS_DTURN)disegna(fP,1);
+    else if(d<NS_DTURN+9){const u=(d-NS_DTURN)/9;disegna(fP,1-u);disegna(fD,u)}   // la svolta: dissolvenza dalle pose di profilo a quelle da dietro
+    else disegna(fD,1);
+    gg.restore()}
 });
 
+/* (18 nov) il LIBRO resta nell'inventario per tutta la durata del gioco: ogni scena del capitolo 2 controlla che ci sia (anche se si entra da un link diretto) */
+function assicuraLibro(){const S=A.S;if(S&&S.inv&&!S.inv.includes('book')){S.inv.unshift('book');S.bookOpen=true;if(A.refreshInv)A.refreshInv()}}
+for(const id of ['capitolo2','c2-esterno','c2-auto','c2-strada','c2-ponte','c2-ponte-vista','c2-ponte-film','c2-scale']){const sc=scenes[id];if(sc&&sc.cfg){const e=sc.cfg.entra;sc.cfg.entra=function(s){assicuraLibro();return e?e.call(this,s):undefined}}}
 /* da fine capitolo 1 (sogno) al capitolo 2 */
 window.__capitolo2=A.capitolo2=()=>{for(const k in C2)C2[k]=typeof C2[k]==='boolean'?false:0;fadeTo(1,1.8,()=>{setScene('capitolo2');fadeTo(0,9)})};   // (14 nov) la velocita' e' al secondo: 9 = schiarita in un decimo di secondo (prima 0,01: nero per minuti)
 });
