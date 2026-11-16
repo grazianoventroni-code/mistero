@@ -14,7 +14,7 @@ window.__C2=null;const C2={sveglio:false,specchio:false,pensato:false,visto:fals
 window.__C2=C2;const sm=x=>{x=clamp(x,0,1);return x*x*(3-2*x)};
 const pausa=s=>new Promise(r=>setTimeout(r,s*1000));
 /* (13 nov) i testi di Nick stanno in basso, nello stesso riquadro del capitolo 1, con la sua voce (clip Kokoro, indice voci-r2) */
-function dn(s,p,testo,opz={}){return A.sayP(testo)}
+function dn(s,p,testo,opz={}){return A.sayP(testo,true)}   // (16 nov) i testi avanzano da soli, in fretta
 
 /* ---------------- 1. salotto di giorno (risveglio) ---------------- */
 const IMG_COAT=mkImg('img/emb/img_cappotto_sedia_r2.png'),IMG_HAT=mkImg('img/emb/img_cappello_sedia_r1.png');
@@ -73,7 +73,7 @@ registraScena({
   superficie:'legno',superfici:[{poly:[[150,108],[190,104],[238,108],[238,118],[150,118]],tipo:'tappeto'}],
   ambiente:{stanza:0,vento:.4,foglie:.5,aria:1,pioggia:0,fuoco:0},   // (15 nov) niente ronzio a 50 Hz: aria nei tronchi + uccelli, scricchiolii e tic della stufa (ambienteGiorno)
   aggiorna(s,dt){ambienteGiorno(dt,true)},
-  suggerimento:'',
+  suggerimento:'',senzaEtichette:true,
   sotto(gg){   // impermeabile e cappello sulla sedia, come la sera prima
     for(const [im,x,y] of [[IMG_COAT,COAT.x,COAT.y],[IMG_HAT,COAT.hx,COAT.hy]])if(im.complete&&im.naturalWidth)gg.drawImage(im,x,y,im.naturalWidth/RS,im.naturalHeight/RS)},
   sopra(gg,s){
@@ -89,7 +89,7 @@ registraScena({
     s.sequenza(async()=>{
       // (12 nov) su iPhone l'audio si sblocca solo con un tocco: se si arriva dal link diretto (?capitolo2) si aspetta il tocco
       while(!(A.AU.ctx&&A.AU.ctx.state==='running')){setHint('TOCCA PER INIZIARE',true);await pausa(.2)}
-      setHint('');SAL.t0=s.t;A.sting('alba');   // intermezzo: il mattino
+      setHint('');SAL.t0=s.t;A.sting('alba');setTimeout(()=>A.musicStart('mattino',7),6500);   // intermezzo: il mattino, poi il tema del mattino
             await pausa(3.2);
       for(const [a,b] of [['seat_nb_sleep','seat_nb_doze'],['seat_nb_doze','seat_nb_wake']]){SAL.posa=a;SAL.posa2=b;
         for(let k=0;k<=20;k++){SAL.mix=k/20;await pausa(.05)}SAL.posa=b;SAL.posa2=null;SAL.mix=0;await pausa(.6)}
@@ -136,7 +136,7 @@ registraScena({
   superficie:'fango',superfici:[{poly:[[138,104],[186,104],[186,111],[138,111]],tipo:'pozzanghera'},{poly:[[78,96],[112,96],[112,101],[78,101]],tipo:'pozzanghera'}],
   ambiente:{stanza:0,vento:.5,foglie:1,aria:.35,pioggia:0,fuoco:0},
   aggiorna(s,dt){ambienteGiorno(dt,false)},
-  suggerimento:'TOCCA PER CAMMINARE',
+  suggerimento:'',
   disegnaSfondo(gg){const im=C2.ascia?BG_EST2:BG_EST;if(im.complete&&im.naturalWidth)gg.drawImage(im,0,0,W,H);else R(0,0,W,H,'#3a5a7a')},
   oggetti:[{baseY:112,disegna(gg){AUTO.sc=PROSP.disegnaAuto(gg,IMG_AUTO34,YH_EST,AUTO.xs,AUTO.ys,21.4)||AUTO.sc}}],
   scatolaAuto:()=>PROSP.scatola(YH_EST,AUTO.xs,AUTO.ys,21.4),
@@ -148,27 +148,33 @@ registraScena({
     for(let i=FANGO.length-1;i>=0;i--){const f=FANGO[i];f.t+=1/60;f.x+=f.vx/60;f.y+=f.vy/60;f.vy+=90/60;if(f.t>.7){FANGO.splice(i,1);continue}R(Math.round(f.x),Math.round(f.y),1,1,f.c)}
     p.axe=C2.ascia>0;   // (15 nov) l'ascia e' nelle pose di Nick ('_axe'): camminata, fermo, ascia sollevata (crouch) e abbassata sul fango (reach)
     },
+  senzaEtichette:true,   // (16 nov) niente scritte sugli oggetti ("la pozzanghera", "l'ascia"...)
+  /* le chiavi (dopo lo scavo) stanno nell'inventario: si trascinano sull'auto */
+  hintTargets:(s,id)=>id==='chiavi'&&AUTO.sc?[[Math.round(AUTO.sc.x0),Math.round(AUTO.sc.y0),Math.round(AUTO.sc.x1-AUTO.sc.x0),Math.round(AUTO.sc.y1-AUTO.sc.y0)]]:[],
+  dropItem:(s,id,x,y)=>{
+    const c=AUTO.sc;if(id!=='chiavi'||!c||s.occupato||x<c.x0-3||x>c.x1+3||y<c.y0-3||y>c.y1+3){A.sfx.no();return}
+    const p=s.giocatore;A.removeItem('chiavi');sfx.chiavi();
+    s.sequenza(async()=>{await p.vaiA(Math.min(94,c.x1+10),110,false,'W');p.dir='W';await pausa(.35);sfx.portaApre&&sfx.portaApre();s.vaiScena('c2-auto')})},
   punti:[
     {nome:'LA POZZANGHERA',rect:[140,101,46,11],cammina:{x:156,y:110,dir:'E'},visibile:()=>C2.tw&&!C2.chiavi,usa:async(s,p)=>{
-      if(!C2.visto){await dn(s,p,'Le chiavi dell\'auto! Ma sono immerse nel fango.');await dn(s,p,'Come le recupero senza sporcarmi?');C2.visto=true;return}
-      if(!C2.ascia)await dn(s,p,'Come le recupero senza sporcarmi?')}},
-    {nome:'L\'ASCIA',rect:[208,72,26,16],cammina:{x:206,y:104,dir:'E'},visibile:()=>C2.visto&&!C2.ascia,usa:async(s,p)=>{
-      await dn(s,p,'L\'ascia! È lo strumento ideale.');
-      p.dir='E';await new Promise(r=>{p.pickUp();setTimeout(()=>{C2.ascia=1;sfx.raccogli();A.sting('tonfo')},450);setTimeout(r,1300)});
-      if(!(await p.vaiA(150,110,false,'E')))return;p.dir='E';
-      // smuove la terra: braccio giu' (raspa) e su, con schizzi di fango
+      if(!C2.ascia){A.say(C2.visto?"Come le recupero senza sporcarmi?":"Le chiavi dell'auto! Ma sono immerse nel fango. Come le recupero senza sporcarmi?");C2.visto=true}}},
+    {nome:'ASCIA',rect:[204,70,32,22],cammina:{x:206,y:104,dir:'E'},visibile:()=>C2.tw&&!C2.ascia&&!C2.chiavi,usa:async(s,p)=>{
+      /* (16 nov) un solo tocco: Nick va all'ascia, la prende, va alla pozzanghera e scava, senza pause ne' frasi da aspettare */
+      C2.visto=true;A.say("L'ascia! È lo strumento ideale.");
+      p.dir='E';p.pickUp();await pausa(.45);C2.ascia=1;sfx.raccogli();A.sting('tonfo');await pausa(.55);
+      const ok=await p.vaiA(150,110,false,'E');if(!ok)return;p.dir='E';
+      // smuove la terra: ascia sollevata (crouch) e abbassata sul fango (reach), con schizzi di fango
       C2.ascia=2;const N=4;p.state='act';p.seq=[];for(let i=0;i<N;i++)p.seq.push(['crouch',.32],['reach',.42]);p.seq.push(['crouch',.4],['#',0]);p.seq=p.seq.filter(a=>a[0]==='#'||p.has(a[0]));p.si=0;p.st=0;
-      for(let i=0;i<N;i++){await pausa(.32+.12);sfx.passo('fango',1);A.nburst(rnd(420,640),1.1,.14,.07,'lowpass',.15,.2);A.tone(rnd(110,160),.12,'sine',.05,60,.15,.1);FIATO.suona('protagonista-esterno','sforzo',.8,.85);for(let j=0;j<6;j++)FANGO.push({x:POZ.x-2+Math.random()*4,y:POZ.y,vx:(Math.random()-.3)*30,vy:-25-Math.random()*25,t:0,c:Math.random()<.5?'#4a3424':'#2e2016'});await pausa(.3)}
-      C2.chiavi=true;sfx.chiavi();A.sting('scoperta');await pausa(.9);
-      C2.ascia=0;   // l'ascia resta a terra accanto alla pozzanghera? per ora non si disegna piu'
-      s.vaiScena('c2-auto')}}],
+      for(let i=0;i<N;i++){await pausa(.32+.12);sfx.passo('fango',1);A.nburst(rnd(380,560),1.0,.16,.05,'lowpass',.1,.15);for(let j=0;j<6;j++)FANGO.push({x:POZ.x-2+Math.random()*4,y:POZ.y,vx:(Math.random()-.3)*30,vy:-25-Math.random()*25,t:0,c:Math.random()<.5?'#4a3424':'#2e2016'});await pausa(.3)}
+      C2.chiavi=true;sfx.chiavi();A.sting('scoperta');A.giveItem('chiavi');   // le chiavi finiscono nell'inventario
+      await pausa(.6);C2.ascia=0;
+      A.say("Le chiavi! Ora posso andare.")}}],
   entra(s){
-    const p=s.giocatore;FANGO.length=0;
+    const p=s.giocatore;FANGO.length=0;A.musicStop(4);
     s.sequenza(async()=>{
-      await pausa(1.2);await p.vaiA(150,106,false,'S');p.dir='S';
-      sfx.stoffa();await pausa(.5);sfx.stoffa();await pausa(.4);A.sting('scintilla');
-      await dn(s,p,'Le chiavi dell\'auto… Non sono nelle tasche.');
-      C2.tw=1;s.hint()})}
+      await pausa(1.0);await p.vaiA(150,106,false,'S');p.dir='S';
+      sfx.stoffa();await pausa(.5);sfx.stoffa();await pausa(.3);A.sting('scintilla');
+      C2.tw=1;A.say("Le chiavi dell'auto… Non sono nelle tasche.")})}
 });
 
 /* ---------------- 4. dentro l'auto (per ora la scena si ferma qui) ---------------- */
@@ -198,9 +204,14 @@ registraScena({
    Non e' piu' una scena disegnata dal gioco: e' un filmato (video/guida-alpina_r6.mp4, 10 s, H.264) fatto con _strumenti/film_guida.py
    sul dipinto strada-alpi.png: l'auto percorre la strada, la camera la segue. Si sovrappone all'area di gioco con la riproduzione nativa
    del telefono (muto, inline); il motore si sente col Web Audio del gioco. Se il filmato non parte si passa subito a «CONTINUA…». */
-const FILM_SRC='video/guida-alpina_r6.mp4';
+const FILM_SRC='video/guida-alpina_r6.mp4',FILM_SRC2='video/guida-ponte_r1.mp4';   // (16 nov) secondo filmato: la strada lungo il fiume, verso il Ponte del Diavolo (stessa prospettiva e stesso moto, senza foglie)
 const FILM_CURVE=[0.03, 0.09, 0.09, 0.09, 0.09, 0.09, 0.28, 0.3, 0.24, 0.36, 0.5, 0.48, 0.17, 0.3, 0.79, 1.21, 1.06, 0.34, 0.48, 1.2, 1.82, 1.96, 1.24, 0.23, 0.08, 0.86, 1.85, 0.83, 0.54, 2.08, 6.72, 23.71, 5.1, 4.03, 3.98, 3.98, 3.98, 3.98];   // quanto la strada gira, ogni 8 fotogrammi: guida il suono del motore
-const FILM={el:null,partito:false,finito:false,t0:0};
+const FILM_CURVE2=[0.03,0.1,0.11,0.11,0.11,0.11,0.15,0.72,0.78,0.77,0.75,0.74,0.73,0.72,0.71,0.7,0.69,0.68,0.67,0.66,0.66,0.65,0.64,0.64,0.63,0.63,0.62,0.62,0.62,0.64,0.69,0.9,1.71,1.89,1.9,1.9,1.9,1.9];
+const FILM={el:null,partito:false,finito:false,t0:0,i:0,curva:null};
+const FILM_LISTA=[{src:FILM_SRC,curva:FILM_CURVE},{src:FILM_SRC2,curva:FILM_CURVE2}];
+function filmAvvia(s,i){const v=filmEl();FILM.i=i;FILM.partito=false;FILM.finito=false;FILM.t0=performance.now();FILM.curva=FILM_LISTA[i].curva;
+  v.onended=()=>filmFine(s);v.onerror=()=>filmFine(s);if(v.getAttribute('src')!==FILM_LISTA[i].src){v.src=FILM_LISTA[i].src;v.load()}
+  filmPosiziona(v);v.style.display='block';try{v.currentTime=0}catch(e){}const p=v.play();if(p&&p.catch)p.catch(()=>filmFine(s))}
 function filmEl(){
   if(FILM.el)return FILM.el;
   const v=document.createElement('video');v.src=FILM_SRC;v.muted=true;v.defaultMuted=true;v.playsInline=true;v.preload='auto';v.controls=false;
@@ -210,24 +221,21 @@ function filmEl(){
 function filmPosiziona(v){   // lo stesso rettangolo in cui il gioco disegna la scena (240x120 logici)
   const r=A.cv.getBoundingClientRect(),w=A.wrap.getBoundingClientRect(),vw=A.view(),k=vw.k;
   v.style.left=(r.left-w.left+(r.width-vw.DW*k)/2+vw.OX*k)+'px';v.style.top=(r.top-w.top+(r.height-H*k)/2)+'px';v.style.width=(W*k)+'px';v.style.height=(H*k)+'px'}
-function filmFine(s){if(FILM.finito)return;FILM.finito=true;A.setEng&&A.setEng(0,false);if(FILM.el)FILM.el.style.display='none';A.setHint('CONTINUA…',true)}
+function filmFine(s){if(FILM.finito)return;FILM.finito=true;if(FILM.i<FILM_LISTA.length-1){FILM.finito=false;filmAvvia(s,FILM.i+1);return}   // (16 nov) a fine del primo filmato parte il secondo, senza tocchi
+  A.setEng&&A.setEng(0,false);A.musicStop(3);if(FILM.el)FILM.el.style.display='none';A.setHint('CONTINUA…',true)}
 registraScena({
   id:'c2-strada',area:[[0,0],[2,0],[2,2],[0,2]],suggerimento:'',
   ambiente:{stanza:0,vento:.3,pioggia:0,fuoco:0},
   disegnaSfondo(gg){R(0,0,W,H,'#000')},
   entra(s){
-    A.say('');FILM.partito=false;FILM.finito=false;FILM.t0=performance.now();s.occupato=true;document.getElementById('bHint').style.display='none';
-    const v=filmEl();filmPosiziona(v);v.style.display='block';
-    try{v.currentTime=0}catch(e){}
-    const p=v.play();if(p&&p.catch)p.catch(()=>filmFine(s));
-    v.onended=()=>filmFine(s);v.onerror=()=>filmFine(s);
-    A.setEng&&A.setEng(.9,true)},
+    A.say('');s.occupato=true;document.getElementById('bHint').style.display='none';filmAvvia(s,0);
+    A.setEng&&A.setEng(.9,true);A.musicStart('viaggio',3)},   // (16 nov) musica di viaggio autunnale, anni '80, sotto il filmato
   aggiorna(s,dt){
     const v=FILM.el;if(!v||FILM.finito)return;filmPosiziona(v);
     if(v.currentTime>.05)FILM.partito=true;
     if(!FILM.partito&&performance.now()-FILM.t0>6000)return filmFine(s);   // non e' partito: si va avanti
     if(v.ended||(v.duration>0&&v.currentTime>=v.duration-.04))return filmFine(s);
-    const c=FILM_CURVE[Math.min(FILM_CURVE.length-1,Math.floor(v.currentTime*30/8))]||0;
+    const cv_=FILM.curva||FILM_CURVE,c=cv_[Math.min(cv_.length-1,Math.floor(v.currentTime*30/8))]||0;
     if(A.AU.engO&&A.AU.ctx)A.AU.engO.frequency.setTargetAtTime(50+24*Math.min(1,c)+4*Math.sin(s.t*3),A.AU.ctx.currentTime,.12)}
 });
 

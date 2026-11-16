@@ -339,7 +339,7 @@ class Scena{
   enter(){
     Dialogo.azzera();Dialogo.creaDOM();this.t=0;this.occupato=false;
     document.getElementById('bHint').style.display='';
-    setHint(this.cfg.suggerimento||'TOCCA PER CAMMINARE · TOCCA GLI OGGETTI, LE PORTE E I PERSONAGGI');
+    setHint(this.cfg.suggerimento!==undefined?this.cfg.suggerimento:'TOCCA PER CAMMINARE · TOCCA GLI OGGETTI, LE PORTE E I PERSONAGGI');   // (16 nov) suggerimento '' = nessuna scritta
     const arr=Scena.arrivo&&Scena.arrivo.id===this.id?Scena.arrivo:null;Scena.arrivo=null;
     this.pronto=false;
     const nomi=[...new Set([...(this.cfg.attori||[]).map(a=>a.nome),this.cfg.giocatore].filter(Boolean))];
@@ -384,7 +384,9 @@ class Scena{
       if(Math.abs(x-a.x)<w&&y<a.y+2&&y>a.y-h)return {tipo:'attore',o:a,rect:[a.x-w,a.y-h,w*2,h],nome:a.etichetta}}
     for(const h of this.cfg.punti||[]){if(h.visibile&&!h.visibile(this))continue;const r=h.rect;if(r&&x>=r[0]&&x<r[0]+r[2]&&y>=r[1]&&y<r[1]+r[3])return {tipo:'punto',o:h,rect:r,nome:h.nome}}
     return null}
-  move(x,y){if(!this.pronto)return;const t=this.trova(x,y);this.hover=t;setHint(t&&t.nome?t.nome:(this.cfg.suggerimento||''))}
+  move(x,y){if(!this.pronto)return;const t=this.trova(x,y);this.hover=t;if(this.cfg.senzaEtichette)return;setHint(t&&t.nome?t.nome:(this.cfg.suggerimento||''))}   // (16 nov) senzaEtichette: niente nomi sugli oggetti
+  dropItem(id,x,y){if(this.cfg.dropItem)return this.cfg.dropItem(this,id,x,y);sfx.no()}   // oggetto dell'inventario lasciato sulla scena
+  hintTargets(id){return this.cfg.hintTargets?this.cfg.hintTargets(this,id):[]}
   async down(x,y){
     if(fade.a>.3||!this.pronto)return;
     if(Dialogo.cor){Dialogo.tocca();return}
@@ -414,7 +416,7 @@ class Scena{
   scegli(opz,att){return Dialogo.scegli(opz,att)}
   attore(id){return this.attori[id]}
   vaiScena(id,arr){Scena.arrivo=arr?{id,...arr}:{id,x:40,y:105};this.occupato=true;fadeTo(1,2.6,()=>{setScene(id);fadeTo(0,2.2)})}
-  hint(){setHint(this.cfg.suggerimento||'');}}
+  hint(){setHint(this.cfg.suggerimento||'')}}
 Scena.arrivo=null;
 function line2(x0,y0,x1,y1){const n=Math.max(1,Math.ceil(Math.hypot(x1-x0,y1-y0)));for(let i=0;i<=n;i++)R(x0+(x1-x0)*i/n,y0+(y1-y0)*i/n,1,1,'#ffff40')}
 
