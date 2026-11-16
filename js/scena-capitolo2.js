@@ -392,6 +392,7 @@ const bordoDx=y=>112+(y-45)/.37;
 const yZ=z=>PF.YH+PF.F*PF.HC/z;
 function corsia(z,f){const y=yZ(z),l=bordoSx(y),r=bordoDx(y);return [l+(r-l)*f,y]}
 const FP={};
+const LARA_WALK=mkImg('img/emb/lara_walk_r1.png');   // camminata vera (8 pose, gambe che alternano): sostituisce le walk_S dell'atlante, che erano 4 pose ripetute con la stessa gamba avanti
 function muovi(p,z,f,dir,fermo,dt){const [x,y]=corsia(z,f);p.x=x;p.y=y;p.dir=dir;
   if(fermo){p.state='idle';return}p.state='walk';p.fase+=PF.V*(dt||1/30)/1.5}   // (18 nov) il ciclo del passo (due passi = 1,5 m) avanza con la distanza REALE percorsa: la camminata si vede anche in lontananza
 registraScena({
@@ -400,33 +401,37 @@ registraScena({
   attori:[{nome:'lara-croft',etichetta:'LARA',x:140,y:60,dir:'S'}],
   area:[[0,0],[2,0],[2,2],[0,2]],rif:[100,2.016],audioPassi:false,
   ambiente:{stanza:0,vento:.35,foglie:.3,aria:.4,pioggia:0,fuoco:0},suggerimento:'',senzaEtichette:true,
-  entra(s){Object.assign(FP,{t:0,zn:6.95,zl:33,incontro:false,laraFine:false,nickFermo:false,fine:false});s.occupato=true;document.getElementById('bHint').style.display='none';fadeTo(0,1.2)},
+  entra(s){Object.assign(FP,{patch:false,t:0,zn:6.95,zl:33,incontro:false,laraFine:false,nickFermo:false,fine:false});s.occupato=true;document.getElementById('bHint').style.display='none';fadeTo(0,1.2)},
   aggiorna(s,dt){
     const n=s.giocatore,l=s.attori['lara-croft'];if(!n||!l)return;FP.t+=dt;
+    if(!FP.patch&&LARA_WALK.complete&&LARA_WALK.naturalWidth&&l.c&&l.c.ready){FP.patch=true;const c0=l.c,fr={...c0.fr};for(let i=0;i<8;i++)fr['walk_S_'+(i+1)]={x:i*c0.w,y:0,w:c0.w,h:c0.h};l.c={...c0,img:LARA_WALK,fr}}
     if(FP.t<.7){muovi(n,FP.zn,.30,'N',true);muovi(l,FP.zl,.72,'S',true);return}
     if(!FP.nickFermo){FP.zn+=PF.V*dt;muovi(n,FP.zn,.30,'N',false,dt)}else{n.state='idle'}
     if(!FP.laraFine){FP.zl-=PF.V*dt;muovi(l,FP.zl,.72,'S',false,dt);if(l.x>246){FP.laraFine=true;l.visibile=false}}
-    if(!FP.incontro&&FP.zn>=FP.zl-.5){FP.incontro=true;FP.nickFermo=true;
+    if(!FP.incontro&&FP.zn>=FP.zl-.3){FP.incontro=true;FP.nickFermo=true;
       s.dici(l,'Ehilà!',{clip:'audio/versi/lara_ehila_r1.mp3',frontale:false});   // (voce vera) Lara saluta e continua a camminare
       s.sequenza(async()=>{await pausa(1.1);n.dir='S';await pausa(.7);await s.dici(n,'Eppure mi pare di averla già vista.',{});await pausa(1.4);FP.fine=true;s.vaiScena('c2-scale',{x:150,y:60,dir:'S'})})}}   // (18 nov) vaiScena fa gia' la sua dissolvenza: una dissolvenza in piu' bloccava il passaggio alle scale
 });
 
 /* ---------------- (18 nov) FILMATO: Nick scende le scale (var1) ----------------
-   Vista dall'alto, di taglio: la camera guarda in giu' verso un pianerottolo e una scalinata che scende verso il basso a sinistra. Pose nuove di Nick (6 fotogrammi, 3/4 davanti-sinistra
-   visto da circa 55 gradi sopra: nick_scale_r1.png da ChatGPT, _strumenti/c2_nick_scale.py). Altezza di Nick: ~22 px in cima (lontano) fino a ~38 px in fondo (vicino); il passo avanza
-   con la distanza percorsa e a ogni gradino il corpo si abbassa. */
-const NS={img:mkImg('img/emb/nick_scale_r1.png'),t:0,fine:false};
-const NS_PERCORSO=[[124,40],[121,62],[112,80],[98,88],[78,99],[56,111],[34,123],[10,135]];
-function nsPos(d){let acc=0;for(let i=1;i<NS_PERCORSO.length;i++){const a=NS_PERCORSO[i-1],b=NS_PERCORSO[i],L=Math.hypot(b[0]-a[0],b[1]-a[1]);if(d<=acc+L){const u=(d-acc)/L;return [a[0]+(b[0]-a[0])*u,a[1]+(b[1]-a[1])*u,i]}acc+=L}const e=NS_PERCORSO[NS_PERCORSO.length-1];return [e[0],e[1],NS_PERCORSO.length]}
+   Camera alta, dall'alto della scalinata: la rampa scende in diagonale verso l'alto-sinistra dello schermo (si allontana dalla camera) e finisce nello spiazzo.
+   Nick parte dalla CIMA (in basso, vicino alla camera: grande), scende la rampa verso SINISTRA (pose di profilo dall'alto, un abbassamento a ogni gradino), in fondo GIRA e
+   va verso il CENTRO dello spiazzo (pose da dietro e dall'alto). Altezza: ~35 px in cima, ~25 px nello spiazzo (stessa prospettiva dello sfondo).
+   Pose: nick_scale_r2.png (ChatGPT gventroni, _strumenti/c2_nick_scale2.py): celle 0-3 profilo sinistro che scende, 4-7 da dietro che cammina. */
+const NS={img:mkImg('img/emb/nick_scale_r2.png'),t:0,fine:false};
+const NS_PERCORSO=[[138,117],[104,101],[76,87],[86,77],[104,67],[121,60]];   // cima della rampa -> fondo della rampa -> centro dello spiazzo
+const NS_RAMPA=2;   // indice del punto in cui finisce la rampa (qui Nick gira)
+function nsPos(d){let acc=0;for(let i=1;i<NS_PERCORSO.length;i++){const a=NS_PERCORSO[i-1],b=NS_PERCORSO[i],L=Math.hypot(b[0]-a[0],b[1]-a[1]);if(d<=acc+L){const u=(d-acc)/L;return [a[0]+(b[0]-a[0])*u,a[1]+(b[1]-a[1])*u,i-1,acc]}acc+=L}const e=NS_PERCORSO[NS_PERCORSO.length-1];return [e[0],e[1],NS_PERCORSO.length,acc]}
+const NS_LUNG=NS_PERCORSO.reduce((t,p,i)=>i?t+Math.hypot(p[0]-NS_PERCORSO[i-1][0],p[1]-NS_PERCORSO[i-1][1]):0,0);
 registraScena({
   id:'c2-scale',sfondo:'img/scene/ponte-diavolo-var1.png',area:[[0,0],[2,0],[2,2],[0,2]],suggerimento:'',senzaEtichette:true,
   ambiente:{stanza:0,vento:.25,foglie:.1,aria:.3,pioggia:0,fuoco:0},
   entra(s){NS.t=0;NS.fine=false;s.occupato=true;document.getElementById('bHint').style.display='none';A.say('');fadeTo(0,1.2)},
-  aggiorna(s,dt){if(NS.t<0)return;NS.t+=dt;if(!NS.fine&&NS.t>13){NS.fine=true;fadeTo(1,1.4,()=>{A.setHint('CONTINUA…',true)})}},
+  aggiorna(s,dt){NS.t+=dt;if(!NS.fine&&NS.t>.8+NS_LUNG/13.5+2.5){NS.fine=true;fadeTo(1,1.4,()=>{A.setHint('CONTINUA…',true)})}},
   sopra(gg,s){
-    const im=NS.img;if(!(im.complete&&im.naturalWidth))return;const v=13.5,d=Math.max(0,NS.t-.8)*v,[x,y0,seg]=nsPos(d);
-    if(NS.t<.8&&false)return;
-    const sulleScale=seg>=3,passo=d/16,fr=Math.floor(passo*6)%6,dip=sulleScale?Math.abs(Math.sin(passo*Math.PI*6/2))*1.3:Math.abs(Math.sin(passo*Math.PI*6/2))*.5;
+    const im=NS.img;if(!(im.complete&&im.naturalWidth))return;const v=13.5,d=Math.min(NS_LUNG,Math.max(0,NS.t-.8)*v),[x,y0,seg]=nsPos(d),camminando=d<NS_LUNG-.1&&NS.t>.8;
+    const rampa=seg<NS_RAMPA,passo=d/(rampa?15:19),ph=camminando?Math.floor(passo*4)%4:0,fr=(rampa?0:4)+ph;
+    const dip=camminando?(rampa?Math.abs(Math.sin(passo*Math.PI*4/2))*1.6:Math.abs(Math.sin(passo*Math.PI*4/2))*.5):0;
     const hLog=22+(y0-40)*.17,sc=hLog/34,ox=x,oy=y0+dip*sc;
     ell(ox,oy+.6,7*sc,2*sc,'#000',.35);
     gg.save();gg.imageSmoothingEnabled=false;const w=120/RS*sc,h=150/RS*sc;gg.drawImage(im,fr*120,0,120,150,Math.round(ox-w/2),Math.round(oy-h+sc),w,h);gg.restore()}
