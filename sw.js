@@ -1,11 +1,11 @@
 // Service worker: il gioco funziona offline.
 // - i file del gioco (immagini, audio, icone) sono salvati alla prima apertura (sempre scaricati freschi: cache reload) e serviti dalla memoria del telefono;
 // - la pagina, gli script (.js), gli indici (.json) e questo file si chiedono prima alla rete (cosi' gli aggiornamenti arrivano subito) e, senza rete, si usa la copia salvata.
-const VERSION = "18 nov 18:40";
+const VERSION = "18 nov 19:10";
 const CACHE = "mistero-" + VERSION;
 const FILES = [
   "./",
-  "apple-touch-icon.png",
+  "apple-touch-icon-vortex.png",
   "audio/effetti/indice.json",
   "audio/effetti/ramone-1-057be5bb.mp3",
   "audio/effetti/ramone-1-3e2102d6.mp3",
@@ -497,9 +497,9 @@ const FILES = [
   "audio/versi/bela_v2.mp3",
   "audio/versi/lara_ehila_r1.mp3",
   "audio/versi/miao_khora_v2.mp3",
-  "audio/versi/miao_mia_v3.mp3",
-  "icon-192.png",
-  "icon-512.png",
+  "audio/versi/miao_mia_v4.mp3",
+  "icona-vortex-192.png",
+  "icona-vortex-512.png",
   "img/char-r19/anna-senza-giacca.json",
   "img/char-r19/anna-senza-giacca.png",
   "img/char-r19/anna.json",

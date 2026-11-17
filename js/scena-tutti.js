@@ -69,7 +69,7 @@ function verso(tipo,f0){
   o.connect(f1);f1.connect(gn);gn.connect(AU.master);o.start(t);lfo.start(t);o.stop(t+d+.05);lfo.stop(t+d+.05);return d}
 
 /* versi veri (registrazioni libere di Wikimedia Commons, in audio/versi); se non si caricano resta il verso sintetizzato */
-const VERSI={khora:['miao_khora_v2'],mia:['miao_mia_v3'],capra:['bela_v2']};
+const VERSI={khora:['miao_khora_v2'],mia:['miao_mia_v4'],capra:['bela_v2']};
 let versoAttuale=null;   // un solo verso alla volta: quello nuovo ferma sempre il precedente
 function versoReale(nome){
   const l=VERSI[nome];if(!l||AU.muted)return Promise.resolve(null);

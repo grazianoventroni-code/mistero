@@ -129,17 +129,18 @@ function stella(gg,x,y,k){   // luccichio: croce di luce che pulsa
 const MIA={fatto:false};
 function vaiLibero(m,x,y){return new Promise(r=>{m.path=[[x,y]];m.arrivo=null;const iv=setInterval(()=>{if(!m.path.length){clearInterval(iv);r()}},60)})}
 /* (17 nov) quando Mia miagola Nick si toglie il cappello e si gratta la testa (pose cap_1..5 dall'atlante) */
-function gagCappello(s){const p=s.giocatore;if(!p||!p.has||!p.has('cap_1'))return;
+function gagCappello(s,muto){const p=s.giocatore;if(!p||!p.has||!p.has('cap_1'))return;
   p.fermaCamminata&&p.fermaCamminata(false);p.dir='S';p.axe=false;p.state='act';
   p.seq=[['cap_1',.55],['cap_2',.5],['cap_3',.42],['cap_4',.42],['cap_3',.42],['cap_2',.42],['cap_4',.42],['cap_5',.7],['#',0]];p.si=0;p.st=0;
+  if(muto)return;   // con Mia Nick non emette versi: si sente solo il miagolio
   FIATO.suona('protagonista-esterno','sorpresa',1,1);setTimeout(()=>FIATO.suona('protagonista-esterno','dubbio',1,.9),1500)}
 async function passaMia(s){
   const m=s.attori&&s.attori.mia;if(!m){MIA.fatto=true;return}
   m.x=262;m.y=116;m.dir='W';m.corsa=false;m.vel=22;m.visibile=true;
   await vaiLibero(m,122,116);                       // attraversa fino al centro
   m.dir='S';await pausa(.7);                        // si gira verso chi guarda
-  try{A.motore.suonaClip('audio/versi/miao_mia_v3.mp3')}catch(e){}
-  gagCappello(s);
+  try{A.motore.suonaClip('audio/versi/miao_mia_v4.mp3',1.2)}catch(e){}
+  gagCappello(s,true);
   m.talking=true;const iv=setInterval(()=>{m.bocca=1+Math.floor(Math.random()*4)},120);await pausa(1.4);clearInterval(iv);m.talking=false;m.bocca=1;
   await pausa(.6);m.dir='W';
   await vaiLibero(m,-40,116);m.visibile=false;MIA.fatto=true}
@@ -285,7 +286,7 @@ function disegnaFurgone(gg,s){
    - smerigliatrice: rumore largo e acuto con scintille; cricchetto: serie di scatti; lamiere e utensili che cadono
    forte=true: il primo, fragoroso. */
 function rumoriAttrezzi(dur,forte){
-  const T=A.tone,N=A.nburst,R_=Math.random,vf=forte?1:.5;
+  const T=A.tone,N=A.nburst,R_=Math.random,vf=forte?1.9:.5;   // (18 nov) forte = fragore caotico da officina
   const clang=(pan,v)=>{N(2500+R_()*2500,.6,.03,.8*v*vf,'highpass',pan,.2);for(const f of [680+R_()*400,1450+R_()*600,2900+R_()*900])N(f,22,.12+R_()*.1,.5*v*vf,'bandpass',pan,.25);T(70,.12,'sine',.35*v*vf,38,pan,.1)};
   const maglio=(pan)=>{clang(pan,1);if(forte)setTimeout(()=>clang(-pan,.5),70)};
   const trapano=(pan)=>{for(let i=0;i<10;i++)setTimeout(()=>{T(150+R_()*20,.07,'square',.1*vf,170,pan,.1);N(1800+R_()*900,1.2,.07,.28*vf,'bandpass',pan,.1)},i*70)};
@@ -294,7 +295,7 @@ function rumoriAttrezzi(dur,forte){
   const lamiera=(pan)=>{N(1100,.7,.35,.35*vf,'bandpass',pan,.35);for(let i=0;i<7;i++)setTimeout(()=>N(1200+R_()*3000,12,.06,.4*vf,'bandpass',pan,.3),i*60+R_()*30)};
   const cadutaUtensile=(pan)=>{clang(pan,.6);setTimeout(()=>clang(pan,.35),130);setTimeout(()=>clang(pan,.2),250)};
   const fondo=()=>{for(let k=0;k<Math.ceil(dur/.45);k++)setTimeout(()=>{N(110+R_()*30,.7,.6,.22*vf,'lowpass',0,.1)},k*450)};fondo();   // brontolio di fondo dell'officina
-  let t=.1,ritmo=forte?.45:.6;
+  const corsia=(t0,r0)=>{let t=t0,ritmo=r0;
   while(t<dur){const r=R_(),pan=(R_()*2-1)*.35;
     if(r<.42){const n=forte?3+Math.floor(R_()*4):2+Math.floor(R_()*2);for(let q=0;q<n;q++)setTimeout(()=>maglio(pan),(t+q*ritmo*.6)*1000);t+=n*ritmo*.6+.2}
     else if(r<.6){setTimeout(()=>trapano(pan),t*1000);t+=.85}
@@ -302,7 +303,8 @@ function rumoriAttrezzi(dur,forte){
     else if(r<.82){setTimeout(()=>cricchetto(pan),t*1000);t+=.6}
     else if(r<.92){setTimeout(()=>cadutaUtensile(pan),t*1000);t+=.6}
     else{setTimeout(()=>lamiera(pan),t*1000);t+=.6}
-    ritmo=Math.max(.3,ritmo*.97)}}
+    ritmo=Math.max(.2,ritmo*.97)}};
+  corsia(.1,forte?.32:.6);if(forte){corsia(.25,.27);corsia(.4,.37);setTimeout(()=>{for(let i=0;i<5;i++)setTimeout(()=>cadutaUtensile((R_()*2-1)*.5),i*220)},dur*500)}}
 /* Nick di spalle che prende il fusibile (pose nuove nick_fusibile_r1: 0 fermo, 1 mano aperta, 2 con il fusibile): disegnato al posto dello sprite normale, stessa scala e stessi piedi */
 function disegnaNickFusibile(gg,s){const p=s.giocatore,im=PONTE.nickF;if(!p||PONTE.nf<0||!(im.complete&&im.naturalWidth))return;
   const sc=p.scala()/RS,dw=124*sc,dh=130*sc;ell(p.x,p.y,dw*.2,Math.max(1,dh*.035),'#000',.38);
@@ -543,7 +545,8 @@ async function CAPRA_FUSIBILE(s,p){   // il fusibile viene inserito nel Flusso C
     await p.vaiA(14,116,false,'E');p.dir='E';A.removeItem('fusibile');C2.fusibile=false;
     p.state='act';p.seq=[['reach',1.1],['#',0]];p.si=0;p.st=0;await pausa(.55);
     A.tone(900,.05,'square',.05,520,.3,.3);A.nburst(3200,6,.03,.05,'bandpass',.3,.3);await pausa(.25);A.tone(130,.18,'sawtooth',.04,60,.3,.3);
-    CAPS.on=true;ronzio();await pausa(1.2);p.state='idle';p.dir='E'});
+    CAPS.on=true;ronzio();if(window.musicaMacchinario)try{window.musicaMacchinario()}catch(e){}   // (18 nov) PUNTO DI INNESTO della musichetta (da descrivere)
+    await pausa(1.2);p.state='idle';p.dir='E'});
   CAPS.busy=false}
 registraScena({
   id:'c2-capra',inventario:true,sfondo:'img/scene/ponte-diavolo-var5.png',
