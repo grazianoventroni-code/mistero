@@ -341,6 +341,15 @@ async function scenaPanino(s){
   PONTE.nf=0;await pausa(.6);PONTE.nf=-1;p.visibile=true;p.dir='N';await pausa(.3);
   A.sting('scoperta',.7);A.giveItem('fusibile');C2.fusibile=true;PONTE.muto=false;PONTE.tv=4;
   await pausa(1.6);s.vaiScena('c2-ponte-film',{x:188,y:116,dir:'N'})}   // si avvia verso il ponte: filmato
+/* (18 nov) I DUE BLUES BROTHERS davanti al furgone mangiano (solo nel finale, quando Nick ritorna dal ponte): l'ALTO un hot dog, il BASSO un toast.
+   Strisce 8 pose (ChatGPT gventroni, _strumenti/bb_mangia.py): 0 panino in basso, 1 sale, 2 vicino alla bocca, 3 morso, 4 bocca piena, 5-6 mastica (guance gonfie), 7 ridiscende. Piedi sul fondo della cella. */
+const BB={alto:{img:mkImg('img/emb/bb_alto_mangia_r1.png'),H:1.85,x:112,f:0},basso:{img:mkImg('img/emb/bb_basso_mangia_r1.png'),H:1.68,x:140,f:1.7}};
+const BB_DUR=[1.0,.3,.3,.5,.55,.5,.5,.45],BB_TOT=BB_DUR.reduce((a,b)=>a+b,0);
+function disegnaBB(gg,s){if(!C2.corsaFinale)return;const yh=PROSP.orizzonte(PONTE.YR,PONTE.SR),y=117,ppm=(y-yh)/PROSP.HC;
+  for(const k of ['alto','basso']){const b=BB[k],im=b.img;if(!(im.complete&&im.naturalWidth))continue;
+    let t=(s.t+b.f)%BB_TOT,i=0;while(i<7&&t>=BB_DUR[i]){t-=BB_DUR[i];i++}
+    const cw=im.naturalWidth/8,ch=im.naturalHeight,hh=b.H*ppm,dw=hh*cw/ch;ell(b.x,y+.4,dw*.4,1.5,'#000',.32);
+    gg.save();gg.imageSmoothingEnabled=true;gg.imageSmoothingQuality='high';gg.drawImage(im,Math.floor(i)*cw,0,cw,ch,b.x-dw/2,y-hh,dw,hh);gg.restore()}}
 registraScena({
   id:'c2-ponte',inventario:true,sfondo:'img/scene/ponte-diavolo-var3.png',
   giocatore:'protagonista-esterno',nomeGiocatore:'NICK',
@@ -360,11 +369,11 @@ registraScena({
       const dx=Math.round(Math.sin(s.t*5)*1.5);gg.save();gg.translate(dx,0);
       for(const [c,o] of [['#05060a',1],['#ffd23a',0]]){gg.fillStyle=c;gg.beginPath();gg.moveTo(3-o,52);gg.lineTo(14,45-o);gg.lineTo(14,49);gg.lineTo(25+o,49);gg.lineTo(25+o,55);gg.lineTo(14,55);gg.lineTo(14,59+o);gg.closePath();gg.fill()}
       gg.restore()}},
-  oggetti:[{baseY:PONTE.RUOTE,disegna(gg,s){disegnaFurgone(gg,s)}}],
+  oggetti:[{baseY:PONTE.RUOTE,disegna(gg,s){disegnaFurgone(gg,s)}},{baseY:117,disegna(gg,s){disegnaBB(gg,s)}}],
   entra(s){fadeTo(0,2.5);const p=s.giocatore;
     if(C2.ritorno){   // (18 nov) ritorno dalle scale: Nick riattraversa il ponte e arriva davanti al furgone
       C2.ponteVisto=true;s.occupato=true;document.getElementById('bHint').style.display='none';PONTE.muto=false;
-      s.sequenza(async()=>{await p.vaiA(100,117,!!C2.corsaFinale,'N');p.corsa=false;p.dir='N';await pausa(1.2);A.setHint('CONTINUA…',true)});return}
+      s.sequenza(async()=>{await p.vaiA(C2.corsaFinale?172:100,117,!!C2.corsaFinale,C2.corsaFinale?'W':'N');p.corsa=false;p.dir=C2.corsaFinale?'W':'N';await pausa(1.2);A.setHint('CONTINUA…',true)});return}
     if(/[?&](panino|consegna)/.test(location.search)&&!C2.fusibile)C2.ponteVisto=true;   // link diretto ?c2-ponte&panino: salta alla scena del panino e del fusibile
     if(C2.ponteVisto&&!C2.fusibile){s.sequenza(()=>scenaPanino(s))}   // tornato dal ponte: la scena del panino
     else if(!C2.ponteVisto)s.sequenza(async()=>{await pausa(1.0);C2.ponteDetto=true;await dn(s,p,'Vediamo se il mio sogno aveva ragione.')})},   // subito: parla e compare la freccia
@@ -554,7 +563,7 @@ async function CAPRA_FUSIBILE(s,p){   // il fusibile viene inserito nel Flusso C
     A.tone(900,.05,'square',.05,520,.3,.3);A.nburst(3200,6,.03,.05,'bandpass',.3,.3);await pausa(.25);A.tone(130,.18,'sawtooth',.04,60,.3,.3);
     CAPS.on=true;ronzio();await pausa(1.2);p.state='idle';p.dir='E';
     await pausa(.9);await s.dici(p,'Vediamo se da qui riesco a vedere il furgone dei panini.',{frontale:false});   // (18 nov) poi: ponte con il simbolo inciso, primo piano, corsa verso il furgone
-    C2.finale=true;await pausa(.3);s.vaiScena('c2-simbolo',{x:94,y:116,dir:'W'})});
+    C2.finale=true;await pausa(.3);s.vaiScena('c2-simbolo',{x:70,y:117,dir:'W'})});
   CAPS.busy=false}
 registraScena({
   id:'c2-capra',inventario:true,sfondo:'img/scene/ponte-diavolo-var5.png',
@@ -615,14 +624,15 @@ registraScena({
 const SIMB={t:0,x:57,y:50};   // posizione del simbolo celtico sul muro dell'arco (px logici)
 registraScena({
   id:'c2-simbolo',sfondo:'img/scene/ponte-simbolo-inciso.png',
-  giocatore:'protagonista-esterno',nomeGiocatore:'NICK',partenza:{x:84,y:116,dir:'W'},
-  area:[[4,108],[96,108],[96,119],[4,119]],ostacoli:[],rif:[112,2.0],audioPassi:false,
+  giocatore:'protagonista-esterno',nomeGiocatore:'NICK',partenza:{x:70,y:117,dir:'W'},
+  area:[[4,106],[72,106],[72,119],[4,119]],ostacoli:[],rif:[112,1.7],audioPassi:false,
   ambiente:{stanza:0,vento:.3,foglie:.2,aria:.4,pioggia:0,fuoco:0},suggerimento:'',senzaEtichette:true,
   aggiorna(s,dt){SIMB.t+=dt;ambienteGiorno(dt,false)},
   sopra(gg,s){const k=SIMB.lampo||0;if(k<=0)return;gg.save();gg.globalCompositeOperation='lighter';   // il simbolo si accende appena Nick lo vede
     const a=Math.min(1,k)*(.55+.2*Math.sin(SIMB.t*9));for(let i=0;i<6;i++){gg.globalAlpha=a*.12;gg.fillStyle='#9fffd0';gg.beginPath();gg.arc(SIMB.x,SIMB.y,6+i*3.2,0,6.283);gg.fill()}gg.restore()},
   entra(s){const p=s.giocatore;s.occupato=true;document.getElementById('bHint').style.display='none';SIMB.t=0;SIMB.lampo=0;fadeTo(0,1.6);
-    s.sequenza(async()=>{await pausa(1.4);await p.vaiA(80,113,false,'W');p.dir='W';await pausa(.9);
+    s.sequenza(async()=>{await pausa(1.4);await p.vaiA(46,116,false,'E');p.dir='E';await pausa(2.2);   // si ferma davanti al muretto e guarda il fiume (a destra)
+      p.dir='N';await pausa(.9);                                                           // poi si gira: ecco il simbolo
       A.musicStart&&A.musicStart('mystery',3);A.sting('simbolo');                                // rivelazione e tensione (provvisorio: musiche gia' presenti)
       for(let i=0;i<=20;i++){SIMB.lampo=i/20;await pausa(.05)}await pausa(1.0);A.sting('scoperta',.6);await pausa(1.6);
       s.vaiScena('c2-primopiano')})}
