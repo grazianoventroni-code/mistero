@@ -398,7 +398,7 @@ class Scena{
     if(this.cfg.sotto)this.cfg.sotto(g,this);
     const lista=[];
     for(const k in this.attori){const a=this.attori[k];if(a.visibile!==false)lista.push({y:a.y,f:()=>a.draw(a.scala())})}
-    for(const o of this.oggetti){if(o.visibile&&!o.visibile(this))continue;lista.push({y:o.baseY??(o.y||0),f:()=>{if(o.img&&o.img.complete&&o.img.naturalWidth)g.drawImage(o.img,o.x,o.y,o.w||o.img.naturalWidth,o.h||o.img.naturalHeight);if(o.disegna)o.disegna(g,this)}})}
+    for(const o of this.oggetti){if(o.visibile&&!o.visibile(this))continue;lista.push({y:o.baseYf?o.baseYf(this):(o.baseY??(o.y||0)),f:()=>{if(o.img&&o.img.complete&&o.img.naturalWidth)g.drawImage(o.img,o.x,o.y,o.w||o.img.naturalWidth,o.h||o.img.naturalHeight);if(o.disegna)o.disegna(g,this)}})}
     lista.sort((a,b)=>a.y-b.y);for(const e of lista)e.f();
     g.globalAlpha=1;
     if(this.cfg.sopra)this.cfg.sopra(g,this);

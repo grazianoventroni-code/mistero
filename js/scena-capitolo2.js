@@ -469,15 +469,17 @@ function s_capraNick(){const sc=scenes['c2-capra'];return sc&&sc.giocatore}
 function s_capraCapra(){const sc=scenes['c2-capra'];return sc&&sc.attori&&sc.attori.capra}
 /* STATO: nutrita = la capra ha mangiato la mela (smette di attaccare); on = il macchinario ha il fusibile (vibra e ronza); busy = sequenza in corso */
 const CAPS={nutrita:false,on:false,busy:false,t:0,last:0,hum:null};
-const CAPRA={mac:mkImg('img/emb/macchinario_flusso_r3.png'),MX:50,MY:112,TX:49,TY:73,GX:98,GY:99,L:74,YX:.177,YY:.407};
+const CAPRA={mac:mkImg('img/emb/macchinario_flusso_r3.png'),MX:50,MY:112,TX:51,TY:96,GX:98,GY:99,L:60,YX:.177,YY:.407};
 /* pose nuove (ChatGPT, account gventroni): nick_spavento_r1 (8 celle 124x150), capra_cariche_r2 (8 celle 160x110), capra_mangia_r1 (8 celle 160x110), nick_offre_r1 (4 celle 160x150)
    capra: 0 bela, 1 testa bassa, 2-4 carica, 5 frenata a fine corda, 6 sbuffa, 7 torna indietro | mangia: 0 annusa, 1 morde, 2-5 mastica, 6 deglutisce, 7 soddisfatta
    Nick: spavento 0 sorpreso, 1 salto, 2 atterra, 3-6 passi indietro, 7 ansima | offre 0 mela sul palmo, 1 palmo vuoto, 2 rilassato, 3 tocca il cappello */
-const CAP_P={nick:mkImg('img/emb/nick_spavento_r1.png'),capra:mkImg('img/emb/capra_cariche_r2.png'),mangia:mkImg('img/emb/capra_mangia_r1.png'),offre:mkImg('img/emb/nick_offre_r1.png'),n:-1,c:-1,m:-1,o:-1,davanti:false};
+const CAP_P={nick:mkImg('img/emb/nick_spavento_r1.png'),capra:mkImg('img/emb/capra_cariche_r2.png'),mangia:mkImg('img/emb/capra_mangia_r1.png'),offre:mkImg('img/emb/nick_offre_r1.png'),atl:mkImg('img/char-r19/capra.png'),n:-1,c:-1,m:-1,o:-1,davanti:false};
+/* punto dove finisce la corda dello sprite (coda a terra), in px della cella: la corda del tavolo si attacca LI' (e' la stessa corda legata al collo della capra) */
+const CODA={idle:[17,75],c:[[39,100],[36,101],[32,101],[51,101],[20,101],[9,90],[40,100],[38,101]],m:[[44,102],[45,101],[44,102],[44,102],[45,102],[44,102],[45,102],[45,102]]};
 window.__CAP={CAPS,CAP_P,CAPRA,ronzio};   // (debug)
-const capraPose=()=>[CAP_P.nick,CAP_P.capra,CAP_P.mangia,CAP_P.offre].every(i=>i.complete&&i.naturalWidth>0);
-function disegnaPosa(g,a,img,i,CW,CH,sh){if(!a||i<0)return;const sc=a.scala(),w=CW/RS*sc,h=CH/RS*sc;ell(a.x,a.y+.6,sh*sc,2*sc,'#000',.35);
-  g.save();g.imageSmoothingEnabled=false;g.drawImage(img,i*CW,0,CW,CH,Math.round(a.x-w/2),Math.round(a.y-h+sc),Math.round(w),Math.round(h));g.restore()}
+const capraPose=()=>[CAP_P.nick,CAP_P.capra,CAP_P.mangia,CAP_P.offre,CAP_P.atl].every(i=>i.complete&&i.naturalWidth>0);
+function disegnaPosa(g,a,img,i,CW,CH,sh,sx0=0){if(!a||i<0)return;const sc=a.scala(),w=CW/RS*sc,h=CH/RS*sc;ell(a.x,a.y+.6,sh*sc,2*sc,'#000',.35);
+  g.save();g.imageSmoothingEnabled=false;g.drawImage(img,sx0+i*CW,0,CW,CH,Math.round(a.x-w/2),Math.round(a.y-h+sc),Math.round(w),Math.round(h));g.restore()}
 /* ronzio del motore (rumore + onde gravi, nessuna musica): parte quando si inserisce il fusibile; si spegne da solo quando la scena non e' piu' attiva */
 function ronzio(){
   const au=A.AU;if(!au||!au.ctx||CAPS.hum||au.muted)return;const c=au.ctx,t=c.currentTime,out=au.master||c.destination;
@@ -506,7 +508,7 @@ async function CAPRA_CARICA(s,p){   // la capra PUNTA Nick, carica fino al limit
   await caricaP;CAP_P.c=5;await pausa(.5);CAP_P.c=6;
   await pausa(.6);CAP_P.davanti=false;CAP_P.c=7;
   await new Promise(r=>{let tr=0;const iv=setInterval(()=>{tr+=.03;const u=Math.min(1,tr/1.6);g.x=gx+(x0-gx)*u;g.y=gy+(y0-gy)*u;if(u>=1){clearInterval(iv);r()}},30)});
-  await pausa(.3);g.x=x0;g.y=y0;g.visibile=true;g.dir='S';CAP_P.c=-1;p.visibile=true;p.dir='W';p.state='idle';CAP_P.n=-1}
+  await pausa(.3);g.x=x0;g.y=y0;g.dir='S';CAP_P.c=-1;p.visibile=true;p.dir='W';p.state='idle';CAP_P.n=-1}
 async function CAPRA_MANGIA(s,p){   // Nick offre la mela, la capra la mangia (e da quel momento non attacca piu')
   CAPS.busy=true;await s.sequenza(async()=>{
     const g=s.attori.capra;A.removeItem('mela');C2.mela=false;
@@ -533,17 +535,19 @@ registraScena({
   rif:[100,2.016],audioPassi:false,
   ambiente:{stanza:0,vento:.2,foglie:.1,aria:.3,pioggia:0,fuoco:0},suggerimento:'',senzaEtichette:true,
   oggetti:[
-    {get baseY(){const n=s_capraNick();return n?n.y:0},disegna(g,s){const p=s.giocatore;if(!capraPose())return;if(CAP_P.n>=0)disegnaPosa(g,p,CAP_P.nick,CAP_P.n,124,150,7);else if(CAP_P.o>=0)disegnaPosa(g,p,CAP_P.offre,CAP_P.o,160,150,7)}},
-    {get baseY(){const c=s_capraCapra(),n=s_capraNick();return CAP_P.davanti&&n?n.y+.5:(c?c.y:0)},disegna(g,s){const c=s.attori&&s.attori.capra;if(!capraPose())return;if(CAP_P.c>=0)disegnaPosa(g,c,CAP_P.capra,CAP_P.c,160,110,11);else if(CAP_P.m>=0)disegnaPosa(g,c,CAP_P.mangia,CAP_P.m,160,110,11)}},
+    {baseYf:s=>s.giocatore?s.giocatore.y:0,disegna(g,s){const p=s.giocatore;if(!capraPose())return;if(CAP_P.n>=0)disegnaPosa(g,p,CAP_P.nick,CAP_P.n,124,150,7);else if(CAP_P.o>=0)disegnaPosa(g,p,CAP_P.offre,CAP_P.o,160,150,7)}},
+    {baseYf:s=>{const c=s.attori&&s.attori.capra,n=s.giocatore;return CAP_P.davanti&&n?n.y+.5:(c?c.y:0)},disegna(g,s){const c=s.attori&&s.attori.capra;if(!capraPose())return;   // la capra e' SEMPRE disegnata con queste pose (anche ferma) cosi' la corda combacia
+      if(CAP_P.c>=0)disegnaPosa(g,c,CAP_P.capra,CAP_P.c,160,110,11);else if(CAP_P.m>=0)disegnaPosa(g,c,CAP_P.mangia,CAP_P.m,160,110,11);else disegnaPosa(g,c,CAP_P.atl,0,91,85,11,182)}},
     {baseY:CAPRA.MY,disegna(g){const im=CAPRA.mac;if(!(im.complete&&im.naturalWidth))return;   // macchinario (1,2 m di larghezza in prospettiva); acceso: vibra
       const w=1.2*(CAPRA.MY-40)/1.6,h=w*im.naturalHeight/im.naturalWidth,X=CAPRA.MX-w/2,Y=CAPRA.MY-h+1;ell(CAPRA.MX,CAPRA.MY+.5,w*.5,1.6,'#000',.35);
       const ox=CAPS.on?Math.round(Math.sin(CAPS.t*95)*.8):0,oy=CAPS.on?Math.round(Math.sin(CAPS.t*61+1.3)*.6):0;
       g.save();g.imageSmoothingEnabled=true;g.imageSmoothingQuality='high';g.drawImage(im,Math.round(X+ox),Math.round(Y+oy),Math.round(w),Math.round(h));
       const gx=X+w*CAPRA.YX+ox,gy=Y+h*CAPRA.YY+oy,a=CAPS.on?.5+.25*Math.sin(CAPS.t*9):.2+.07*Math.sin(CAPS.t*2);   // bagliore neon dei tubi
       g.globalCompositeOperation='lighter';const gr=g.createRadialGradient(gx,gy,0,gx,gy,w*.22);gr.addColorStop(0,`rgba(110,215,255,${a})`);gr.addColorStop(1,'rgba(110,215,255,0)');g.fillStyle=gr;g.fillRect(gx-w*.25,gy-w*.25,w*.5,w*.5);g.restore()}},
-    {baseY:CAPRA.GY-1,disegna(g,s){const c=s.attori&&s.attori.capra;if(!c)return;   // corda: lenta a riposo, tesa quando la capra tira
-      const x0=CAPRA.TX,y0=CAPRA.TY,x1=Math.round(c.x-4),y1=Math.round(c.y-c.altezza()*.55),d=Math.hypot(x1-x0,y1-y0),tn=Math.min(1,d/CAPRA.L),sag=15*Math.sqrt(Math.max(0,1-tn*tn));
-      g.save();g.fillStyle='#d2b27a';for(let i=0;i<=28;i++){const u=i/28,x=x0+(x1-x0)*u,y=y0+(y1-y0)*u+Math.sin(Math.PI*u)*sag;g.fillRect(Math.round(x),Math.round(y),1,1)}g.restore()}}
+    {baseY:CAPRA.TY,disegna(g,s){const c=s.attori&&s.attori.capra;if(!c||!capraPose())return;   // la corda dello sprite continua a terra fino al piede del tavolo (dietro il macchinario): lenta a riposo, tesa quando la capra tira
+      let CW=91,CH=85,t=CODA.idle;if(CAP_P.c>=0){CW=160;CH=110;t=CODA.c[CAP_P.c]}else if(CAP_P.m>=0){CW=160;CH=110;t=CODA.m[CAP_P.m]}
+      const sc=c.scala(),w=CW/RS*sc,h=CH/RS*sc,x1=c.x-w/2+t[0]/CW*w,y1=c.y-h+sc+t[1]/CH*h,x0=CAPRA.TX,y0=CAPRA.TY,d=Math.hypot(x1-x0,y1-y0),tn=Math.min(1,d/CAPRA.L),amp=2.6*Math.sqrt(Math.max(0,1-tn*tn));
+      g.save();g.fillStyle='#d98a5c';for(let i=0;i<=40;i++){const u=i/40,x=x0+(x1-x0)*u,y=y0+(y1-y0)*u+Math.sin(u*Math.PI*3)*amp*Math.sin(Math.PI*u);g.fillRect(Math.round(x),Math.round(y),1,1);g.fillRect(Math.round(x),Math.round(y)+1,1,1)}g.restore()}}
   ],
   /* ogni volta che Nick si avvicina alla capra (finche' non ha mangiato la mela) lei lo attacca */
   aggiorna(s,dt){CAPS.t+=dt;CAPS.last=performance.now();
@@ -558,6 +562,7 @@ registraScena({
     if(id==='fusibile'&&!CAPS.on&&x>=20&&x<=82&&y>=74&&y<=118){if(CAPS.nutrita)CAPRA_FUSIBILE(s,p);else{CAPS.busy=true;s.sequenza(async()=>{try{await p.vaiA(150,111,false,'W');await CAPRA_CARICA(s,p)}finally{CAPS.busy=false}})}return}
     A.sfx.no()},
   entra(s){   // arriva con tutto l'inventario: libro, fusibile e mela (anche da link diretto)
+    if(s.attori.capra)s.attori.capra.visibile=false;   // lo sprite normale e' sostituito dalle pose (anche da fermo)
     Object.assign(CAPS,{nutrita:false,on:false,busy:false,t:0});if(CAPS.hum){CAPS.hum.stop();CAPS.hum=null}CAP_P.n=CAP_P.c=CAP_P.m=CAP_P.o=-1;CAP_P.davanti=false;
     const S=A.S;if(S&&S.inv){let m=false;for(const id of ['book','fusibile','mela'])if(!S.inv.includes(id)){S.inv.push(id);m=true}S.bookOpen=true;if(m&&A.refreshInv)A.refreshInv()}
     fadeTo(0,1.6)}
