@@ -10,7 +10,7 @@
 "use strict";
 const M=A.motore;if(!M)return;
 const {registraScena,sfx}=M,{g,W,H,RS,R,ell,clamp,lerp,hash,mkImg,CHARS,setHint,fadeTo,setScene,scenes}=A;
-window.__C2=null;const C2={ponteDetto:false,ponteVisto:false,sveglio:false,specchio:false,pensato:false,visto:false,ascia:0,scavo:0,chiavi:false,tw:0};   // stato del capitolo 2
+window.__C2=null;const C2={ritorno:false,ponteDetto:false,ponteVisto:false,sveglio:false,specchio:false,pensato:false,visto:false,ascia:0,scavo:0,chiavi:false,tw:0};   // stato del capitolo 2
 window.__C2=C2;const sm=x=>{x=clamp(x,0,1);return x*x*(3-2*x)};
 const pausa=s=>new Promise(r=>setTimeout(r,s*1000));
 /* (13 nov) i testi di Nick stanno in basso, nello stesso riquadro del capitolo 1, con la sua voce (clip Kokoro, indice voci-r2) */
@@ -161,7 +161,7 @@ registraScena({
   oggetti:[{baseY:112,disegna(gg){AUTO.sc=PROSP.disegnaAuto(gg,IMG_AUTO34,YH_EST,AUTO.xs,AUTO.ys,21.4)||AUTO.sc}}],
   scatolaAuto:()=>PROSP.scatola(YH_EST,AUTO.xs,AUTO.ys,21.4),
   sotto(gg,s){
-    if(AUTO.sc)ell((AUTO.sc.x0+AUTO.sc.x1)/2,AUTO.sc.y1-1,(AUTO.sc.x1-AUTO.sc.x0)*.52,2.5,'#05060a',.4);   // ombra dell'auto
+    if(AUTO.sc)PROSP.ombraAuto(gg,AUTO.sc);   // ombra dell'auto (la stessa della scena di notte)
     if(!C2.chiavi&&C2.tw){const k=Math.max(0,Math.sin(s.t*2.6))**6;stella(gg,POZ.x,POZ.y,k)}},   // luccichio nel fango
   sopra(gg,s){
     const p=s.giocatore;if(!p)return;
@@ -204,9 +204,9 @@ registraScena({
   disegnaSfondo(gg,s){
     // dal parabrezza: il bosco e i monti dello stesso sfondo di giorno, ingranditi
     if(BG_EST2.complete&&BG_EST2.naturalWidth)gg.drawImage(BG_EST2,0,26,120,60,0,0,W,H);else R(0,0,W,H,'#6a9ac8');
-    if(IMG_CAR.complete&&IMG_CAR.naturalWidth)gg.drawImage(IMG_CAR,0,0);
+    if(IMG_CAR.complete&&IMG_CAR.naturalWidth)gg.drawImage(IMG_CAR,0,0,W,H);
     {const d=A.drive;if(d&&d.gauges){d.gauges(.9+.12*Math.sin(s.t*3.1));d.radio(s.t)}}   // (16 nov) quadro strumenti e autoradio accesi, come nella guida notturna
-    if(IMG_WHEEL.complete&&IMG_WHEEL.naturalWidth){const hw=IMG_WHEEL.naturalWidth,hh=IMG_WHEEL.naturalHeight,ws=.62,dw=Math.round(hw*ws),dh=Math.round(hh*ws),cy=Math.round(hh*.47*ws);
+    if(IMG_WHEEL.complete&&IMG_WHEEL.naturalWidth){const hw=IMG_WHEEL.naturalWidth,hh=IMG_WHEEL.naturalHeight,ws=.31,dw=Math.round(hw*ws),dh=Math.round(hh*ws),cy=Math.round(hh*.47*ws);
       gg.save();gg.translate(68,97);const wx0=-Math.round(dw/2),wy0=-cy;gg.drawImage(IMG_WHEEL,wx0,wy0,dw,dh);gg.drawImage(IMG_WHEEL,0,hh-1,hw,1,wx0,wy0+dh,dw,70);gg.restore()}
     gg.globalAlpha=.10;R(0,0,W,H,'#ffe0a0');gg.globalAlpha=1},   // luce del giorno nell'abitacolo
   ambiente:{stanza:.4,vento:.05,pioggia:0,fuoco:0},
@@ -360,6 +360,9 @@ registraScena({
       gg.restore()}},
   oggetti:[{baseY:PONTE.RUOTE,disegna(gg,s){disegnaFurgone(gg,s)}}],
   entra(s){fadeTo(0,2.5);const p=s.giocatore;
+    if(C2.ritorno){   // (18 nov) ritorno dalle scale: Nick riattraversa il ponte e arriva davanti al furgone
+      C2.ponteVisto=true;s.occupato=true;document.getElementById('bHint').style.display='none';PONTE.muto=false;
+      s.sequenza(async()=>{await p.vaiA(100,117,false,'N');p.dir='N';await pausa(1.2);A.setHint('CONTINUA…',true)});return}
     if(/[?&](panino|consegna)/.test(location.search)&&!C2.fusibile)C2.ponteVisto=true;   // link diretto ?c2-ponte&panino: salta alla scena del panino e del fusibile
     if(C2.ponteVisto&&!C2.fusibile){s.sequenza(()=>scenaPanino(s))}   // tornato dal ponte: la scena del panino
     else if(!C2.ponteVisto)s.sequenza(async()=>{await pausa(1.0);C2.ponteDetto=true;await dn(s,p,'Vediamo se il mio sogno aveva ragione.')})},   // subito: parla e compare la freccia
@@ -414,19 +417,32 @@ registraScena({
     ell(m.x,m.y+.4,w*.5,1,'#000',.3);gg.save();gg.imageSmoothingEnabled=false;gg.drawImage(MELA_IMG,Math.round(m.x-w/2),Math.round(m.y-h-w+1),w,w);
     if(FP.melaPronta&&!FP.melaRaccolta&&Math.sin(FP.t*5)>.3){gg.fillStyle='#fff';const cx=Math.round(m.x+w*.3),cy=Math.round(m.y-w-1);gg.fillRect(cx-2,cy,5,1);gg.fillRect(cx,cy-2,1,5)}
     gg.restore()},
-  entra(s){Object.assign(FP,{mela:null,melaT:0,melaPronta:false,melaRaccolta:false,attesaMela:false,patch:false,t:0,zn:6.95,zl:46,alphaL:0,incontro:false,laraFine:false,nickFermo:false,fine:false});s.occupato=true;document.getElementById('bHint').style.display='none';fadeTo(0,1.2)},
+  entra(s){Object.assign(FP,{mela:null,melaT:0,melaPronta:false,melaRaccolta:false,attesaMela:false,patch:false,t:0,zn:6.95,zl:40,alphaL:1,incontro:false,laraFine:false,nickFermo:false,fine:false});s.occupato=true;document.getElementById('bHint').style.display='none';fadeTo(0,1.2)},
   aggiorna(s,dt){
     const n=s.giocatore,l=s.attori['lara-croft'];if(!n||!l)return;FP.t+=dt;
     if(!l._alfa){const d0=l.draw.bind(l);l.draw=function(sc){g.save();g.globalAlpha=FP.alphaL;d0(sc);g.restore()};l._alfa=1}   // Lara emerge dalla lontananza (trasparenza che sale)
     if(!FP.patch&&LARA_WALK.complete&&LARA_WALK.naturalWidth&&l.c&&l.c.ready){FP.patch=true;const c0=l.c,fr={...c0.fr};for(let i=0;i<8;i++)fr['walk_S_'+(i+1)]={x:i*c0.w,y:0,w:c0.w,h:c0.h};l.c={...c0,img:LARA_WALK,fr}}
-    if(FP.t<.7){muovi(n,FP.zn,.30,'N',true);muovi(l,FP.zl,.62,'S',true);return}
     if(!FP.nickFermo){FP.zn+=PF.V*dt;muovi(n,FP.zn,.30,'N',false,dt)}else{n.state='idle'}
-    if(!FP.laraFine){FP.zl-=PF.VL*dt;FP.alphaL=Math.min(1,Math.max(FP.alphaL,(FP.t-.8)/3.2));muovi(l,FP.zl,.62+.16*Math.max(0,Math.min(1,(yZ(FP.zl)-108)/14)),'S',false,dt,PF.VL);if(l.x>246){FP.laraFine=true;l.visibile=false}}
+    if(!FP.laraFine){FP.zl-=PF.VL*dt;muovi(l,FP.zl,.62+.16*Math.max(0,Math.min(1,(yZ(FP.zl)-108)/14)),'S',false,dt,PF.VL);if(l.x>246){FP.laraFine=true;l.visibile=false}}
     if(FP.melaT&&!FP.mela&&FP.t>=FP.melaT){FP.mela={x:l.x+1,y:l.y,t0:FP.t};setTimeout(()=>{A.tone(210,.09,'sine',.05,120,.2,.3);A.nburst(900,4,.02,.02,'bandpass',.2,.3)},500);setTimeout(()=>{A.tone(260,.05,'sine',.025,170,.2,.3)},690)}
     if(FP.mela&&!FP.melaPronta&&!FP.melaRaccolta&&FP.t>=FP.mela.t0+.75){FP.melaPronta=true;const m=FP.mela,w=Math.max(4,6*(m.y-40)/60);FP.melaPunto.rect=[Math.round(m.x-7),Math.round(m.y-12),14,14];FP.melaPunto.cammina={x:n.x,y:n.y,dir:'E'}}
     if(!FP.incontro&&FP.zn>=FP.zl-.3){FP.incontro=true;FP.nickFermo=true;
       s.dici(l,'Ehilà!',{clip:'audio/versi/lara_ehila_r1.mp3',frontale:false});FP.melaT=FP.t+.6;   // (voce vera) Lara saluta e continua a camminare
       s.sequenza(async()=>{await pausa(1.1);n.dir='S';await pausa(.7);await s.dici(n,'Eppure mi pare di averla già vista.',{});await pausa(1.0);FP.attesaMela=true;const nx=n.x,ny=n.y;n.vaiA=async(x,y)=>x===nx&&y===ny})}}   // (18 nov) ora Nick puo' raccogliere la mela: il filmato prosegue verso le scale solo dopo   // (18 nov) vaiScena fa gia' la sua dissolvenza: una dissolvenza in piu' bloccava il passaggio alle scale
+});
+
+/* ---------------- (18 nov) FILMATO: il ritorno. Dopo il motore del Flusso Canalizzatore Nick risale le scale e ritraversa il ponte verso di noi (stessa visuale e stessa prospettiva del
+   filmato dell'incontro con Lara), poi arriva al furgone. Nick percorre la corsia sinistra da lontano (Z=30 m) a vicino (Z=6,95 m). ---------------- */
+const RIT={zn:30,t:0,fine:false};
+registraScena({
+  id:'c2-ritorno',sfondo:'img/scene/ponte-diavolo-var2.png',
+  giocatore:'protagonista-esterno',nomeGiocatore:'NICK',partenza:{x:120,y:60,dir:'S'},
+  area:[[0,0],[2,0],[2,2],[0,2]],rif:[100,2.016],audioPassi:false,
+  ambiente:{stanza:0,vento:.35,foglie:.3,aria:.4,pioggia:0,fuoco:0},suggerimento:'',senzaEtichette:true,
+  entra(s){Object.assign(RIT,{zn:30,t:0,fine:false});s.occupato=true;document.getElementById('bHint').style.display='none';fadeTo(0,1.0)},
+  aggiorna(s,dt){const n=s.giocatore;if(!n)return;RIT.t+=dt;
+    if(RIT.zn>6.95){RIT.zn-=2.4*dt;muovi(n,RIT.zn,.30,'S',false,dt,2.4)}
+    else if(!RIT.fine){RIT.fine=true;n.state='idle';s.sequenza(async()=>{await pausa(.3);s.vaiScena('c2-ponte',{x:6,y:118,dir:'E'})})}}
 });
 
 /* ---------------- (18 nov) FILMATO: Nick scende le scale (var1) ----------------
@@ -548,6 +564,8 @@ registraScena({
       g.save();g.imageSmoothingEnabled=true;g.imageSmoothingQuality='high';const im2=acc||!(CAPRA.macOff.complete&&CAPRA.macOff.naturalWidth)?im:CAPRA.macOff;g.drawImage(im2,Math.round(X+ox),Math.round(Y+oy),Math.round(w),Math.round(h));
       const gx=X+w*CAPRA.YX+ox,gy=Y+h*CAPRA.YY+oy,a=acc?(CAPS.on?.75:.42):.04;   // bagliore neon dei tubi
       g.globalCompositeOperation='lighter';const gr=g.createRadialGradient(gx,gy,0,gx,gy,w*.22);gr.addColorStop(0,`rgba(110,215,255,${a})`);gr.addColorStop(1,'rgba(110,215,255,0)');g.fillStyle=gr;g.fillRect(gx-w*.25,gy-w*.25,w*.5,w*.5);g.restore()}},
+    {baseY:300,disegna(g,s){if(!CAPS.on||Math.floor(CAPS.t*2.2)%2!==0)return;   // freccia gialla lampeggiante sulle scale: da li' si torna indietro
+      const dx=Math.round(Math.sin(CAPS.t*5)*1.2);g.save();g.translate(150+dx,40);for(const [c,o] of [['#05060a',1],['#ffd23a',0]]){g.fillStyle=c;g.beginPath();g.moveTo(0,-8-o);g.lineTo(-8-o,0);g.lineTo(-3,0);g.lineTo(-3,7+o);g.lineTo(3,7+o);g.lineTo(3,0);g.lineTo(8+o,0);g.closePath();g.fill()}g.restore()}},
     {baseY:CAPRA.TY,disegna(g,s){const c=s.attori&&s.attori.capra;if(!c||!capraPose())return;   // la corda dello sprite continua a terra fino al piede del tavolo (dietro il macchinario): lenta a riposo, tesa quando la capra tira
       let CW=91,CH=85,AX=45.5,t=CODA.idle,teso=false;if(CAP_P.t>=0){CW=230;CH=92;AX=140;t=CODA.t[CAP_P.t];teso=true}else if(CAP_P.w>=0){CW=160;CH=110;AX=80;t=CODA.w[CAP_P.w]}else if(CAP_P.c>=0){CW=160;CH=110;AX=80;t=CODA.c[CAP_P.c]}else if(CAP_P.m>=0){CW=160;CH=110;AX=80;t=CODA.m[CAP_P.m]}
       const sc=c.scala(),w=CW/RS*sc,h=CH/RS*sc,x1=c.x-AX/CW*w+t[0]/CW*w,y1=c.y-h+sc+t[1]/CH*h,x0=CAPRA.TX,y0=CAPRA.TY,d=Math.hypot(x1-x0,y1-y0),tn=Math.min(1,d/CAPRA.L),amp=teso?0:2.6*Math.sqrt(Math.max(0,1-tn*tn));
@@ -561,7 +579,8 @@ registraScena({
   aggiorna(s,dt){CAPS.t+=dt;CAPS.last=performance.now();
     if(CAPS.nutrita||CAPS.busy||s.occupato||!capraPose())return;const p=s.giocatore,g=s.attori.capra;
     if(p&&g&&Math.abs(p.x-CAPRA.GX)<46&&Math.abs(p.y-CAPRA.GY)<26){CAPS.busy=true;p.path=[];p.arrivo=null;p.state='idle';s.sequenza(async()=>{try{await CAPRA_CARICA(s,p)}finally{CAPS.busy=false}})}},
-  punti:[{nome:'',rect:[20,72,58,42],get cammina(){return CAPS.nutrita?{x:14,y:116,dir:'E'}:{x:150,y:111,dir:'W'}},usa:async(s,p)=>{if(!CAPS.nutrita){CAPS.busy=true;try{await CAPRA_CARICA(s,p)}finally{CAPS.busy=false}}}}],
+  punti:[{nome:'',rect:[128,26,46,46],cammina:{x:150,y:80,dir:'N'},visibile:()=>CAPS.on,usa:async(s,p)=>{C2.ritorno=true;p.dir='N';await pausa(.4);s.vaiScena('c2-ritorno')}},
+    {nome:'',rect:[20,72,58,42],get cammina(){return CAPS.nutrita?{x:14,y:116,dir:'E'}:{x:150,y:111,dir:'W'}},usa:async(s,p)=>{if(!CAPS.nutrita){CAPS.busy=true;try{await CAPRA_CARICA(s,p)}finally{CAPS.busy=false}}}}],
   /* trascinando dall'inventario: la MELA sulla capra, il FUSIBILE sul macchinario */
   hintTargets:(s,id)=>id==='mela'&&!CAPS.nutrita?[[78,56,40,46]]:(id==='fusibile'&&!CAPS.on?[[22,76,58,40]]:[]),
   dropItem:(s,id,x,y)=>{
@@ -579,7 +598,7 @@ registraScena({
 
 /* (18 nov) il LIBRO resta nell'inventario per tutta la durata del gioco: ogni scena del capitolo 2 controlla che ci sia (anche se si entra da un link diretto) */
 function assicuraLibro(){const S=A.S;if(S&&S.inv&&!S.inv.includes('book')){S.inv.unshift('book');S.bookOpen=true;if(A.refreshInv)A.refreshInv()}}
-for(const id of ['capitolo2','c2-esterno','c2-auto','c2-strada','c2-ponte','c2-ponte-vista','c2-ponte-film','c2-scale','c2-capra']){const sc=scenes[id];if(sc&&sc.cfg){const e=sc.cfg.entra;sc.cfg.entra=function(s){assicuraLibro();return e?e.call(this,s):undefined}}}
+for(const id of ['capitolo2','c2-esterno','c2-auto','c2-strada','c2-ponte','c2-ponte-vista','c2-ponte-film','c2-scale','c2-ritorno','c2-capra']){const sc=scenes[id];if(sc&&sc.cfg){const e=sc.cfg.entra;sc.cfg.entra=function(s){assicuraLibro();return e?e.call(this,s):undefined}}}
 /* da fine capitolo 1 (sogno) al capitolo 2 */
 window.__capitolo2=A.capitolo2=()=>{for(const k in C2)C2[k]=typeof C2[k]==='boolean'?false:0;fadeTo(1,1.8,()=>{setScene('capitolo2');fadeTo(0,9)})};   // (14 nov) la velocita' e' al secondo: 9 = schiarita in un decimo di secondo (prima 0,01: nero per minuti)
 });
