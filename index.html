@@ -2153,7 +2153,7 @@ const BUILD='18 nov 19:10';
 {const ve=document.getElementById('ver');if(ve)ve.textContent='v. '+BUILD;
  if(location.protocol.startsWith('http')){
   fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{
-    const m=t.match(/const BUILD='18 nov 19:10']+)'/);if(!m||m[1]===BUILD)return;
+    const m=t.match(/const BUILD='([^']+)'/);if(!m||m[1]===BUILD)return;
     try{if(sessionStorage.getItem('upd')===m[1])return;sessionStorage.setItem('upd',m[1])}catch(e){}
     const regs=navigator.serviceWorker&&navigator.serviceWorker.getRegistrations?navigator.serviceWorker.getRegistrations().then(rs=>Promise.all(rs.map(r=>r.update()))):Promise.resolve();
     regs.catch(()=>{}).then(()=>window.caches&&caches.keys?caches.keys().then(ks=>Promise.all(ks.map(k=>caches.delete(k)))):0).catch(()=>{}).then(()=>location.reload())}).catch(()=>{})}}
