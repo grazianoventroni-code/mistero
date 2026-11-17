@@ -552,8 +552,7 @@ async function CAPRA_FUSIBILE(s,p){   // il fusibile viene inserito nel Flusso C
     await p.vaiA(14,116,false,'E');p.dir='E';A.removeItem('fusibile');C2.fusibile=false;
     p.state='act';p.seq=[['reach',1.1],['#',0]];p.si=0;p.st=0;await pausa(.55);
     A.tone(900,.05,'square',.05,520,.3,.3);A.nburst(3200,6,.03,.05,'bandpass',.3,.3);await pausa(.25);A.tone(130,.18,'sawtooth',.04,60,.3,.3);
-    CAPS.on=true;ronzio();if(window.musicaMacchinario)try{window.musicaMacchinario()}catch(e){}   // (18 nov) PUNTO DI INNESTO della musichetta (da descrivere)
-    await pausa(1.2);p.state='idle';p.dir='E'});
+    CAPS.on=true;ronzio();await pausa(1.2);p.state='idle';p.dir='E'});
   CAPS.busy=false}
 registraScena({
   id:'c2-capra',inventario:true,sfondo:'img/scene/ponte-diavolo-var5.png',
