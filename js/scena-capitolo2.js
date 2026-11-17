@@ -501,6 +501,13 @@ const capraPose=()=>[CAP_P.nick,CAP_P.capra,CAP_P.mangia,CAP_P.offre,CAP_P.atl,C
 function disegnaPosa(g,a,img,i,CW,CH,sh,sx0=0,ax=CW/2){if(!a||i<0)return;const sc=a.scala(),w=CW/RS*sc,h=CH/RS*sc;ell(a.x,a.y+.6,sh*sc,2*sc,'#000',.35);
   g.save();g.imageSmoothingEnabled=false;g.drawImage(img,sx0+i*CW,0,CW,CH,Math.round(a.x-ax/CW*w),Math.round(a.y-h+sc),Math.round(w),Math.round(h));g.restore()}
 /* ronzio del motore (rumore + onde gravi, nessuna musica): parte quando si inserisce il fusibile; si spegne da solo quando la scena non e' piu' attiva */
+/* (18 nov) musichetta 8 bit del macchinario: ciclo di 4 battute in loop finche' si resta nella scena (stesso controllo del ronzio) */
+function musicaMacchinario(){
+  const au=A.AU;if(!au||!au.ctx||au.muted||CAPS.mus)return;const c=au.ctx;CAPS.mus=true;
+  A.motore.caricaClip('audio/musica/macchinario.mp3').then(b=>{if(!b){CAPS.mus=false;return}
+    const src=c.createBufferSource(),gn=c.createGain();src.buffer=b;src.loop=true;gn.gain.setValueAtTime(.0001,c.currentTime);gn.gain.linearRampToValueAtTime(.32,c.currentTime+1.2);src.connect(gn);gn.connect(au.master||c.destination);src.start();
+    const wd=setInterval(()=>{if(performance.now()-CAPS.last>700||au.muted){clearInterval(wd);const t=c.currentTime;gn.gain.cancelScheduledValues(t);gn.gain.setValueAtTime(gn.gain.value,t);gn.gain.linearRampToValueAtTime(.0001,t+.5);try{src.stop(t+.6)}catch(e){}CAPS.mus=false}},300)})}
+window.musicaMacchinario=musicaMacchinario;
 function ronzio(){
   const au=A.AU;if(!au||!au.ctx||CAPS.hum||au.muted)return;const c=au.ctx,t=c.currentTime,out=au.master||c.destination;
   const gm=c.createGain(),lp=c.createBiquadFilter(),o1=c.createOscillator(),o2=c.createOscillator(),og=c.createGain(),lfo=c.createOscillator(),lg=c.createGain(),lfo2=c.createOscillator(),lg2=c.createGain();

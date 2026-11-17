@@ -1,7 +1,7 @@
 // Service worker: il gioco funziona offline.
 // - i file del gioco (immagini, audio, icone) sono salvati alla prima apertura (sempre scaricati freschi: cache reload) e serviti dalla memoria del telefono;
 // - la pagina, gli script (.js), gli indici (.json) e questo file si chiedono prima alla rete (cosi' gli aggiornamenti arrivano subito) e, senza rete, si usa la copia salvata.
-const VERSION = "18 nov 19:40";
+const VERSION = "18 nov 20:10";
 const CACHE = "mistero-" + VERSION;
 const FILES = [
   "./",
@@ -491,6 +491,7 @@ const FILES = [
   "audio/gemelle/gemella-cf3284cf.mp3",
   "audio/gemelle/gemella-de4e9982.mp3",
   "audio/gemelle/indice.json",
+  "audio/musica/macchinario.mp3",
   "audio/prova-16k.mp3",
   "audio/temporale.wav",
   "audio/tuoni.mp3",
