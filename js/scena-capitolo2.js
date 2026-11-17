@@ -570,7 +570,8 @@ registraScena({
   entra(s){   // arriva con tutto l'inventario: libro, fusibile e mela (anche da link diretto)
     if(s.attori.capra)s.attori.capra.visibile=false;   // lo sprite normale e' sostituito dalle pose (anche da fermo)
     Object.assign(CAPS,{nutrita:false,on:false,busy:false,t:0});if(CAPS.hum){CAPS.hum.stop();CAPS.hum=null}CAP_P.n=CAP_P.c=CAP_P.m=CAP_P.o=CAP_P.t=CAP_P.w=-1;CAP_P.davanti=false;
-    const S=A.S;if(S&&S.inv){let m=false;for(const id of ['book','fusibile','mela'])if(!S.inv.includes(id)){S.inv.push(id);m=true}S.bookOpen=true;if(m&&A.refreshInv)A.refreshInv()}
+    const rip=window.__ripresa;window.__ripresa=false;   // ripresa da salvataggio: non rimetto nell'inventario gli oggetti di prova
+    const S=A.S;if(S&&S.inv&&!rip){let m=false;for(const id of ['book','fusibile','mela'])if(!S.inv.includes(id)){S.inv.push(id);m=true}S.bookOpen=true;if(m&&A.refreshInv)A.refreshInv()}
     fadeTo(0,1.6)}
 });
 

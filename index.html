@@ -10,7 +10,7 @@
 <meta name="theme-color" content="#000000">
 <script>/* (12 nov) pulizia: a ogni versione nuova si tolgono service worker e memoria vecchi e si ricarica una volta.
    Un service worker rimasto da versioni precedenti serviva script e indice delle voci superati (le voci non si sentivano). BUILD0 lo aggiorna pubblica.py. */
-(function(){var BUILD0='18 nov 14:30';try{if(!('serviceWorker' in navigator)||localStorage.getItem('mistero-build')===BUILD0)return;localStorage.setItem('mistero-build',BUILD0);window.__pulizia=1;
+(function(){var BUILD0='18 nov 15:10';try{if(!('serviceWorker' in navigator)||localStorage.getItem('mistero-build')===BUILD0)return;localStorage.setItem('mistero-build',BUILD0);window.__pulizia=1;
  var t=setTimeout(function(){location.reload()},4000);
  Promise.all([navigator.serviceWorker.getRegistrations().then(function(rs){return Promise.all(rs.map(function(r){return r.unregister()}))}),
    window.caches?caches.keys().then(function(ks){return Promise.all(ks.map(function(k){return caches.delete(k)}))}):0]).then(function(){clearTimeout(t);location.reload()},function(){clearTimeout(t);location.reload()})}catch(e){}})();</script>
@@ -52,6 +52,8 @@ button:active{background:#1a2438;transform:translate(1px,1px)}
 #inv .slot b{position:absolute;right:2px;bottom:0;font-size:11px;color:#d8cfb0;text-shadow:1px 1px #000;pointer-events:none}
 @keyframes pl{50%{background:#2a2014}}
 #bar button{padding:2px 0;width:var(--sl);height:calc(var(--sl)*.8);font-size:clamp(13px,4vh,18px);letter-spacing:0;opacity:.8}
+#bSave svg{display:block;margin:auto;width:1.25em;height:1.25em}
+#toast{position:fixed;z-index:7;right:calc(var(--sl) + 28px);top:10px;display:none;padding:6px 14px;background:rgba(10,13,20,.92);border:2px solid #d8cfb0;color:#d8cfb0;font-family:Verdana,'Trebuchet MS','DejaVu Sans',Arial,sans-serif;font-weight:800;font-size:clamp(11px,3.4vh,15px);letter-spacing:2px;pointer-events:none}
 #rot{display:none;position:fixed;inset:0;z-index:9;background:#05070c;color:#d8cfb0;align-items:center;justify-content:center;flex-direction:column;gap:18px;text-align:center;padding:24px;font-size:16px;letter-spacing:1px}
 #rot i{display:block;width:44px;height:74px;border:4px solid #d99a45;box-shadow:3px 3px 0 #000;animation:rt 2.2s steps(1) infinite}
 @keyframes rt{0%,45%{transform:rotate(0)}55%,100%{transform:rotate(90deg)}}
@@ -72,18 +74,18 @@ button:active{background:#1a2438;transform:translate(1px,1px)}
     <div id="dlg"><p id="txt"></p></div>
   </div>
   <div id="side">
-    <button id="bSkip" style="display:none">SALTA&nbsp;&nbsp;&#10140;</button><div id="bar"><button id="bHint">?</button><button id="bSnd">♪</button></div>
+    <button id="bSkip" style="display:none">SALTA&nbsp;&nbsp;&#10140;</button><div id="bar"><button id="bHint">?</button><button id="bSnd">♪</button><button id="bSave" aria-label="Salva la partita" style="display:none"><svg viewBox="0 0 16 16" shape-rendering="crispEdges" fill="currentColor"><path fill-rule="evenodd" d="M1 1h12l2 2v12H1zM4 1v5h8V1zM3 9h10v6H3z"/><rect x="9" y="2" width="2" height="3"/><rect x="4" y="10" width="8" height="1"/><rect x="4" y="12" width="6" height="1"/></svg></button></div><div id="toast"></div>
     <div id="inv"></div>
   </div>
 </div>
 <div id="probe" style="position:fixed;visibility:hidden;pointer-events:none;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)"></div>
 <div id="rot"><i></i><div>RUOTA IL TELEFONO<br>IN ORIZZONTALE</div></div>
 
-<script src="js/motore.js?v=18nov1430"></script>
-<script src="js/scena-demo.js?v=18nov1430"></script>
-<script src="js/scena-tutti.js?v=18nov1430"></script>
-<script src="js/scena-ramones.js?v=18nov1430"></script>
-<script src="js/scena-capitolo2.js?v=18nov1430"></script>
+<script src="js/motore.js?v=18nov1510"></script>
+<script src="js/scena-demo.js?v=18nov1510"></script>
+<script src="js/scena-tutti.js?v=18nov1510"></script>
+<script src="js/scena-ramones.js?v=18nov1510"></script>
+<script src="js/scena-capitolo2.js?v=18nov1510"></script>
 <script>
 (()=>{
 "use strict";
@@ -495,7 +497,21 @@ function save(){try{localStorage.setItem(SAVE,JSON.stringify({scene:S.scene,stov
 function resetState(){S.stove={wood:false,lit:false,litAt:-1000};S.inv=[];S.logs=0;S.logsLeft=3;S.candleLit=false;S.candleBath=false;S.bookOpen=false;S.bathSeen=false;S.keyTaken=false;S.binOpen=false;S.paperStage=0;S.dreamSeen=false}
 function loadState(sv){resetState();Object.assign(S.stove,sv.stove||{});S.inv=sv.inv||[];S.logs=sv.logs||0;S.logsLeft=(sv.logsLeft===undefined?3:sv.logsLeft);S.candleLit=!!sv.candleLit;S.candleBath=!!sv.candleBath;S.bookOpen=!!sv.bookOpen;S.bathSeen=!!sv.bathSeen;S.keyTaken=!!sv.keyTaken;if(sv.scene!=='drive'&&!S.inv.includes('matches')&&!(sv.stove&&sv.stove.lit))S.inv.push('matches');S.binOpen=!!sv.binOpen;S.paperStage=sv.paperStage||0;S.dreamSeen=!!sv.dreamSeen}
 function loadSave(){try{return JSON.parse(localStorage.getItem(SAVE))}catch(e){return null}}
-function clearSave(){try{localStorage.removeItem(SAVE)}catch(e){}}
+function clearSave(){try{localStorage.removeItem(SAVE);localStorage.removeItem(SAVE2)}catch(e){}}
+/* (18 nov) SALVATAGGIO MANUALE (icona del floppy, in qualunque punto del gioco): scena corrente + tutto lo stato (S e stato del capitolo 2). Alla riapertura: Continua = si riparte dall'inizio di quella scena con il suo stato */
+const SAVE2='mistero-salvataggio-manuale-v1';
+function caricaManuale(){try{return JSON.parse(localStorage.getItem(SAVE2))}catch(e){return null}}
+function toast(t){const e=document.getElementById('toast');if(!e)return;e.textContent=t;e.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(()=>{e.style.display='none'},2200)}
+function salvaManuale(){
+  const key=Object.keys(scenes).find(k=>scenes[k]===cur);
+  if(!key||key==='start'||key==='prova'){return}
+  try{localStorage.setItem(SAVE2,JSON.stringify({v:1,scena:key,S:JSON.parse(JSON.stringify(S)),C2:window.__C2?JSON.parse(JSON.stringify(window.__C2)):null,t:Date.now()}));toast('PARTITA SALVATA');if(typeof sfx!=='undefined'&&sfx.take)sfx.take()}
+  catch(e){toast('SALVATAGGIO NON RIUSCITO')}}
+function ripristinaManuale(sv){
+  resetState();Object.assign(S,sv.S||{});S.stove=Object.assign({wood:false,lit:false,litAt:-1000},(sv.S&&sv.S.stove)||{});if(S.stove.lit)S.stove.litAt=NOW-100;
+  if(window.__C2&&sv.C2)Object.assign(window.__C2,sv.C2);
+  window.__ripresa=true;setTimeout(()=>{window.__ripresa=false},120000)}
+function azzeraC2(){const c=window.__C2;if(c)for(const k in c)c[k]=typeof c[k]==='boolean'?false:0}
 let NOW=0,DT=0;
 
 const fade={a:1,to:1,speed:1,cb:null};
@@ -1674,13 +1690,18 @@ const bagno={hintUntil:0,
    SCHERMATA INIZIALE (nero)
    ================================================================ */
 const start={enter(){S.scene='start';{const io=document.getElementById('ios');if(io)io.style.display=(IS_IOS&&!navigator.standalone)?'block':'none'}stormReset();document.getElementById('bHint').style.display='none';
-    const sv=loadSave(),m=document.getElementById('menu');
-    if(sv&&(sv.scene==='outside'||sv.scene==='inside')){
+    const sv=loadSave(),mv=caricaManuale(),m=document.getElementById('menu');
+    const nuova=e=>{e.stopPropagation();audioInit();goFull();clearSave();resetState();azzeraC2();m.style.display='none';goScene('drive',1.4)};
+    if(mv&&mv.scena&&scenes[mv.scena]){   // salvataggio manuale (floppy): ha la precedenza
+      m.innerHTML='<button id="mC">Continua</button><button id="mN">Nuova partita</button>';m.style.display='flex';
+      document.getElementById('mC').onclick=e=>{e.stopPropagation();audioInit();goFull();m.style.display='none';ripristinaManuale(mv);goScene(mv.scena,1.4)};
+      document.getElementById('mN').onclick=nuova;
+    }else if(sv&&(sv.scene==='outside'||sv.scene==='inside')){
       m.innerHTML='<button id="mC">Continua</button><button id="mN">Nuova partita</button>';m.style.display='flex';
       document.getElementById('mC').onclick=e=>{e.stopPropagation();audioInit();goFull();m.style.display='none';loadState(sv);if(sv.stove.lit)S.stove.litAt=NOW-100;goScene(sv.scene,1.4)};
-      document.getElementById('mN').onclick=e=>{e.stopPropagation();audioInit();goFull();clearSave();resetState();m.style.display='none';goScene('drive',1.4)};
+      document.getElementById('mN').onclick=nuova;
     }else m.style.display='none';
-    this.hasSave=!!(sv&&(sv.scene==='outside'||sv.scene==='inside'));say('')},
+    this.hasSave=!!((mv&&mv.scena&&scenes[mv.scena])||(sv&&(sv.scene==='outside'||sv.scene==='inside')));say('')},
   update(){},
   down(){if(this.hasSave||fade.a>.3)return;audioInit();goFull();goScene('drive',1.2)},
   diag(){const pr=document.getElementById('probe'),cs=getComputedStyle(pr),wr=document.getElementById('wrap').getBoundingClientRect(),vv=window.visualViewport;
@@ -2071,7 +2092,7 @@ const prova={actors:[],sel:0,ready:false,lastTap:0,fps:0,fn:0,ft:0,
 loadChar('protagonista-interno');loadChar('protagonista-esterno');   // servono nel sogno e fuori dalla baita
 const scenes={start,drive,outside,inside,bagno,sogno,prova};
 let cur=start;
-function setScene(n){if(n==='start'&&window.__pendingReload){location.reload();return}cur=scenes[n];setHint('');const ve=document.getElementById('ver');if(ve)ve.style.display=n==='start'?'':'none';const io=document.getElementById('ios');if(io)io.style.display=(n==='start'&&IS_IOS&&!navigator.standalone)?'block':'none';cur.enter();refreshInv()}
+function setScene(n){if(n==='start'&&window.__pendingReload){location.reload();return}cur=scenes[n];setHint('');const ve=document.getElementById('ver');if(ve)ve.style.display=n==='start'?'':'none';{const bs=document.getElementById('bSave');if(bs)bs.style.display=n==='start'?'none':''}const io=document.getElementById('ios');if(io)io.style.display=(n==='start'&&IS_IOS&&!navigator.standalone)?'block':'none';cur.enter();refreshInv()}
 let lastWR='';
 function frame(ms){const t=ms/1000;
   {const b=document.getElementById('wrap').getBoundingClientRect(),k=Math.round(b.width)+'x'+Math.round(b.height);if(k!==lastWR){lastWR=k;resizeDisplay()}}
@@ -2095,6 +2116,7 @@ cv.addEventListener('pointermove',e=>{const [x,y]=ptr(e);if(cur.move)cur.move(x,
 cv.addEventListener('pointerup',e=>{const [x,y]=ptr(e);if(cur.up)cur.up(x,y)});
 cv.addEventListener('pointercancel',()=>{if(cur===inside)inside.drag=null});
 document.getElementById('bHint').onclick=e=>{e.stopPropagation();audioInit();if(cur.hint)cur.hint()};
+document.getElementById('bSave').onclick=e=>{e.stopPropagation();audioInit();salvaManuale()};
 document.getElementById('bSnd').onclick=e=>{e.stopPropagation();AU.muted=!AU.muted;if(AU.master)AU.master.gain.value=AU.muted?0:.9;e.currentTarget.style.opacity=AU.muted?.35:.8};
 document.addEventListener('contextmenu',e=>e.preventDefault());
 /* schermata fissa: niente pizzico, doppio tocco o zoom, e se il browser ingrandisce comunque si torna subito a scala 1 */
@@ -2115,7 +2137,7 @@ document.addEventListener('wheel',e=>{if(e.ctrlKey)e.preventDefault()},{passive:
 document.addEventListener('visibilitychange',()=>{if(document.hidden){if(SILENT_EL)SILENT_EL.pause()}else if(AU.ctx)unmuteSilentSwitch();if(AU.ctx){if(document.hidden)AU.ctx.suspend();else AU.ctx.resume()}});
 
 /* aggiornamento automatico: se sul server c'e' una versione piu' nuova di questa, ricarica una volta (cancella anche le copie salvate) */
-const BUILD='18 nov 14:30';
+const BUILD='18 nov 15:10';
 {const ve=document.getElementById('ver');if(ve)ve.textContent='v. '+BUILD;
  if(location.protocol.startsWith('http')){
   fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{
@@ -2138,7 +2160,7 @@ const boot=()=>{fade.a=1;fade.to=1;const dm=/[?&]demo/.test(location.search)&&sc
  if(mg&&!tt&&!sessionStorage.getItem('heal')){   // i file js in memoria sono vecchi: si svuota la memoria del gioco e si ricarica una volta sola
    sessionStorage.setItem('heal','1');const rl=()=>location.reload();
    (navigator.serviceWorker&&navigator.serviceWorker.getRegistrations?navigator.serviceWorker.getRegistrations().then(rs=>Promise.all(rs.map(r=>r.unregister()))):Promise.resolve()).catch(()=>{}).then(()=>window.caches&&caches.keys?caches.keys().then(ks=>Promise.all(ks.map(k=>caches.delete(k)))):0).catch(()=>{}).then(rl);return}
- if(tt){cur=tt;tt.enter()}else if(dm){cur=scenes.demo;scenes.demo.enter()}else if(/[?&]prova/.test(location.search)){cur=prova;prova.enter()}else{cur=start;start.enter()}fadeTo(0,2);requestAnimationFrame(frame)};
+ if(tt){cur=tt;tt.enter()}else if(dm){cur=scenes.demo;scenes.demo.enter()}else if(/[?&]prova/.test(location.search)){cur=prova;prova.enter()}else{cur=start;start.enter()}{const bs=document.getElementById('bSave');if(bs)bs.style.display=cur===start?'none':''}fadeTo(0,2);requestAnimationFrame(frame)};
 Promise.all(IMGS).then(boot);
 })();
 </script>
