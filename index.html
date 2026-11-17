@@ -10,7 +10,7 @@
 <meta name="theme-color" content="#000000">
 <script>/* (12 nov) pulizia: a ogni versione nuova si tolgono service worker e memoria vecchi e si ricarica una volta.
    Un service worker rimasto da versioni precedenti serviva script e indice delle voci superati (le voci non si sentivano). BUILD0 lo aggiorna pubblica.py. */
-(function(){var BUILD0='18 nov 17:40';try{if(!('serviceWorker' in navigator)||localStorage.getItem('mistero-build')===BUILD0)return;localStorage.setItem('mistero-build',BUILD0);window.__pulizia=1;
+(function(){var BUILD0='18 nov 18:10';try{if(!('serviceWorker' in navigator)||localStorage.getItem('mistero-build')===BUILD0)return;localStorage.setItem('mistero-build',BUILD0);window.__pulizia=1;
  var t=setTimeout(function(){location.reload()},4000);
  Promise.all([navigator.serviceWorker.getRegistrations().then(function(rs){return Promise.all(rs.map(function(r){return r.unregister()}))}),
    window.caches?caches.keys().then(function(ks){return Promise.all(ks.map(function(k){return caches.delete(k)}))}):0]).then(function(){clearTimeout(t);location.reload()},function(){clearTimeout(t);location.reload()})}catch(e){}})();</script>
@@ -81,11 +81,11 @@ button:active{background:#1a2438;transform:translate(1px,1px)}
 <div id="probe" style="position:fixed;visibility:hidden;pointer-events:none;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)"></div>
 <div id="rot"><i></i><div>RUOTA IL TELEFONO<br>IN ORIZZONTALE</div></div>
 
-<script src="js/motore.js?v=18nov1740"></script>
-<script src="js/scena-demo.js?v=18nov1740"></script>
-<script src="js/scena-tutti.js?v=18nov1740"></script>
-<script src="js/scena-ramones.js?v=18nov1740"></script>
-<script src="js/scena-capitolo2.js?v=18nov1740"></script>
+<script src="js/motore.js?v=18nov1810"></script>
+<script src="js/scena-demo.js?v=18nov1810"></script>
+<script src="js/scena-tutti.js?v=18nov1810"></script>
+<script src="js/scena-ramones.js?v=18nov1810"></script>
+<script src="js/scena-capitolo2.js?v=18nov1810"></script>
 <script>
 (()=>{
 "use strict";
@@ -583,7 +583,7 @@ const IMG_DREAM=[mkImg('img/emb/img_dream_0.png'),mkImg('img/emb/img_dream_1.png
 const IMG_WOMAN=mkImg('img/emb/img_woman.png');
 const IMG_CAB=mkImg('img/emb/img_cab.png');
 /* sprite degli oggetti (generati da riferimenti, ridotti): sostituiscono quelli a codice */
-const SPRI={'palla_carta':mkImg('img/emb/spr_palla_carta.png'),'book_open_big':mkImg('img/emb/spr_book_open_big_r2.png'),'book_locked':mkImg('img/emb/spr_book_locked_r2.png'),'book_locked_small':mkImg('img/emb/spr_book_locked_small_r2.png'),'book_open':mkImg('img/emb/spr_book_open_r2.png'),'candle_lit':mkImg('img/emb/spr_candle_lit_r2.png'),'candle_lit_big':mkImg('img/emb/spr_candle_lit_big_r2.png'),'candle_unlit_big':mkImg('img/emb/spr_candle_unlit_big_r2.png'),'candle_unlit_mid':mkImg('img/emb/spr_candle_unlit_mid_r2.png'),'comic':mkImg('img/emb/spr_comic.png'),'comic_small':mkImg('img/emb/spr_comic_small.png'),'key':mkImg('img/emb/spr_key.png'),'key_small':mkImg('img/emb/spr_key_small.png'),'matchbox':mkImg('img/emb/spr_matchbox_r2.png'),'matchbox_small':mkImg('img/emb/spr_matchbox_small_r2.png'),'matchburn':mkImg('img/emb/spr_matchburn.png'),'symbol':mkImg('img/emb/spr_symbol.png')};
+const SPRI={'palla_carta':mkImg('img/emb/spr_palla_carta.png'),'book_open_big':mkImg('img/emb/spr_book_open_big_r2.png'),'book_locked':mkImg('img/emb/spr_book_locked_r2.png'),'book_locked_small':mkImg('img/emb/spr_book_locked_small_r2.png'),'book_open':mkImg('img/emb/spr_book_open_r2.png'),'candle_lit':mkImg('img/emb/spr_candle_lit_r2.png'),'candle_lit_big':mkImg('img/emb/spr_candle_lit_big_r2.png'),'candle_unlit_big':mkImg('img/emb/spr_candle_unlit_big_r2.png'),'candle_unlit_mid':mkImg('img/emb/spr_candle_unlit_mid_r2.png'),'comic':mkImg('img/emb/spr_comic.png'),'comic_small':mkImg('img/emb/spr_comic_small.png'),'key':mkImg('img/emb/spr_key.png'),'key_small':mkImg('img/emb/spr_key_small.png'),'matchbox':mkImg('img/emb/spr_matchbox_r2.png'),'matchbox_small':mkImg('img/emb/spr_matchbox_small_r2.png'),'matchburn':mkImg('img/emb/spr_matchburn.png'),'symbol':mkImg('img/emb/spr_symbol_r2.png')};
 const IMG_LOG=mkImg('img/emb/img_log_r2.png');
 const IMG_TREES=['img/emb/img_trees_0.png','img/emb/img_trees_1.png','img/emb/img_trees_2.png','img/emb/img_trees_3.png','img/emb/img_trees_4.png'].map(mkImg);
 const TREEC={};
@@ -1067,7 +1067,7 @@ const SPR={"matchbox":{"w":14,"h":22,"pal":["#f3d678","#bad5d9","#f9b57e","#ec98
 const SPRT={};
 /* (18 nov) SPRK = fattore di risoluzione degli sprite: alcuni oggetti sono disegnati al DOPPIO della risoluzione di prima (come gli sfondi 480x240) e si mostrano a meta' misura:
    lw(t)/lh(t) = larghezza/altezza LOGICHE */
-const SPRK={book_open_big:2,book_locked:2,book_locked_small:2,book_open:2,candle_lit:2,candle_lit_big:2,candle_unlit_big:2,candle_unlit_mid:2,matchbox:2,matchbox_small:2};
+const SPRK={symbol:2,book_open_big:2,book_locked:2,book_locked_small:2,book_open:2,candle_lit:2,candle_lit_big:2,candle_unlit_big:2,candle_unlit_mid:2,matchbox:2,matchbox_small:2};
 const lw=t=>t.width/(t.k||1),lh=t=>t.height/(t.k||1);
 function sprTex(k){if(SPRT[k])return SPRT[k];const im=SPRI[k];if(im&&im.complete&&im.naturalWidth){const t=mkTex(im.naturalWidth,im.naturalHeight,c=>{c.imageSmoothingEnabled=false;c.drawImage(im,0,0)});t.k=SPRK[k]||1;return SPRT[k]=t}const d=SPR[k];const tx=mkTex(d.w,d.h,c=>{d.rows.forEach((r,j)=>{for(let i=0;i<r.length;i++){const ch=r[i];if(ch!=='.')R(i,j,1,1,d.pal['0123456789abcdefghijklmnopqrstuvwxyz'.indexOf(ch)],c)}})});return im?tx:(SPRT[k]=tx)}
 function spr(k,x,y,flip=false,a=1){const t=sprTex(k);g.globalAlpha=a;
@@ -1201,7 +1201,7 @@ function drawIDrag(){
   g.globalAlpha=.55;R(x-3,y-3,w+6,h+6,'rgba(216,207,176,.3)');g.globalAlpha=1;g.drawImage(ic.t,x,y,w,h)}
 
 /* libro aperto: due pagine con righe di una scrittura inventata e il simbolo al centro, tutto in inchiostro senape */
-const INK='#a67c1a';
+const INK='#6a4208';   // (18 nov) inchiostro piu' scuro: testo e simbolo leggibili sulla pergamena
 function glyph(x,y,sd){const st=Math.floor(hash(sd*1.7)*5);
   for(let j=0;j<5;j++)for(let i=0;i<3;i++){const h=hash(sd*3.1+i*7+j*13);if(h>.5||(i===1&&j===st)||(j===0&&i!==1&&h>.3))R(x+i,y+j,1,1,INK)}}
 function runeLine(x0,x1,y,sd){let x=x0,w=0;
@@ -1213,7 +1213,7 @@ function paintBook(){
   const bx=41,by=3,bo=sprTex('book_open_big');g.drawImage(bo,bx,by,lw(bo),lh(bo));
   for(let i=0;i<10;i++)runeLine(bx+24,bx+(i%4===3?58:68),by+13+i*7,i+1);           // pagina sinistra
   runeLine(bx+96,bx+126,by+13,41);runeLine(bx+101,bx+121,by+20,43);                  // pagina destra: titolo
-  g.drawImage(sprTex('symbol'),bx+98,by+28);                                         // simbolo grande al centro
+  {const sy=sprTex('symbol');g.drawImage(sy,bx+95,by+26,lw(sy),lh(sy))}                // simbolo grande al centro (34 px logici, a risoluzione doppia)
   for(let i=0;i<3;i++)runeLine(bx+88,bx+(i===2?118:134),by+62+i*7,60+i)}
 function drawCU(){
   if(!CU.id)return;const it=ITEMS[CU.id],t=itemTex(CU.id),a=sm((NOW-CU.t0)/.22);
@@ -2149,7 +2149,7 @@ document.addEventListener('wheel',e=>{if(e.ctrlKey)e.preventDefault()},{passive:
 document.addEventListener('visibilitychange',()=>{if(document.hidden){if(SILENT_EL)SILENT_EL.pause()}else if(AU.ctx)unmuteSilentSwitch();if(AU.ctx){if(document.hidden)AU.ctx.suspend();else AU.ctx.resume()}});
 
 /* aggiornamento automatico: se sul server c'e' una versione piu' nuova di questa, ricarica una volta (cancella anche le copie salvate) */
-const BUILD='18 nov 17:40';
+const BUILD='18 nov 18:10';
 {const ve=document.getElementById('ver');if(ve)ve.textContent='v. '+BUILD;
  if(location.protocol.startsWith('http')){
   fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{
