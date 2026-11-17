@@ -444,7 +444,7 @@ registraScena({
   entra(s){Object.assign(RIT,{zn:30,t:0,fine:false,v:C2.corsaFinale?4.6:2.4});if(C2.corsaFinale&&s.giocatore)s.giocatore.corsa=true;s.occupato=true;document.getElementById('bHint').style.display='none';fadeTo(0,1.0)},
   aggiorna(s,dt){const n=s.giocatore;if(!n)return;RIT.t+=dt;
     if(RIT.zn>6.95){RIT.zn-=RIT.v*dt;n.corsa=!!C2.corsaFinale;muovi(n,RIT.zn,.30,'S',false,dt,RIT.v)}
-    else if(!RIT.fine){RIT.fine=true;n.state='idle';s.sequenza(async()=>{await pausa(.3);s.vaiScena('c2-ponte',{x:6,y:118,dir:'E'})})}}
+    else if(!RIT.fine){RIT.fine=true;n.state='idle';s.sequenza(async()=>{await pausa(.3);s.vaiScena('c2-ponte',C2.corsaFinale?{x:238,y:112,dir:'W'}:{x:6,y:118,dir:'E'})})}}   // (18 nov) nel finale Nick arriva al furgone da DESTRA
 });
 
 /* ---------------- (18 nov) FILMATO: Nick scende le scale (var1) ----------------
@@ -606,8 +606,7 @@ registraScena({
     const S=A.S;if(S&&S.inv&&!rip&&/[?&]c2-capra/.test(location.search)){let m=false;for(const id of ['book','fusibile','mela'])if(!S.inv.includes(id)){S.inv.push(id);m=true}S.bookOpen=true;if(m&&A.refreshInv)A.refreshInv()}
     if(C2.finale){   // (18 nov) FILMATO FINALE: macchinario acceso, capra sazia; Nick corre fino alle scale, le sale e poi corre lungo il ponte verso il furgone
       Object.assign(CAPS,{nutrita:true,on:true});ronzio();const p=s.giocatore;s.occupato=true;document.getElementById('bHint').style.display='none';
-      s.sequenza(async()=>{await pausa(.9);await p.vaiA(150,80,true,'N');
-        p.state='walk';p.v=1;p.corsa=true;p.dir='N';for(let i=0;i<22;i++){p.y-=1.15;p.x-=.55;p.fase+=.16;await pausa(.04)}   // sale i gradini
+      s.sequenza(async()=>{await pausa(.9);p.vaiA(150,80,true,'N');await pausa(2.3);   // (18 nov) corre verso le scale: il filmato si interrompe PRIMA che le raggiunga
         C2.ritorno=true;C2.corsaFinale=true;s.vaiScena('c2-ritorno')})}
     fadeTo(0,1.6)}
 });
@@ -628,7 +627,7 @@ registraScena({
       for(let i=0;i<=20;i++){SIMB.lampo=i/20;await pausa(.05)}await pausa(1.0);A.sting('scoperta',.6);await pausa(1.6);
       s.vaiScena('c2-primopiano')})}
 });
-const VOLTO=mkImg('img/emb/nick_primo_piano_r0.png');
+const VOLTO=mkImg('img/emb/nick_primo_piano_r1.png');
 const PRIMO={t:0};
 const RIGHE_PRIMO=['Ma allora è tutto vero!',"Ma com'è possibile? Cosa significa tutto questo?",'Che devo fare ora?',"La torre dell'orologio, la chiesa nera… ho idea di dove siano.",'Non so nemmeno se sono reali.','E quella donna…'];
 function vortice(gg,cx,cy,t){   // spirale rotante in leggera trasparenza che nasce dalla fronte e si allarga (effetto vertigine)
@@ -640,10 +639,10 @@ registraScena({
   id:'c2-primopiano',giocatore:'protagonista-esterno',nomeGiocatore:'NICK',partenza:{x:120,y:60,dir:'S'},
   area:[[0,0],[2,0],[2,2],[0,2]],suggerimento:'',senzaEtichette:true,ambiente:{stanza:0,vento:0,pioggia:0,fuoco:0},
   disegnaSfondo(gg,s){R(0,0,W,H,'#05060a');const t=PRIMO.t,im=VOLTO;if(!(im.complete&&im.naturalWidth))return;
-    const z=1+.16*Math.min(1,t/14)+.01*Math.sin(t*2.1),hh=118*z,ww=hh*im.naturalWidth/im.naturalHeight,x=120-ww/2+Math.sin(t*37)*.12,y=H-hh+6*z;   // lo zoom lento accompagna la vertigine
+    const z=1+.16*Math.min(1,t/14)+.01*Math.sin(t*2.1),hh=122*z,ww=hh*im.naturalWidth/im.naturalHeight,x=120-ww/2+Math.sin(t*37)*.12,y=H-hh+3*z;   // lo zoom lento accompagna la vertigine
     const g2=gg.createRadialGradient(120,60,10,120,60,120);g2.addColorStop(0,'#1a2030');g2.addColorStop(1,'#05060a');gg.fillStyle=g2;gg.fillRect(0,0,W,H);
-    gg.save();gg.imageSmoothingEnabled=false;gg.drawImage(im,Math.round(x*4)/4,Math.round(y*4)/4,ww,hh);gg.restore();
-    vortice(gg,120,y+hh*.42,t)},
+    gg.save();gg.imageSmoothingEnabled=true;gg.imageSmoothingQuality='high';gg.drawImage(im,x,y,ww,hh);gg.restore();
+    vortice(gg,x+ww*.508,y+hh*.25,t)},
   aggiorna(s,dt){PRIMO.t+=dt},
   entra(s){const p=s.giocatore;PRIMO.t=0;p.visibile=false;s.occupato=true;document.getElementById('bHint').style.display='none';fadeTo(0,.5);
     s.sequenza(async()=>{await pausa(1.6);for(const t of RIGHE_PRIMO){await s.dici(p,t,{frontale:false});await pausa(.5)}
