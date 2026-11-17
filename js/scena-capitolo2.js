@@ -528,7 +528,7 @@ async function CAPRA_FUSIBILE(s,p){   // il fusibile viene inserito nel Flusso C
     CAPS.on=true;ronzio();await pausa(1.2);p.state='idle';p.dir='E'});
   CAPS.busy=false}
 registraScena({
-  id:'c2-capra',inventario:true,sfondo:(m=>m?'img/scene/prove/var5-'+m[1]+'.png':'img/scene/ponte-diavolo-var5.png')(location.search.match(/[?&]prova=([abc])/)),   // (18 nov) ?prova=a|b|c: confronto della definizione dello sfondo
+  id:'c2-capra',inventario:true,sfondo:'img/scene/ponte-diavolo-var5.png',
   giocatore:'protagonista-esterno',nomeGiocatore:'NICK',partenza:{x:176,y:109,dir:'W'},
   attori:[{nome:'capra',etichetta:'CAPRA',x:CAPRA.GX,y:CAPRA.GY,dir:'S',k:.8}],
   area:[[2,100],[90,78],[170,78],[238,100],[238,119],[2,119]],

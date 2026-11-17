@@ -10,7 +10,7 @@
 <meta name="theme-color" content="#000000">
 <script>/* (12 nov) pulizia: a ogni versione nuova si tolgono service worker e memoria vecchi e si ricarica una volta.
    Un service worker rimasto da versioni precedenti serviva script e indice delle voci superati (le voci non si sentivano). BUILD0 lo aggiorna pubblica.py. */
-(function(){var BUILD0='18 nov 14:00';try{if(!('serviceWorker' in navigator)||localStorage.getItem('mistero-build')===BUILD0)return;localStorage.setItem('mistero-build',BUILD0);window.__pulizia=1;
+(function(){var BUILD0='18 nov 14:30';try{if(!('serviceWorker' in navigator)||localStorage.getItem('mistero-build')===BUILD0)return;localStorage.setItem('mistero-build',BUILD0);window.__pulizia=1;
  var t=setTimeout(function(){location.reload()},4000);
  Promise.all([navigator.serviceWorker.getRegistrations().then(function(rs){return Promise.all(rs.map(function(r){return r.unregister()}))}),
    window.caches?caches.keys().then(function(ks){return Promise.all(ks.map(function(k){return caches.delete(k)}))}):0]).then(function(){clearTimeout(t);location.reload()},function(){clearTimeout(t);location.reload()})}catch(e){}})();</script>
@@ -79,11 +79,11 @@ button:active{background:#1a2438;transform:translate(1px,1px)}
 <div id="probe" style="position:fixed;visibility:hidden;pointer-events:none;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)"></div>
 <div id="rot"><i></i><div>RUOTA IL TELEFONO<br>IN ORIZZONTALE</div></div>
 
-<script src="js/motore.js?v=18nov1400"></script>
-<script src="js/scena-demo.js?v=18nov1400"></script>
-<script src="js/scena-tutti.js?v=18nov1400"></script>
-<script src="js/scena-ramones.js?v=18nov1400"></script>
-<script src="js/scena-capitolo2.js?v=18nov1400"></script>
+<script src="js/motore.js?v=18nov1430"></script>
+<script src="js/scena-demo.js?v=18nov1430"></script>
+<script src="js/scena-tutti.js?v=18nov1430"></script>
+<script src="js/scena-ramones.js?v=18nov1430"></script>
+<script src="js/scena-capitolo2.js?v=18nov1430"></script>
 <script>
 (()=>{
 "use strict";
@@ -982,7 +982,7 @@ const outside={chr:{x:84,dir:1,tx:null,walking:false,dist:0,enter:0},idle:0,ripp
   draw(){
     const [fl,bx,age]=stormF(),T=NOW,c=this.chr;
     // sfondo: immagine dipinta (generata da riferimenti e ridotta a 240x120)
-    if(BG_OUT.complete&&BG_OUT.naturalWidth)g.drawImage(BG_OUT,0,0);else R(0,0,W,H,'#0c1620');
+    if(BG_OUT.complete&&BG_OUT.naturalWidth)g.drawImage(BG_OUT,0,0,W,H);else R(0,0,W,H,'#0c1620');
     bolt(bx,50,fl,age);
     // pozzanghere: cerchi che si allargano
     for(const r of this.ripples){const k=(NOW-r.t)/.9;g.globalAlpha=.5*(1-k);ell(r.x,r.y,1+k*5,Math.max(1,k*1.6),'#6a82a0',1);g.globalAlpha=1}
@@ -1498,7 +1498,7 @@ const inside={idle:0,matchT:-1,timers:[],hintUntil:0,ph:0,doorOpen:0,
   draw(){
     const [fl]=stormF(),T=NOW,lit=S.stove.lit,k=lit?sm((NOW-S.stove.litAt)/5):0;
     // sfondo: immagine dipinta (generata da riferimenti e ridotta a 240x120)
-    if(BG_STUFA.complete&&BG_STUFA.naturalWidth)g.drawImage(BG_STUFA,0,0);else R(0,0,W,H,'#2a1c12');
+    if(BG_STUFA.complete&&BG_STUFA.naturalWidth)g.drawImage(BG_STUFA,0,0,W,H);else R(0,0,W,H,'#2a1c12');
     // pioggia che scorre sui vetri
     rainWin(76,36,22,28,18,0);rainWin(206,32,12,34,9,50);
     // porta del bagno aperta: si vede il buio
@@ -1647,7 +1647,7 @@ const bagno={hintUntil:0,
   },
   draw(){
     const T=NOW;
-    if(BG_BAGNO.complete&&BG_BAGNO.naturalWidth)g.drawImage(BG_BAGNO,0,0);else R(0,0,W,H,'#1c2a20');
+    if(BG_BAGNO.complete&&BG_BAGNO.naturalWidth)g.drawImage(BG_BAGNO,0,0,W,H);else R(0,0,W,H,'#1c2a20');
     sprS('candle_unlit_mid',170,41,.75);
     if(S.binOpen){ell(141,81,6.5,4,'#2e4237');ell(141,81,5.5,3.2,'#799592');ell(140,80,3.2,1.6,'#9db6b2');ell(141,82,5.5,1.3,'#527576');ell(141,88,5.2,1.8,'#2e4237');ell(141,88,4.4,1.2,'#0f1c19')}   // coperchio aperto
     // ---- luce: solo la candela ----
@@ -1878,8 +1878,8 @@ const sogno={t:0,steps:0,lastStep:0,vis:-1,
     const T=SOGNO_T,img=IMG_DREAM[i];if(!img.complete||!img.naturalWidth)return;const env=k;
     const z=1.02+.05*age/T.vis,rot=Math.sin(age*1.3+i)*.014,cx=120+Math.sin(age*.9+i*2)*3,cy=60+Math.cos(age*1.1+i)*2;
     dx.setTransform(1,0,0,1,0,0);dx.clearRect(0,0,W,H);dx.globalAlpha=1;
-    dx.save();dx.translate(cx,cy);dx.rotate(rot);dx.scale(z,z);dx.translate(-120,-60);dx.drawImage(img,0,0);
-    dx.globalAlpha=.32;dx.translate(120,60);dx.scale(1.025,1.025);dx.translate(-120+2.2*Math.sin(age*2.1),-60);dx.drawImage(img,0,0);dx.restore();
+    dx.save();dx.translate(cx,cy);dx.rotate(rot);dx.scale(z,z);dx.translate(-120,-60);dx.drawImage(img,0,0,W,H);
+    dx.globalAlpha=.32;dx.translate(120,60);dx.scale(1.025,1.025);dx.translate(-120+2.2*Math.sin(age*2.1),-60);dx.drawImage(img,0,0,W,H);dx.restore();
     // onda orizzontale: l'immagine "respira"
     g.globalAlpha=env;
     const amp=1.5+1.1*Math.sin(age*.8);
@@ -2044,7 +2044,7 @@ const prova={actors:[],sel:0,ready:false,lastTap:0,fps:0,fn:0,ft:0,
     for(const a of this.actors)a.update(dt,PV_AREA,30*pvScale(a.y)/1.45)},
   draw(){
     g.globalAlpha=1;g.globalCompositeOperation='source-over';
-    if(BG_STUFA.complete&&BG_STUFA.naturalWidth)g.drawImage(BG_STUFA,0,0);else R(0,0,W,H,'#111');
+    if(BG_STUFA.complete&&BG_STUFA.naturalWidth)g.drawImage(BG_STUFA,0,0,W,H);else R(0,0,W,H,'#111');
     if(!this.ready){txt('CARICO...',90,56,'#d8cfb0');return}
     const L=[...this.actors].sort((a,b)=>a.y-b.y);
     for(const a of L)a.draw(pvScale(a.y));
@@ -2115,7 +2115,7 @@ document.addEventListener('wheel',e=>{if(e.ctrlKey)e.preventDefault()},{passive:
 document.addEventListener('visibilitychange',()=>{if(document.hidden){if(SILENT_EL)SILENT_EL.pause()}else if(AU.ctx)unmuteSilentSwitch();if(AU.ctx){if(document.hidden)AU.ctx.suspend();else AU.ctx.resume()}});
 
 /* aggiornamento automatico: se sul server c'e' una versione piu' nuova di questa, ricarica una volta (cancella anche le copie salvate) */
-const BUILD='18 nov 14:00';
+const BUILD='18 nov 14:30';
 {const ve=document.getElementById('ver');if(ve)ve.textContent='v. '+BUILD;
  if(location.protocol.startsWith('http')){
   fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{

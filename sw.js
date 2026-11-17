@@ -1,7 +1,7 @@
 // Service worker: il gioco funziona offline.
 // - i file del gioco (immagini, audio, icone) sono salvati alla prima apertura (sempre scaricati freschi: cache reload) e serviti dalla memoria del telefono;
 // - la pagina, gli script (.js), gli indici (.json) e questo file si chiedono prima alla rete (cosi' gli aggiornamenti arrivano subito) e, senza rete, si usa la copia salvata.
-const VERSION = "18 nov 14:00";
+const VERSION = "18 nov 14:30";
 const CACHE = "mistero-" + VERSION;
 const FILES = [
   "./",
@@ -500,15 +500,6 @@ const FILES = [
   "audio/versi/miao_mia_v3.mp3",
   "icon-192.png",
   "icon-512.png",
-  "img/abete1.png",
-  "img/abete2.png",
-  "img/abete3.png",
-  "img/abete4.png",
-  "img/abete5.png",
-  "img/auto-esterno.png",
-  "img/auto-interno.png",
-  "img/bagno.png",
-  "img/casetta.png",
   "img/char-r19/anna-senza-giacca.json",
   "img/char-r19/anna-senza-giacca.png",
   "img/char-r19/anna.json",
@@ -658,7 +649,6 @@ const FILES = [
   "img/emb/spr_matchburn.png",
   "img/emb/spr_palla_carta.png",
   "img/emb/spr_symbol.png",
-  "img/esterno.png",
   "img/scene/casello-cabina.png",
   "img/scene/casello-chiosco.png",
   "img/scene/casello-piazzale.png",
@@ -697,9 +687,6 @@ const FILES = [
   "img/scene/ponte-senza-simboli.png",
   "img/scene/ponte-simbolo-celtico.png",
   "img/scene/ponte-simbolo-inciso.png",
-  "img/scene/prove/var5-a.png",
-  "img/scene/prove/var5-b.png",
-  "img/scene/prove/var5-c.png",
   "img/scene/ristorante-settimo.png",
   "img/scene/strada-alpi.png",
   "img/scene/strada-arrivo-ponte.png",
@@ -741,8 +728,6 @@ const FILES = [
   "img/sprite/protagonista.png",
   "img/sprite/seduto.png",
   "img/sprite/symbol.png",
-  "img/stanza-stufa.png",
-  "img/volante.png",
   "index.html",
   "js/motore.js",
   "js/scena-capitolo2.js",
