@@ -116,7 +116,7 @@ const POZ={x:166,y:107},CAR_X=6;
 const PR_EST={yr:107,sr:1.047},YH_EST=PROSP.orizzonte(PR_EST.yr,PR_EST.sr);   // orizzonte della scena = occhi di un uomo in piedi (PROSP)
 /* (15 nov) AUTO IN PROSPETTIVA: l'Alfa 164 (4,55 x 1,83 x 1,43 m) e' una scatola in 3D proiettata con la stessa camera che scala Nick; lo sprite (3/4 posteriore, disegnato a 21,4 gradi dall'asse)
    e' scalato sulla scatola proiettata, e l'angolo dell'asse e' scelto perche' da quel punto si veda proprio sotto 21,4 gradi. Punti di fuga: asse dell'auto e perpendicolare (griglia con ?griglia). */
-const IMG_AUTO34=mkImg('img/emb/auto164_34retro_d69.png');
+const IMG_AUTO34=mkImg('img/emb/auto164_34retro_hd.png');   // (18 nov) versione ad alta risoluzione (420 px), come gli sfondi a 480x240
 const AUTO={xs:40,ys:107.3,sc:null};   // centro dell'impronta a terra, in px di schermo
 function disegnaAscia(gg,hx,hy,ang,flip){   // l'ascia e' presa per il fondo del manico (in alto a destra nello sprite: 17,1)
   if(!(IMG_ASCIA.complete&&IMG_ASCIA.naturalWidth))return;
@@ -388,17 +388,17 @@ registraScena({
    ogni punto del pavimento e' (profondita' Z in m, corsia f tra bordo sinistro e destro): y = 40 + F*1,6/Z, x = bordo sx(y) + (bordo dx - bordo sx)*f.
    Lara cammina verso di noi sul lato destro (f=.62), Nick va nel verso opposto sul lato sinistro (f=.30), a 1,6 m/s: scala e passo seguono la prospettiva
    (rif [100,2.016] = orizzonte 40). Si incontrano a meta' ponte: Lara dice "Ehilà!" (voce vera) e prosegue fino a sparire a destra; Nick si ferma, si volta e commenta. */
-const PF={F:330,HC:1.6,YH:40,V:1.6};
+const PF={F:330,HC:1.6,YH:40,V:1.6,VL:2.0};   // VL: velocita' di Lara (passo deciso)
 const BORDO_SX=[[40,102],[48,108],[60,113],[75,128],[90,136],[120,138]];
 function bordoSx(y){const P=BORDO_SX;if(y<=P[0][0])return P[0][1];for(let i=1;i<P.length;i++)if(y<=P[i][0])return P[i-1][1]+(P[i][1]-P[i-1][1])*(y-P[i-1][0])/(P[i][0]-P[i-1][0]);return P[P.length-1][1]}
 const bordoDx=y=>112+(y-45)/.37;
 const yZ=z=>PF.YH+PF.F*PF.HC/z;
 function corsia(z,f){const y=yZ(z),l=bordoSx(y),r=bordoDx(y);return [l+(r-l)*f,y]}
 const FP={};
-const MELA_IMG=mkImg('img/emb/mela_r1.png');   // (18 nov) la mela rossa che cade a Lara dopo l'Ehila'
+const MELA_IMG=mkImg('img/emb/mela_r2.png');   // (18 nov) la mela rossa che cade a Lara dopo l'Ehila'
 const LARA_WALK=mkImg('img/emb/lara_walk_r1.png');   // camminata vera (8 pose, gambe che alternano): sostituisce le walk_S dell'atlante, che erano 4 pose ripetute con la stessa gamba avanti
-function muovi(p,z,f,dir,fermo,dt){const [x,y]=corsia(z,f);p.x=x;p.y=y;p.dir=dir;
-  if(fermo){p.state='idle';return}p.state='walk';p.v=1;p.bob=p.n==='lara-croft'?1.5:1.0;p.fase+=PF.V*(dt||1/30)/1.5}   // (18 nov) il ciclo del passo (due passi = 1,5 m) avanza con la distanza REALE percorsa: la camminata si vede anche in lontananza
+function muovi(p,z,f,dir,fermo,dt,vel){const [x,y]=corsia(z,f);p.x=x;p.y=y;p.dir=dir;
+  if(fermo){p.state='idle';return}p.state='walk';p.v=1;p.bob=p.n==='lara-croft'?0:1.0;p.fase+=(vel||PF.V)*(dt||1/30)/1.5}   // (18 nov) Lara senza saltello: i piedi restano sul terreno   // (18 nov) il ciclo del passo (due passi = 1,5 m) avanza con la distanza REALE percorsa: la camminata si vede anche in lontananza
 registraScena({
   id:'c2-ponte-film',sfondo:'img/scene/ponte-diavolo-var2.png',
   giocatore:'protagonista-esterno',nomeGiocatore:'NICK',partenza:{x:188,y:116,dir:'N'},
@@ -406,20 +406,22 @@ registraScena({
   area:[[0,0],[2,0],[2,2],[0,2]],rif:[100,2.016],audioPassi:false,
   ambiente:{stanza:0,vento:.35,foglie:.3,aria:.4,pioggia:0,fuoco:0},suggerimento:'',senzaEtichette:true,
   punti:[FP.melaPunto={nome:'',rect:[0,0,0,0],visibile:()=>!!FP.melaPronta&&!FP.melaRaccolta,cammina:{x:0,y:0,dir:'E'},usa:async(s,p)=>{
-    FP.melaRaccolta=true;p.dir='E';await pausa(.6);FP.mela=null;A.sting('scoperta',.5);A.giveItem('mela');C2.mela=true;await pausa(1.0);FP.fine=true;s.vaiScena('c2-scale',{x:150,y:60,dir:'S'})}}],
+    FP.melaRaccolta=true;const mx=FP.mela.x-13;p.dir='E';if(Math.abs(mx-p.x)>2){p.state='walk';p.v=1;await new Promise(r=>{const iv=setInterval(()=>{p.fase+=.03*1.6/1.5;p.x+=Math.sign(mx-p.x)*Math.min(Math.abs(mx-p.x),.9);if(Math.abs(mx-p.x)<.5){clearInterval(iv);r()}},30)})}
+    p.state='idle';p.dir='E';p.pickUp();await pausa(.7);FP.mela=null;sfx.raccogli();A.sting('scoperta',.5);A.giveItem('mela');C2.mela=true;await pausa(1.4);FP.fine=true;s.vaiScena('c2-scale',{x:150,y:60,dir:'S'})}}],
   sopra(gg,s){const m=FP.mela;if(!m||!MELA_IMG.complete||!MELA_IMG.naturalWidth)return;
     const w=Math.max(4,6*(m.y-40)/60),h0=.9*(m.y-40)/1.6,u=(FP.t-m.t0)/.5;let h=0;
     if(u<0)return;if(u<1)h=h0*(1-u*u);else if(u<1.35)h=h0*.12*Math.sin(Math.PI*(u-1)/.35);
     ell(m.x,m.y+.4,w*.5,1,'#000',.3);gg.save();gg.imageSmoothingEnabled=false;gg.drawImage(MELA_IMG,Math.round(m.x-w/2),Math.round(m.y-h-w+1),w,w);
     if(FP.melaPronta&&!FP.melaRaccolta&&Math.sin(FP.t*5)>.3){gg.fillStyle='#fff';const cx=Math.round(m.x+w*.3),cy=Math.round(m.y-w-1);gg.fillRect(cx-2,cy,5,1);gg.fillRect(cx,cy-2,1,5)}
     gg.restore()},
-  entra(s){Object.assign(FP,{mela:null,melaT:0,melaPronta:false,melaRaccolta:false,attesaMela:false,patch:false,t:0,zn:6.95,zl:33,incontro:false,laraFine:false,nickFermo:false,fine:false});s.occupato=true;document.getElementById('bHint').style.display='none';fadeTo(0,1.2)},
+  entra(s){Object.assign(FP,{mela:null,melaT:0,melaPronta:false,melaRaccolta:false,attesaMela:false,patch:false,t:0,zn:6.95,zl:46,alphaL:0,incontro:false,laraFine:false,nickFermo:false,fine:false});s.occupato=true;document.getElementById('bHint').style.display='none';fadeTo(0,1.2)},
   aggiorna(s,dt){
     const n=s.giocatore,l=s.attori['lara-croft'];if(!n||!l)return;FP.t+=dt;
+    if(!l._alfa){const d0=l.draw.bind(l);l.draw=function(sc){g.save();g.globalAlpha=FP.alphaL;d0(sc);g.restore()};l._alfa=1}   // Lara emerge dalla lontananza (trasparenza che sale)
     if(!FP.patch&&LARA_WALK.complete&&LARA_WALK.naturalWidth&&l.c&&l.c.ready){FP.patch=true;const c0=l.c,fr={...c0.fr};for(let i=0;i<8;i++)fr['walk_S_'+(i+1)]={x:i*c0.w,y:0,w:c0.w,h:c0.h};l.c={...c0,img:LARA_WALK,fr}}
     if(FP.t<.7){muovi(n,FP.zn,.30,'N',true);muovi(l,FP.zl,.62,'S',true);return}
     if(!FP.nickFermo){FP.zn+=PF.V*dt;muovi(n,FP.zn,.30,'N',false,dt)}else{n.state='idle'}
-    if(!FP.laraFine){FP.zl-=PF.V*dt;muovi(l,FP.zl,.62+.16*Math.max(0,Math.min(1,(yZ(FP.zl)-108)/14)),'S',false,dt);if(l.x>246){FP.laraFine=true;l.visibile=false}}
+    if(!FP.laraFine){FP.zl-=PF.VL*dt;FP.alphaL=Math.min(1,Math.max(FP.alphaL,(FP.t-.8)/3.2));muovi(l,FP.zl,.62+.16*Math.max(0,Math.min(1,(yZ(FP.zl)-108)/14)),'S',false,dt,PF.VL);if(l.x>246){FP.laraFine=true;l.visibile=false}}
     if(FP.melaT&&!FP.mela&&FP.t>=FP.melaT){FP.mela={x:l.x+1,y:l.y,t0:FP.t};setTimeout(()=>{A.tone(210,.09,'sine',.05,120,.2,.3);A.nburst(900,4,.02,.02,'bandpass',.2,.3)},500);setTimeout(()=>{A.tone(260,.05,'sine',.025,170,.2,.3)},690)}
     if(FP.mela&&!FP.melaPronta&&!FP.melaRaccolta&&FP.t>=FP.mela.t0+.75){FP.melaPronta=true;const m=FP.mela,w=Math.max(4,6*(m.y-40)/60);FP.melaPunto.rect=[Math.round(m.x-7),Math.round(m.y-12),14,14];FP.melaPunto.cammina={x:n.x,y:n.y,dir:'E'}}
     if(!FP.incontro&&FP.zn>=FP.zl-.3){FP.incontro=true;FP.nickFermo=true;
@@ -445,7 +447,7 @@ registraScena({
   id:'c2-scale',sfondo:'img/scene/ponte-diavolo-var1.png',area:[[0,0],[2,0],[2,2],[0,2]],suggerimento:'',senzaEtichette:true,
   ambiente:{stanza:0,vento:.25,foglie:.1,aria:.3,pioggia:0,fuoco:0},
   entra(s){NS.t=0;NS.fine=false;s.occupato=true;document.getElementById('bHint').style.display='none';A.say('');fadeTo(0,1.2)},
-  aggiorna(s,dt){NS.t+=dt;if(!NS.fine&&NS.t>.8+NS_TOT+2.2){NS.fine=true;fadeTo(1,1.4,()=>{A.setHint('CONTINUA…',true)})}},
+  aggiorna(s,dt){NS.t+=dt;if(!NS.fine&&NS.t>.8+NS_TOT+2.2){NS.fine=true;s.vaiScena('c2-capra',{x:176,y:109,dir:'W'})}},   // (18 nov) dalle scale alla scena della capra
   sopra(gg,s){
     const im=NS.img;if(!(im.complete&&im.naturalWidth))return;const tt=Math.max(0,NS.t-.8),d=nsDist(tt),[x,y0,seg]=nsPos(d),camminando=tt>0&&tt<NS_TOT-.05;
     const hLog=32+(y0-40)*.22,sc=hLog/34,w=120/RS*sc,h=150/RS*sc;
@@ -571,7 +573,7 @@ registraScena({
     if(s.attori.capra)s.attori.capra.visibile=false;   // lo sprite normale e' sostituito dalle pose (anche da fermo)
     Object.assign(CAPS,{nutrita:false,on:false,busy:false,t:0});if(CAPS.hum){CAPS.hum.stop();CAPS.hum=null}CAP_P.n=CAP_P.c=CAP_P.m=CAP_P.o=CAP_P.t=CAP_P.w=-1;CAP_P.davanti=false;
     const rip=window.__ripresa;window.__ripresa=false;   // ripresa da salvataggio: non rimetto nell'inventario gli oggetti di prova
-    const S=A.S;if(S&&S.inv&&!rip){let m=false;for(const id of ['book','fusibile','mela'])if(!S.inv.includes(id)){S.inv.push(id);m=true}S.bookOpen=true;if(m&&A.refreshInv)A.refreshInv()}
+    const S=A.S;if(S&&S.inv&&!rip&&/[?&]c2-capra/.test(location.search)){let m=false;for(const id of ['book','fusibile','mela'])if(!S.inv.includes(id)){S.inv.push(id);m=true}S.bookOpen=true;if(m&&A.refreshInv)A.refreshInv()}
     fadeTo(0,1.6)}
 });
 
