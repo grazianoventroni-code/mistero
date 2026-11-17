@@ -467,7 +467,63 @@ registraScena({
    Per ora SOLO la messa in scena: la logica della capra (cariche, corda, soluzione) va definita con l'utente. */
 function s_capraNick(){const sc=scenes['c2-capra'];return sc&&sc.giocatore}
 function s_capraCapra(){const sc=scenes['c2-capra'];return sc&&sc.attori&&sc.attori.capra}
-const CAPRA={mac:mkImg('img/emb/macchinario_flusso_r2.png'),MX:50,MY:112,TX:49,TY:73,GX:98,GY:99};
+/* STATO: nutrita = la capra ha mangiato la mela (smette di attaccare); on = il macchinario ha il fusibile (vibra e ronza); busy = sequenza in corso */
+const CAPS={nutrita:false,on:false,busy:false,t:0,last:0,hum:null};
+const CAPRA={mac:mkImg('img/emb/macchinario_flusso_r3.png'),MX:50,MY:112,TX:49,TY:73,GX:98,GY:99,L:74,YX:.177,YY:.407};
+/* pose nuove (ChatGPT, account gventroni): nick_spavento_r1 (8 celle 124x150), capra_cariche_r2 (8 celle 160x110), capra_mangia_r1 (8 celle 160x110), nick_offre_r1 (4 celle 160x150)
+   capra: 0 bela, 1 testa bassa, 2-4 carica, 5 frenata a fine corda, 6 sbuffa, 7 torna indietro | mangia: 0 annusa, 1 morde, 2-5 mastica, 6 deglutisce, 7 soddisfatta
+   Nick: spavento 0 sorpreso, 1 salto, 2 atterra, 3-6 passi indietro, 7 ansima | offre 0 mela sul palmo, 1 palmo vuoto, 2 rilassato, 3 tocca il cappello */
+const CAP_P={nick:mkImg('img/emb/nick_spavento_r1.png'),capra:mkImg('img/emb/capra_cariche_r2.png'),mangia:mkImg('img/emb/capra_mangia_r1.png'),offre:mkImg('img/emb/nick_offre_r1.png'),n:-1,c:-1,m:-1,o:-1,davanti:false};
+window.__CAP={CAPS,CAP_P,CAPRA,ronzio};   // (debug)
+const capraPose=()=>[CAP_P.nick,CAP_P.capra,CAP_P.mangia,CAP_P.offre].every(i=>i.complete&&i.naturalWidth>0);
+function disegnaPosa(g,a,img,i,CW,CH,sh){if(!a||i<0)return;const sc=a.scala(),w=CW/RS*sc,h=CH/RS*sc;ell(a.x,a.y+.6,sh*sc,2*sc,'#000',.35);
+  g.save();g.imageSmoothingEnabled=false;g.drawImage(img,i*CW,0,CW,CH,Math.round(a.x-w/2),Math.round(a.y-h+sc),Math.round(w),Math.round(h));g.restore()}
+/* ronzio del motore (rumore + onde gravi, nessuna musica): parte quando si inserisce il fusibile; si spegne da solo quando la scena non e' piu' attiva */
+function ronzio(){
+  const au=A.AU;if(!au||!au.ctx||CAPS.hum||au.muted)return;const c=au.ctx,t=c.currentTime,out=au.master||c.destination;
+  const gm=c.createGain(),lp=c.createBiquadFilter(),o1=c.createOscillator(),o2=c.createOscillator(),og=c.createGain(),lfo=c.createOscillator(),lg=c.createGain(),lfo2=c.createOscillator(),lg2=c.createGain();
+  lp.type='lowpass';lp.frequency.value=300;lp.Q.value=1.2;o1.type='sawtooth';o2.type='square';og.gain.value=.32;
+  o1.frequency.setValueAtTime(26,t);o1.frequency.linearRampToValueAtTime(47,t+1.4);o2.frequency.setValueAtTime(52,t);o2.frequency.linearRampToValueAtTime(94,t+1.4);
+  lfo.frequency.value=13;lg.gain.value=.012;lfo.connect(lg);lg.connect(gm.gain);             // pulsazione del motore
+  lfo2.frequency.value=3.1;lg2.gain.value=90;lfo2.connect(lg2);lg2.connect(lp.frequency);      // il tono respira
+  gm.gain.setValueAtTime(.0001,t);gm.gain.linearRampToValueAtTime(.05,t+1.2);
+  const n=c.createBuffer(1,c.sampleRate*2,c.sampleRate),d=n.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
+  const ns=c.createBufferSource();ns.buffer=n;ns.loop=true;const bp=c.createBiquadFilter();bp.type='bandpass';bp.frequency.value=170;bp.Q.value=.9;const ng=c.createGain();ng.gain.value=.45;
+  o1.connect(lp);o2.connect(og);og.connect(lp);ns.connect(bp);bp.connect(ng);ng.connect(lp);lp.connect(gm);gm.connect(out);
+  [o1,o2,lfo,lfo2,ns].forEach(x=>x.start(t));CAPS.hum={gm,stop(){const tt=c.currentTime;gm.gain.cancelScheduledValues(tt);gm.gain.setValueAtTime(gm.gain.value,tt);gm.gain.linearRampToValueAtTime(.0001,tt+.4);[o1,o2,lfo,lfo2,ns].forEach(x=>{try{x.stop(tt+.5)}catch(e){}})}};
+  const wd=setInterval(()=>{if(performance.now()-CAPS.last>700){clearInterval(wd);if(CAPS.hum){CAPS.hum.stop();CAPS.hum=null}}},300)}
+async function CAPRA_CARICA(s,p){   // la capra PUNTA Nick, carica fino al limite della corda (che si tende) e Nick si spaventa e arretra
+  const g=s.attori.capra;if(!g||!capraPose())return;
+  const x0=CAPRA.GX,y0=CAPRA.GY;p.dir='W';p.state='idle';await pausa(.15);
+  const px=p.x,py=p.y;p.visibile=false;g.visibile=false;CAP_P.n=0;CAP_P.c=0;
+  try{A.motore.suonaClip('audio/versi/bela_v2.mp3')}catch(e){}
+  await pausa(1.0);CAP_P.c=1;await pausa(.8);                        // bela, poi testa bassa e zoccolo che raspa
+  const gx=Math.min(px-14,122),gy=Math.max(y0,Math.min(py-3,108));CAP_P.davanti=true;let t=0;
+  const caricaP=new Promise(r=>{const iv=setInterval(()=>{t+=.03;const u=Math.min(1,t/.38);g.x=x0+(gx-x0)*u;g.y=y0+(gy-y0)*u;CAP_P.c=2+Math.floor(t/.09)%3;if(u>=1){clearInterval(iv);r()}},30)});
+  (async()=>{await pausa(.12);FIATO.suona('protagonista-esterno','sorpresa',1,1);CAP_P.n=1;await pausa(.32);CAP_P.n=2;await pausa(.2);
+    for(let k=0;k<8;k++){CAP_P.n=3+k%4;const xs=p.x;await new Promise(r=>{let tt=0;const iv=setInterval(()=>{tt+=.03;p.x=xs+3*Math.min(1,tt/.16);if(tt>=.16){clearInterval(iv);r()}},30)})}
+    CAP_P.n=7})();
+  await caricaP;CAP_P.c=5;await pausa(.5);CAP_P.c=6;
+  await pausa(.6);CAP_P.davanti=false;CAP_P.c=7;
+  await new Promise(r=>{let tr=0;const iv=setInterval(()=>{tr+=.03;const u=Math.min(1,tr/1.6);g.x=gx+(x0-gx)*u;g.y=gy+(y0-gy)*u;if(u>=1){clearInterval(iv);r()}},30)});
+  await pausa(.3);g.x=x0;g.y=y0;g.visibile=true;g.dir='S';CAP_P.c=-1;p.visibile=true;p.dir='W';p.state='idle';CAP_P.n=-1}
+async function CAPRA_MANGIA(s,p){   // Nick offre la mela, la capra la mangia (e da quel momento non attacca piu')
+  CAPS.busy=true;await s.sequenza(async()=>{
+    const g=s.attori.capra;A.removeItem('mela');C2.mela=false;
+    await p.vaiA(g.x+60,g.y+7,false,'W');p.dir='W';await pausa(.2);
+    p.visibile=false;g.visibile=false;CAP_P.o=0;CAP_P.m=0;await pausa(1.0);                 // annusa la mela sul palmo
+    CAP_P.o=1;CAP_P.m=1;A.tone(260,.06,'square',.03,140,.1,.3);await pausa(.55);
+    for(const f of [2,3,4,5,4,5,2,3]){CAP_P.m=f;if(f>2)CAP_P.o=2;A.nburst(2400+Math.random()*600,5,.05,.05,'bandpass',.1,.3);A.tone(150,.05,'square',.02,95,.1,.3);await pausa(.34)}   // mastica
+    CAP_P.m=6;await pausa(.8);CAP_P.m=7;CAP_P.o=3;await pausa(.9);                          // deglutisce, e' soddisfatta; Nick tocca il cappello
+    p.visibile=true;p.dir='W';p.state='idle';CAP_P.o=-1;CAPS.nutrita=true});
+  CAPS.busy=false}
+async function CAPRA_FUSIBILE(s,p){   // il fusibile viene inserito nel Flusso Canalizzatore: il macchinario vibra e ronza
+  CAPS.busy=true;await s.sequenza(async()=>{
+    await p.vaiA(14,116,false,'E');p.dir='E';A.removeItem('fusibile');C2.fusibile=false;
+    p.state='act';p.seq=[['reach',1.1],['#',0]];p.si=0;p.st=0;await pausa(.55);
+    A.tone(900,.05,'square',.05,520,.3,.3);A.nburst(3200,6,.03,.05,'bandpass',.3,.3);await pausa(.25);A.tone(130,.18,'sawtooth',.04,60,.3,.3);
+    CAPS.on=true;ronzio();await pausa(1.2);p.state='idle';p.dir='E'});
+  CAPS.busy=false}
 registraScena({
   id:'c2-capra',inventario:true,sfondo:'img/scene/ponte-diavolo-var5.png',
   giocatore:'protagonista-esterno',nomeGiocatore:'NICK',partenza:{x:176,y:109,dir:'W'},
@@ -477,44 +533,35 @@ registraScena({
   rif:[100,2.016],audioPassi:false,
   ambiente:{stanza:0,vento:.2,foglie:.1,aria:.3,pioggia:0,fuoco:0},suggerimento:'',senzaEtichette:true,
   oggetti:[
-    {get baseY(){return s_capraNick()?s_capraNick().y:0},disegna(g,s){const p=s.giocatore;if(CAP_P.n>=0&&capraPose())disegnaPosa(g,p,CAP_P.nick,CAP_P.n,124,150,7)}},
-    {get baseY(){const c=s_capraCapra();return c?c.y:0},disegna(g,s){const c=s.attori&&s.attori.capra;if(CAP_P.c>=0&&capraPose())disegnaPosa(g,c,CAP_P.capra,CAP_P.c,160,110,11)}},
-    {baseY:CAPRA.MY,disegna(g){const im=CAPRA.mac;if(!(im.complete&&im.naturalWidth))return;   // macchinario: 0,75 m di larghezza alla profondita' dei suoi piedi
-      const w=1.2*(CAPRA.MY-40)/1.6,h=w*im.naturalHeight/im.naturalWidth;ell(CAPRA.MX,CAPRA.MY+.5,w*.5,1.6,'#000',.35);
-      g.save();g.imageSmoothingEnabled=true;g.imageSmoothingQuality='high';g.drawImage(im,Math.round(CAPRA.MX-w/2),Math.round(CAPRA.MY-h+1),Math.round(w),Math.round(h));g.restore()}},
-    {baseY:CAPRA.GY-1,disegna(g,s){const c=s.attori&&s.attori.capra;if(!c)return;   // corda: dal collo della capra alla gamba del tavolo, con un po' di pancia
-      const x0=CAPRA.TX,y0=CAPRA.TY,x1=Math.round(c.x-4),y1=Math.round(c.y-c.altezza()*.55);
-      g.save();g.fillStyle='#d2b27a';for(let i=0;i<=24;i++){const u=i/24,x=x0+(x1-x0)*u,y=y0+(y1-y0)*u+Math.sin(Math.PI*u)*7;g.fillRect(Math.round(x),Math.round(y),1,1)}g.restore()}}
+    {get baseY(){const n=s_capraNick();return n?n.y:0},disegna(g,s){const p=s.giocatore;if(!capraPose())return;if(CAP_P.n>=0)disegnaPosa(g,p,CAP_P.nick,CAP_P.n,124,150,7);else if(CAP_P.o>=0)disegnaPosa(g,p,CAP_P.offre,CAP_P.o,160,150,7)}},
+    {get baseY(){const c=s_capraCapra(),n=s_capraNick();return CAP_P.davanti&&n?n.y+.5:(c?c.y:0)},disegna(g,s){const c=s.attori&&s.attori.capra;if(!capraPose())return;if(CAP_P.c>=0)disegnaPosa(g,c,CAP_P.capra,CAP_P.c,160,110,11);else if(CAP_P.m>=0)disegnaPosa(g,c,CAP_P.mangia,CAP_P.m,160,110,11)}},
+    {baseY:CAPRA.MY,disegna(g){const im=CAPRA.mac;if(!(im.complete&&im.naturalWidth))return;   // macchinario (1,2 m di larghezza in prospettiva); acceso: vibra
+      const w=1.2*(CAPRA.MY-40)/1.6,h=w*im.naturalHeight/im.naturalWidth,X=CAPRA.MX-w/2,Y=CAPRA.MY-h+1;ell(CAPRA.MX,CAPRA.MY+.5,w*.5,1.6,'#000',.35);
+      const ox=CAPS.on?Math.round(Math.sin(CAPS.t*95)*.8):0,oy=CAPS.on?Math.round(Math.sin(CAPS.t*61+1.3)*.6):0;
+      g.save();g.imageSmoothingEnabled=true;g.imageSmoothingQuality='high';g.drawImage(im,Math.round(X+ox),Math.round(Y+oy),Math.round(w),Math.round(h));
+      const gx=X+w*CAPRA.YX+ox,gy=Y+h*CAPRA.YY+oy,a=CAPS.on?.5+.25*Math.sin(CAPS.t*9):.2+.07*Math.sin(CAPS.t*2);   // bagliore neon dei tubi
+      g.globalCompositeOperation='lighter';const gr=g.createRadialGradient(gx,gy,0,gx,gy,w*.22);gr.addColorStop(0,`rgba(110,215,255,${a})`);gr.addColorStop(1,'rgba(110,215,255,0)');g.fillStyle=gr;g.fillRect(gx-w*.25,gy-w*.25,w*.5,w*.5);g.restore()}},
+    {baseY:CAPRA.GY-1,disegna(g,s){const c=s.attori&&s.attori.capra;if(!c)return;   // corda: lenta a riposo, tesa quando la capra tira
+      const x0=CAPRA.TX,y0=CAPRA.TY,x1=Math.round(c.x-4),y1=Math.round(c.y-c.altezza()*.55),d=Math.hypot(x1-x0,y1-y0),tn=Math.min(1,d/CAPRA.L),sag=15*Math.sqrt(Math.max(0,1-tn*tn));
+      g.save();g.fillStyle='#d2b27a';for(let i=0;i<=28;i++){const u=i/28,x=x0+(x1-x0)*u,y=y0+(y1-y0)*u+Math.sin(Math.PI*u)*sag;g.fillRect(Math.round(x),Math.round(y),1,1)}g.restore()}}
   ],
-  punti:[{nome:'',rect:[20,72,58,42],cammina:{x:148,y:111,dir:'W'},usa:async(s,p)=>{CAPRA_CARICA(s,p)}}],
-  entra(s){   // (18 nov) arriva con tutto l'inventario: libro, fusibile e mela (anche da link diretto)
-    const S=A.S;if(S&&S.inv){let m=false;for(const id of ['book','fusibile','mela'])if(!S.inv.includes(id)){S.inv.push(id);m=true}S.bookOpen=true;C2.fusibile=true;C2.mela=true;if(m&&A.refreshInv)A.refreshInv()}
+  /* ogni volta che Nick si avvicina alla capra (finche' non ha mangiato la mela) lei lo attacca */
+  aggiorna(s,dt){CAPS.t+=dt;CAPS.last=performance.now();
+    if(CAPS.nutrita||CAPS.busy||s.occupato||!capraPose())return;const p=s.giocatore,g=s.attori.capra;
+    if(p&&g&&Math.abs(p.x-CAPRA.GX)<46&&Math.abs(p.y-CAPRA.GY)<26){CAPS.busy=true;p.path=[];p.arrivo=null;p.state='idle';s.sequenza(async()=>{try{await CAPRA_CARICA(s,p)}finally{CAPS.busy=false}})}},
+  punti:[{nome:'',rect:[20,72,58,42],get cammina(){return CAPS.nutrita?{x:14,y:116,dir:'E'}:{x:150,y:111,dir:'W'}},usa:async(s,p)=>{if(!CAPS.nutrita){CAPS.busy=true;try{await CAPRA_CARICA(s,p)}finally{CAPS.busy=false}}}}],
+  /* trascinando dall'inventario: la MELA sulla capra, il FUSIBILE sul macchinario */
+  hintTargets:(s,id)=>id==='mela'&&!CAPS.nutrita?[[78,56,40,46]]:(id==='fusibile'&&!CAPS.on?[[22,76,58,40]]:[]),
+  dropItem:(s,id,x,y)=>{
+    if(s.occupato||CAPS.busy||!capraPose()){A.sfx.no();return}const p=s.giocatore,g=s.attori.capra;
+    if(id==='mela'&&!CAPS.nutrita&&x>=74&&x<=124&&y>=50&&y<=104){CAPRA_MANGIA(s,p);return}
+    if(id==='fusibile'&&!CAPS.on&&x>=20&&x<=82&&y>=74&&y<=118){if(CAPS.nutrita)CAPRA_FUSIBILE(s,p);else{CAPS.busy=true;s.sequenza(async()=>{try{await p.vaiA(150,111,false,'W');await CAPRA_CARICA(s,p)}finally{CAPS.busy=false}})}return}
+    A.sfx.no()},
+  entra(s){   // arriva con tutto l'inventario: libro, fusibile e mela (anche da link diretto)
+    Object.assign(CAPS,{nutrita:false,on:false,busy:false,t:0});if(CAPS.hum){CAPS.hum.stop();CAPS.hum=null}CAP_P.n=CAP_P.c=CAP_P.m=CAP_P.o=-1;CAP_P.davanti=false;
+    const S=A.S;if(S&&S.inv){let m=false;for(const id of ['book','fusibile','mela'])if(!S.inv.includes(id)){S.inv.push(id);m=true}S.bookOpen=true;if(m&&A.refreshInv)A.refreshInv()}
     fadeTo(0,1.6)}
 });
-/* Nick fa per avvicinarsi al macchinario e la capra lo PUNTA (18 nov, pose nuove da ChatGPT: nick_spavento_r1 = 8 celle 124x150, capra_cariche_r1 = 8 celle 116x108).
-   Capra: 0 bela, 1 testa bassa e zoccolo, 2-4 carica, 5 frenata a fine corda, 6 sbuffa, 7 torna indietro.  Nick (verso sinistra): 0 sorpreso, 1 salto, 2 atterra, 3-6 passi indietro, 7 ansima. */
-const CAP_P={nick:mkImg('img/emb/nick_spavento_r1.png'),capra:mkImg('img/emb/capra_cariche_r1.png'),n:-1,c:-1};
-function capraPose(){return CAP_P.nick.complete&&CAP_P.capra.complete&&CAP_P.nick.naturalWidth>0&&CAP_P.capra.naturalWidth>0}
-function disegnaPosa(g,a,img,i,CW,CH,sh){if(!a||i<0)return;const sc=a.scala(),w=CW/RS*sc,h=CH/RS*sc;ell(a.x,a.y+.6,sh*sc,2*sc,'#000',.35);
-  g.save();g.imageSmoothingEnabled=false;g.drawImage(img,i*CW,0,CW,CH,Math.round(a.x-w/2),Math.round(a.y-h+sc),Math.round(w),Math.round(h));g.restore()}
-async function CAPRA_CARICA(s,p){
-  const g=s.attori.capra;if(!g)return;
-  const x0=g.x,y0=g.y;
-  await p.vaiA(132,111,false,'W');p.dir='W';await pausa(.25);
-  if(!capraPose()){await pausa(1)}
-  p.visibile=false;g.visibile=false;CAP_P.n=0;CAP_P.c=0;p.x=132;     // sostituisco gli sprite con le pose nuove
-  try{A.motore.suonaClip('audio/versi/bela_v2.mp3')}catch(e){}
-  await pausa(1.0);CAP_P.c=1;await pausa(.8);                        // la capra bela, poi abbassa la testa e raspa
-  const nx=132;let t=0;
-  // carica: 3 fotogrammi di galoppo; la capra corre fino al limite della corda
-  const caricaP=new Promise(r=>{const iv=setInterval(()=>{t+=.03;const u=Math.min(1,t/.38);g.x=x0+(120-x0)*u;CAP_P.c=2+Math.floor(t/.09)%3;if(u>=1){clearInterval(iv);r()}},30)});
-  (async()=>{await pausa(.12);FIATO.suona('protagonista-esterno','sorpresa',1,1);CAP_P.n=1;await pausa(.32);CAP_P.n=2;await pausa(.2);   // Nick: salto, atterraggio...
-    for(let k=0;k<8;k++){CAP_P.n=3+k%4;const xs=p.x;await new Promise(r=>{let tt=0;const iv=setInterval(()=>{tt+=.03;p.x=xs+3*Math.min(1,tt/.16);if(tt>=.16){clearInterval(iv);r()}},30)})}   // ...e passi indietro (24 px)
-    CAP_P.n=7})();
-  await caricaP;CAP_P.c=5;await pausa(.5);CAP_P.c=6;
-  await pausa(.6);CAP_P.n=7;
-  CAP_P.c=7;const ret=new Promise(r=>{let tr=0;const iv=setInterval(()=>{tr+=.03;const u=Math.min(1,tr/1.6);g.x=120+(x0-120)*u;if(u>=1){clearInterval(iv);r()}},30)});await ret;
-  await pausa(.3);g.x=x0;g.y=y0;g.visibile=true;g.dir='S';CAP_P.c=-1;p.visibile=true;p.dir='W';p.state='idle';CAP_P.n=-1}
 
 /* (18 nov) il LIBRO resta nell'inventario per tutta la durata del gioco: ogni scena del capitolo 2 controlla che ci sia (anche se si entra da un link diretto) */
 function assicuraLibro(){const S=A.S;if(S&&S.inv&&!S.inv.includes('book')){S.inv.unshift('book');S.bookOpen=true;if(A.refreshInv)A.refreshInv()}}
