@@ -364,7 +364,7 @@ registraScena({
   entra(s){fadeTo(0,2.5);const p=s.giocatore;
     if(C2.ritorno){   // (18 nov) ritorno dalle scale: Nick riattraversa il ponte e arriva davanti al furgone
       C2.ponteVisto=true;s.occupato=true;document.getElementById('bHint').style.display='none';PONTE.muto=false;
-      s.sequenza(async()=>{await p.vaiA(100,117,false,'N');p.dir='N';await pausa(1.2);A.setHint('CONTINUA…',true)});return}
+      s.sequenza(async()=>{await p.vaiA(100,117,!!C2.corsaFinale,'N');p.corsa=false;p.dir='N';await pausa(1.2);A.setHint('CONTINUA…',true)});return}
     if(/[?&](panino|consegna)/.test(location.search)&&!C2.fusibile)C2.ponteVisto=true;   // link diretto ?c2-ponte&panino: salta alla scena del panino e del fusibile
     if(C2.ponteVisto&&!C2.fusibile){s.sequenza(()=>scenaPanino(s))}   // tornato dal ponte: la scena del panino
     else if(!C2.ponteVisto)s.sequenza(async()=>{await pausa(1.0);C2.ponteDetto=true;await dn(s,p,'Vediamo se il mio sogno aveva ragione.')})},   // subito: parla e compare la freccia
@@ -441,9 +441,9 @@ registraScena({
   giocatore:'protagonista-esterno',nomeGiocatore:'NICK',partenza:{x:120,y:60,dir:'S'},
   area:[[0,0],[2,0],[2,2],[0,2]],rif:[100,2.016],audioPassi:false,
   ambiente:{stanza:0,vento:.35,foglie:.3,aria:.4,pioggia:0,fuoco:0},suggerimento:'',senzaEtichette:true,
-  entra(s){Object.assign(RIT,{zn:30,t:0,fine:false});s.occupato=true;document.getElementById('bHint').style.display='none';fadeTo(0,1.0)},
+  entra(s){Object.assign(RIT,{zn:30,t:0,fine:false,v:C2.corsaFinale?4.6:2.4});if(C2.corsaFinale&&s.giocatore)s.giocatore.corsa=true;s.occupato=true;document.getElementById('bHint').style.display='none';fadeTo(0,1.0)},
   aggiorna(s,dt){const n=s.giocatore;if(!n)return;RIT.t+=dt;
-    if(RIT.zn>6.95){RIT.zn-=2.4*dt;muovi(n,RIT.zn,.30,'S',false,dt,2.4)}
+    if(RIT.zn>6.95){RIT.zn-=RIT.v*dt;n.corsa=!!C2.corsaFinale;muovi(n,RIT.zn,.30,'S',false,dt,RIT.v)}
     else if(!RIT.fine){RIT.fine=true;n.state='idle';s.sequenza(async()=>{await pausa(.3);s.vaiScena('c2-ponte',{x:6,y:118,dir:'E'})})}}
 });
 
@@ -552,7 +552,9 @@ async function CAPRA_FUSIBILE(s,p){   // il fusibile viene inserito nel Flusso C
     await p.vaiA(14,116,false,'E');p.dir='E';A.removeItem('fusibile');C2.fusibile=false;
     p.state='act';p.seq=[['reach',1.1],['#',0]];p.si=0;p.st=0;await pausa(.55);
     A.tone(900,.05,'square',.05,520,.3,.3);A.nburst(3200,6,.03,.05,'bandpass',.3,.3);await pausa(.25);A.tone(130,.18,'sawtooth',.04,60,.3,.3);
-    CAPS.on=true;ronzio();await pausa(1.2);p.state='idle';p.dir='E'});
+    CAPS.on=true;ronzio();await pausa(1.2);p.state='idle';p.dir='E';
+    await pausa(.9);await s.dici(p,'Vediamo se da qui riesco a vedere il furgone dei panini.',{frontale:false});   // (18 nov) poi: ponte con il simbolo inciso, primo piano, corsa verso il furgone
+    C2.finale=true;await pausa(.3);s.vaiScena('c2-simbolo',{x:94,y:116,dir:'W'})});
   CAPS.busy=false}
 registraScena({
   id:'c2-capra',inventario:true,sfondo:'img/scene/ponte-diavolo-var5.png',
@@ -573,7 +575,7 @@ registraScena({
       g.save();g.imageSmoothingEnabled=true;g.imageSmoothingQuality='high';const im2=acc||!(CAPRA.macOff.complete&&CAPRA.macOff.naturalWidth)?im:CAPRA.macOff;g.drawImage(im2,Math.round(X+ox),Math.round(Y+oy),Math.round(w),Math.round(h));
       const gx=X+w*CAPRA.YX+ox,gy=Y+h*CAPRA.YY+oy,a=acc?(CAPS.on?.75:.42):.04;   // bagliore neon dei tubi
       g.globalCompositeOperation='lighter';const gr=g.createRadialGradient(gx,gy,0,gx,gy,w*.22);gr.addColorStop(0,`rgba(110,215,255,${a})`);gr.addColorStop(1,'rgba(110,215,255,0)');g.fillStyle=gr;g.fillRect(gx-w*.25,gy-w*.25,w*.5,w*.5);g.restore()}},
-    {baseY:300,disegna(g,s){if(!CAPS.on||Math.floor(CAPS.t*2.2)%2!==0)return;   // freccia gialla lampeggiante sulle scale: da li' si torna indietro
+    {baseY:300,disegna(g,s){if(!CAPS.on||C2.finale||Math.floor(CAPS.t*2.2)%2!==0)return;   // freccia gialla lampeggiante sulle scale: da li' si torna indietro
       const dx=Math.round(Math.sin(CAPS.t*5)*1.2);g.save();g.translate(150+dx,40);for(const [c,o] of [['#05060a',1],['#ffd23a',0]]){g.fillStyle=c;g.beginPath();g.moveTo(0,-8-o);g.lineTo(-8-o,0);g.lineTo(-3,0);g.lineTo(-3,7+o);g.lineTo(3,7+o);g.lineTo(3,0);g.lineTo(8+o,0);g.closePath();g.fill()}g.restore()}},
     {baseY:CAPRA.TY,disegna(g,s){const c=s.attori&&s.attori.capra;if(!c||!capraPose())return;   // la corda dello sprite continua a terra fino al piede del tavolo (dietro il macchinario): lenta a riposo, tesa quando la capra tira
       let CW=91,CH=85,AX=45.5,t=CODA.idle,teso=false;if(CAP_P.t>=0){CW=230;CH=92;AX=140;t=CODA.t[CAP_P.t];teso=true}else if(CAP_P.w>=0){CW=160;CH=110;AX=80;t=CODA.w[CAP_P.w]}else if(CAP_P.c>=0){CW=160;CH=110;AX=80;t=CODA.c[CAP_P.c]}else if(CAP_P.m>=0){CW=160;CH=110;AX=80;t=CODA.m[CAP_P.m]}
@@ -588,7 +590,7 @@ registraScena({
   aggiorna(s,dt){CAPS.t+=dt;CAPS.last=performance.now();
     if(CAPS.nutrita||CAPS.busy||s.occupato||!capraPose())return;const p=s.giocatore,g=s.attori.capra;
     if(p&&g&&Math.abs(p.x-CAPRA.GX)<46&&Math.abs(p.y-CAPRA.GY)<26){CAPS.busy=true;p.path=[];p.arrivo=null;p.state='idle';s.sequenza(async()=>{try{await CAPRA_CARICA(s,p)}finally{CAPS.busy=false}})}},
-  punti:[{nome:'',rect:[128,26,46,46],cammina:{x:150,y:80,dir:'N'},visibile:()=>CAPS.on,usa:async(s,p)=>{C2.ritorno=true;p.dir='N';await pausa(.4);s.vaiScena('c2-ritorno')}},
+  punti:[{nome:'',rect:[128,26,46,46],cammina:{x:150,y:80,dir:'N'},visibile:()=>CAPS.on&&!C2.finale,usa:async(s,p)=>{C2.ritorno=true;p.dir='N';await pausa(.4);s.vaiScena('c2-ritorno')}},
     {nome:'',rect:[20,72,58,42],get cammina(){return CAPS.nutrita?{x:14,y:116,dir:'E'}:{x:150,y:111,dir:'W'}},usa:async(s,p)=>{if(!CAPS.nutrita){CAPS.busy=true;try{await CAPRA_CARICA(s,p)}finally{CAPS.busy=false}}}}],
   /* trascinando dall'inventario: la MELA sulla capra, il FUSIBILE sul macchinario */
   hintTargets:(s,id)=>id==='mela'&&!CAPS.nutrita?[[78,56,40,46]]:(id==='fusibile'&&!CAPS.on?[[22,76,58,40]]:[]),
@@ -602,12 +604,55 @@ registraScena({
     Object.assign(CAPS,{nutrita:false,on:false,busy:false,t:0});if(CAPS.hum){CAPS.hum.stop();CAPS.hum=null}CAP_P.n=CAP_P.c=CAP_P.m=CAP_P.o=CAP_P.t=CAP_P.w=-1;CAP_P.davanti=false;
     const rip=window.__ripresa;window.__ripresa=false;   // ripresa da salvataggio: non rimetto nell'inventario gli oggetti di prova
     const S=A.S;if(S&&S.inv&&!rip&&/[?&]c2-capra/.test(location.search)){let m=false;for(const id of ['book','fusibile','mela'])if(!S.inv.includes(id)){S.inv.push(id);m=true}S.bookOpen=true;if(m&&A.refreshInv)A.refreshInv()}
+    if(C2.finale){   // (18 nov) FILMATO FINALE: macchinario acceso, capra sazia; Nick corre fino alle scale, le sale e poi corre lungo il ponte verso il furgone
+      Object.assign(CAPS,{nutrita:true,on:true});ronzio();const p=s.giocatore;s.occupato=true;document.getElementById('bHint').style.display='none';
+      s.sequenza(async()=>{await pausa(.9);await p.vaiA(150,80,true,'N');
+        p.state='walk';p.v=1;p.corsa=true;p.dir='N';for(let i=0;i<22;i++){p.y-=1.15;p.x-=.55;p.fase+=.16;await pausa(.04)}   // sale i gradini
+        C2.ritorno=true;C2.corsaFinale=true;s.vaiScena('c2-ritorno')})}
     fadeTo(0,1.6)}
+});
+
+/* ---------------- (18 nov) FINALE DELLA SCENA DELLA CAPRA: il ponte con il simbolo inciso (davvero esiste) e il primo piano di Nick con il vortice alla Hitchcock ---------------- */
+const SIMB={t:0,x:57,y:50};   // posizione del simbolo celtico sul muro dell'arco (px logici)
+registraScena({
+  id:'c2-simbolo',sfondo:'img/scene/ponte-simbolo-inciso.png',
+  giocatore:'protagonista-esterno',nomeGiocatore:'NICK',partenza:{x:84,y:116,dir:'W'},
+  area:[[4,108],[96,108],[96,119],[4,119]],ostacoli:[],rif:[112,2.0],audioPassi:false,
+  ambiente:{stanza:0,vento:.3,foglie:.2,aria:.4,pioggia:0,fuoco:0},suggerimento:'',senzaEtichette:true,
+  aggiorna(s,dt){SIMB.t+=dt;ambienteGiorno(dt,false)},
+  sopra(gg,s){const k=SIMB.lampo||0;if(k<=0)return;gg.save();gg.globalCompositeOperation='lighter';   // il simbolo si accende appena Nick lo vede
+    const a=Math.min(1,k)*(.55+.2*Math.sin(SIMB.t*9));for(let i=0;i<6;i++){gg.globalAlpha=a*.12;gg.fillStyle='#9fffd0';gg.beginPath();gg.arc(SIMB.x,SIMB.y,6+i*3.2,0,6.283);gg.fill()}gg.restore()},
+  entra(s){const p=s.giocatore;s.occupato=true;document.getElementById('bHint').style.display='none';SIMB.t=0;SIMB.lampo=0;fadeTo(0,1.6);
+    s.sequenza(async()=>{await pausa(1.4);await p.vaiA(80,113,false,'W');p.dir='W';await pausa(.9);
+      A.musicStart&&A.musicStart('mystery',3);A.sting('simbolo');                                // rivelazione e tensione (provvisorio: musiche gia' presenti)
+      for(let i=0;i<=20;i++){SIMB.lampo=i/20;await pausa(.05)}await pausa(1.0);A.sting('scoperta',.6);await pausa(1.6);
+      s.vaiScena('c2-primopiano')})}
+});
+const VOLTO=mkImg('img/emb/nick_primo_piano_r0.png');
+const PRIMO={t:0};
+const RIGHE_PRIMO=['Ma allora è tutto vero!',"Ma com'è possibile? Cosa significa tutto questo?",'Che devo fare ora?',"La torre dell'orologio, la chiesa nera… ho idea di dove siano.",'Non so nemmeno se sono reali.','E quella donna…'];
+function vortice(gg,cx,cy,t){   // spirale rotante in leggera trasparenza che nasce dalla fronte e si allarga (effetto vertigine)
+  const q=v=>Math.round(v*4)/4,R=Math.min(210,t*60);gg.save();gg.globalCompositeOperation='lighter';
+  for(let k=0;k<4;k++)for(let r=1;r<R;r+=.3){const th=k*1.5708+r*.07-t*1.9,x=cx+Math.cos(th)*r*1.45,y=cy+Math.sin(th)*r*.78,f=1-r/Math.max(R,1),a=.30*Math.pow(Math.max(0,f),.6)*Math.min(1,r/5);
+    if(x<-2||x>W+2||y<-2||y>H+2)continue;gg.globalAlpha=a;gg.fillStyle=(k+Math.floor(r/9))%2?'#cfe6ff':'#a8ffe0';gg.fillRect(q(x),q(y),1,1)}
+  gg.restore()}
+registraScena({
+  id:'c2-primopiano',giocatore:'protagonista-esterno',nomeGiocatore:'NICK',partenza:{x:120,y:60,dir:'S'},
+  area:[[0,0],[2,0],[2,2],[0,2]],suggerimento:'',senzaEtichette:true,ambiente:{stanza:0,vento:0,pioggia:0,fuoco:0},
+  disegnaSfondo(gg,s){R(0,0,W,H,'#05060a');const t=PRIMO.t,im=VOLTO;if(!(im.complete&&im.naturalWidth))return;
+    const z=1+.16*Math.min(1,t/14)+.01*Math.sin(t*2.1),hh=118*z,ww=hh*im.naturalWidth/im.naturalHeight,x=120-ww/2+Math.sin(t*37)*.12,y=H-hh+6*z;   // lo zoom lento accompagna la vertigine
+    const g2=gg.createRadialGradient(120,60,10,120,60,120);g2.addColorStop(0,'#1a2030');g2.addColorStop(1,'#05060a');gg.fillStyle=g2;gg.fillRect(0,0,W,H);
+    gg.save();gg.imageSmoothingEnabled=false;gg.drawImage(im,Math.round(x*4)/4,Math.round(y*4)/4,ww,hh);gg.restore();
+    vortice(gg,120,y+hh*.42,t)},
+  aggiorna(s,dt){PRIMO.t+=dt},
+  entra(s){const p=s.giocatore;PRIMO.t=0;p.visibile=false;s.occupato=true;document.getElementById('bHint').style.display='none';fadeTo(0,.5);
+    s.sequenza(async()=>{await pausa(1.6);for(const t of RIGHE_PRIMO){await s.dici(p,t,{frontale:false});await pausa(.5)}
+      await pausa(.8);C2.finale=true;s.vaiScena('c2-capra',{x:14,y:116,dir:'E'})})}
 });
 
 /* (18 nov) il LIBRO resta nell'inventario per tutta la durata del gioco: ogni scena del capitolo 2 controlla che ci sia (anche se si entra da un link diretto) */
 function assicuraLibro(){const S=A.S;if(S&&S.inv&&!S.inv.includes('book')){S.inv.unshift('book');S.bookOpen=true;if(A.refreshInv)A.refreshInv()}}
-for(const id of ['capitolo2','c2-esterno','c2-auto','c2-strada','c2-ponte','c2-ponte-vista','c2-ponte-film','c2-scale','c2-ritorno','c2-capra']){const sc=scenes[id];if(sc&&sc.cfg){const e=sc.cfg.entra;sc.cfg.entra=function(s){assicuraLibro();return e?e.call(this,s):undefined}}}
+for(const id of ['capitolo2','c2-esterno','c2-auto','c2-strada','c2-ponte','c2-ponte-vista','c2-ponte-film','c2-scale','c2-ritorno','c2-capra','c2-simbolo','c2-primopiano']){const sc=scenes[id];if(sc&&sc.cfg){const e=sc.cfg.entra;sc.cfg.entra=function(s){assicuraLibro();return e?e.call(this,s):undefined}}}
 /* da fine capitolo 1 (sogno) al capitolo 2 */
 window.__capitolo2=A.capitolo2=()=>{for(const k in C2)C2[k]=typeof C2[k]==='boolean'?false:0;fadeTo(1,1.8,()=>{setScene('capitolo2');fadeTo(0,9)})};   // (14 nov) la velocita' e' al secondo: 9 = schiarita in un decimo di secondo (prima 0,01: nero per minuti)
 });
