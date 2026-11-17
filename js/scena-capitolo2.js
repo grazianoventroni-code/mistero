@@ -349,7 +349,28 @@ function disegnaBB(gg,s){if(!C2.corsaFinale)return;const yh=PROSP.orizzonte(PONT
   for(const k of ['alto','basso']){const b=BB[k],im=b.img;if(!(im.complete&&im.naturalWidth))continue;
     let t=(s.t+b.f)%BB_TOT,i=0;while(i<7&&t>=BB_DUR[i]){t-=BB_DUR[i];i++}
     const cw=im.naturalWidth/8,ch=im.naturalHeight,hh=b.H*ppm,dw=hh*cw/ch;ell(b.x,y+.4,dw*.4,1.5,'#000',.32);
-    gg.save();gg.imageSmoothingEnabled=true;gg.imageSmoothingQuality='high';gg.drawImage(im,Math.floor(i)*cw,0,cw,ch,b.x-dw/2,y-hh,dw,hh);gg.restore()}}
+    gg.save();gg.imageSmoothingEnabled=true;gg.imageSmoothingQuality='high';
+    if(k==='basso'&&C2.bav){const g=bavGeom(ppm),j=Math.sin(s.t*38)*.5;ell(g.x0+g.dw*.5,y+.4,g.dw*.45,1.6,'#000',.32);   // Nick afferra John per il bavero (immagine speculare: Nick a destra)
+      gg.translate(g.x0+j,y-g.hh);gg.scale(-1,1);gg.drawImage(BAV,-g.dw,0,g.dw,g.hh)}
+    else gg.drawImage(im,Math.floor(i)*cw,0,cw,ch,b.x-dw/2,y-hh,dw,hh);gg.restore()}}
+/* (18 nov) SCONTRO: Nick afferra John per il bavero (ChatGPT gventroni, _strumenti/bb_bavero.py). Immagine originale: Nick a sinistra, John a destra; qui e' speculare (Nick a destra) perche' Nick arriva da destra */
+const BAV=mkImg('img/emb/nick_john_bavero_r1.png');
+function bavGeom(ppm){const hh=1.86*ppm,dw=hh*935/1249,x0=BB.basso.x-dw*.22;return{hh,dw,x0,nx:x0+dw*.73}}
+const DAN={nome:'dan',etichetta:'DAN',talking:false,bocca:1},JOHN={nome:'john',etichetta:'JOHN',talking:false,bocca:1};
+async function scenaBB(s,p){const yh=PROSP.orizzonte(PONTE.YR,PONTE.SR),ppm=(117-yh)/PROSP.HC,g=bavGeom(ppm),F={frontale:false};
+  await s.dici(DAN,'Siamo in missione per conto di Dio, mi aspettavo di mangiare qualcosa di meglio.',F);await pausa(.3);
+  await s.dici(JOHN,"Questo toast alle cavallette non è male in fondo! Certo non è la frittura mista di Settimo ma mi accontento!",F);
+  A.sting('scoperta',.5);await pausa(.2);
+  await p.vaiA(g.nx,117,true,'W');p.corsa=false;p.visibile=false;C2.bav=true;A.sting('simbolo',.5);   // Nick scatta e lo afferra
+  await s.dici(p,"Settimo?! Cos'è Settimo?? Chi è? Rispondi!",F);
+  C2.bav=false;p.x=g.nx;p.y=117;p.dir='W';p.visibile=true;await pausa(.4);   // lo rilascia
+  await s.dici(JOHN,'Ehiiii amico,',{clip:'audio/versi/john_ehi_r1.mp3',frontale:false});
+  await s.dici(JOHN,'calma, che ti prende? Non ti agitare, ti fa male sai?',F);
+  await s.dici(JOHN,"Chi è Settimo dici? Mio fratello qui ci ha lavorato l'anno scorso come lavapiatti.",F);
+  await s.dici(JOHN,'In realtà non lavava nulla e i piatti li svuotava, ma sono dettagli.',F);
+  await s.dici(p,'Dove si trova?! Che posto è?',F);
+  await s.dici(DAN,'Ehiiii amico,',{clip:'audio/versi/dan_ehi_r1.mp3',frontale:false});
+  await s.dici(DAN,'sai, ci ho fatto il lavapiatti lì! Sta giù a Firenze.',F)}
 registraScena({
   id:'c2-ponte',inventario:true,sfondo:'img/scene/ponte-diavolo-var3.png',
   giocatore:'protagonista-esterno',nomeGiocatore:'NICK',
@@ -373,7 +394,7 @@ registraScena({
   entra(s){fadeTo(0,2.5);const p=s.giocatore;
     if(C2.ritorno){   // (18 nov) ritorno dalle scale: Nick riattraversa il ponte e arriva davanti al furgone
       C2.ponteVisto=true;s.occupato=true;document.getElementById('bHint').style.display='none';PONTE.muto=false;
-      s.sequenza(async()=>{await p.vaiA(C2.corsaFinale?172:100,117,!!C2.corsaFinale,C2.corsaFinale?'W':'N');p.corsa=false;p.dir=C2.corsaFinale?'W':'N';await pausa(1.2);A.setHint('CONTINUA…',true)});return}
+      s.sequenza(async()=>{await p.vaiA(C2.corsaFinale?172:100,117,!!C2.corsaFinale,C2.corsaFinale?'W':'N');p.corsa=false;p.dir=C2.corsaFinale?'W':'N';await pausa(1.2);if(C2.corsaFinale)await scenaBB(s,p);A.setHint('CONTINUA…',true)});return}
     if(/[?&](panino|consegna)/.test(location.search)&&!C2.fusibile)C2.ponteVisto=true;   // link diretto ?c2-ponte&panino: salta alla scena del panino e del fusibile
     if(C2.ponteVisto&&!C2.fusibile){s.sequenza(()=>scenaPanino(s))}   // tornato dal ponte: la scena del panino
     else if(!C2.ponteVisto)s.sequenza(async()=>{await pausa(1.0);C2.ponteDetto=true;await dn(s,p,'Vediamo se il mio sogno aveva ragione.')})},   // subito: parla e compare la freccia

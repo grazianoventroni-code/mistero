@@ -183,6 +183,8 @@ const VOCI={ // profilo di voce per personaggio: f0 in Hz, forma d'onda, battute
   anna:{sx:'f',f0:265,forma:'triangle',cps:31,mod:.14,tp:1.15,tr:1.03,col:'#e0a8d0'},
   'anna-senza-giacca':{sx:'f',f0:265,forma:'triangle',cps:31,mod:.14,tp:1.15,tr:1.03,col:'#e0a8d0'},
   lillo:{sx:'m',f0:128,forma:'sawtooth',cps:27,mod:.12,tp:.7,tr:.95,col:'#b8c8a0'},
+  dan:{sx:'m',f0:168,forma:'triangle',cps:30,mod:.09,tp:1,tr:1,col:'#c9c9dc'},
+  john:{sx:'m',f0:118,forma:'sawtooth',cps:27,mod:.12,tp:.72,tr:.95,col:'#d8b890'},
   greg:{sx:'m',f0:172,forma:'triangle',cps:30,mod:.08,tp:.95,tr:1,col:'#b8a0d8'},
   'lara-croft':{sx:'f',f0:285,forma:'triangle',cps:30,mod:.1,tp:1.2,tr:1,col:'#d9a07a'},
   gemella:{sx:'f',f0:360,forma:'sine',cps:27,mod:.08,tp:1.5,tr:.95,col:'#a8c8f0'},
@@ -230,7 +232,7 @@ if(window.speechSynthesis){speechSynthesis.getVoices();speechSynthesis.onvoicesc
    Una nota per vocale: onda a dente di sega con due formanti (a e i o u), piccolo glissando, vibrato e altezze su una scala pentatonica che sale e scende a caso;
    le consonanti secche (p t k s f) aggiungono un colpetto di rumore. La frase finisce piu' in basso, la domanda sale, l'esclamazione e' piu' vivace. */
 const PENTA=[0,2,4,7,9,12,14,16];
-const PROFILO_BORB={'doc-ritorno-al-futuro':{f:1.55,vib:.045,vel:1.25,gl:.12,pan:.25},'protagonista-esterno':{f:1,vib:.015,vel:1,gl:.06,pan:-.15},'protagonista-interno':{f:1,vib:.015,vel:1,gl:.06,pan:-.15},
+const PROFILO_BORB={'doc-ritorno-al-futuro':{f:1.55,vib:.045,vel:1.25,gl:.12,pan:.25},'protagonista-esterno':{f:1,vib:.015,vel:1,gl:.06,pan:-.15},dan:{f:1.12,vib:.02,vel:1.05,gl:.08,pan:.2},john:{f:.8,vib:.02,vel:.92,gl:.07,pan:.3},'protagonista-interno':{f:1,vib:.015,vel:1,gl:.06,pan:-.15},
   default:{f:1,vib:.02,vel:1,gl:.07,pan:0}};
 const BORB={};   // stato per personaggio: indice nella scala
 function notaBorb(nome,p,v,rel,dur,vol,consonante){
