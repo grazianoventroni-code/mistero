@@ -547,7 +547,11 @@ registraScena({
     {baseY:CAPRA.TY,disegna(g,s){const c=s.attori&&s.attori.capra;if(!c||!capraPose())return;   // la corda dello sprite continua a terra fino al piede del tavolo (dietro il macchinario): lenta a riposo, tesa quando la capra tira
       let CW=91,CH=85,t=CODA.idle;if(CAP_P.c>=0){CW=160;CH=110;t=CODA.c[CAP_P.c]}else if(CAP_P.m>=0){CW=160;CH=110;t=CODA.m[CAP_P.m]}
       const sc=c.scala(),w=CW/RS*sc,h=CH/RS*sc,x1=c.x-w/2+t[0]/CW*w,y1=c.y-h+sc+t[1]/CH*h,x0=CAPRA.TX,y0=CAPRA.TY,d=Math.hypot(x1-x0,y1-y0),tn=Math.min(1,d/CAPRA.L),amp=2.6*Math.sqrt(Math.max(0,1-tn*tn));
-      g.save();g.fillStyle='#d98a5c';for(let i=0;i<=40;i++){const u=i/40,x=x0+(x1-x0)*u,y=y0+(y1-y0)*u+Math.sin(u*Math.PI*3)*amp*Math.sin(Math.PI*u);g.fillRect(Math.round(x),Math.round(y),1,1);g.fillRect(Math.round(x),Math.round(y)+1,1,1)}g.restore()}}
+      /* corda disegnata come quella dello sprite (pixel da 1/4 di px logico): contorno viola scuro, bordo cremisi, corpo corallo e filo di luce crema */
+      g.save();const q=v=>Math.round(v*4)/4,CL=[['#46103a',-.5],['#b92241',-.25],['#e45744',0],['#e45744',.25],['#6a1f43',.5]],n=Math.max(8,Math.ceil(Math.abs(x1-x0)*4));
+      for(let i=0;i<=n;i++){const u=i/n,x=q(x0+(x1-x0)*u),y=y0+(y1-y0)*u+Math.sin(u*Math.PI*3)*amp*Math.sin(Math.PI*u);
+        for(const [col,dy] of CL){g.fillStyle=col;g.fillRect(x,q(y+dy),.25,.25)}
+        if(Math.floor(i/5)%3===0){g.fillStyle='#fde1b9';g.fillRect(x,q(y-.25),.25,.25)}}g.restore()}}
   ],
   /* ogni volta che Nick si avvicina alla capra (finche' non ha mangiato la mela) lei lo attacca */
   aggiorna(s,dt){CAPS.t+=dt;CAPS.last=performance.now();
