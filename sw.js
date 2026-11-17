@@ -1,7 +1,7 @@
 // Service worker: il gioco funziona offline.
 // - i file del gioco (immagini, audio, icone) sono salvati alla prima apertura (sempre scaricati freschi: cache reload) e serviti dalla memoria del telefono;
 // - la pagina, gli script (.js), gli indici (.json) e questo file si chiedono prima alla rete (cosi' gli aggiornamenti arrivano subito) e, senza rete, si usa la copia salvata.
-const VERSION = "18 nov 13:10";
+const VERSION = "18 nov 14:00";
 const CACHE = "mistero-" + VERSION;
 const FILES = [
   "./",
@@ -697,6 +697,9 @@ const FILES = [
   "img/scene/ponte-senza-simboli.png",
   "img/scene/ponte-simbolo-celtico.png",
   "img/scene/ponte-simbolo-inciso.png",
+  "img/scene/prove/var5-a.png",
+  "img/scene/prove/var5-b.png",
+  "img/scene/prove/var5-c.png",
   "img/scene/ristorante-settimo.png",
   "img/scene/strada-alpi.png",
   "img/scene/strada-arrivo-ponte.png",
