@@ -357,20 +357,20 @@ function disegnaBB(gg,s){if(!C2.corsaFinale)return;const yh=PROSP.orizzonte(PONT
 const BAV=mkImg('img/emb/nick_john_bavero_r1.png');
 function bavGeom(ppm){const hh=1.86*ppm,dw=hh*935/1249,x0=BB.basso.x-dw*.22;return{hh,dw,x0,nx:x0+dw*.73}}
 const DAN={nome:'dan',etichetta:'DAN',talking:false,bocca:1},JOHN={nome:'john',etichetta:'JOHN',talking:false,bocca:1};
-async function scenaBB(s,p){const yh=PROSP.orizzonte(PONTE.YR,PONTE.SR),ppm=(117-yh)/PROSP.HC,g=bavGeom(ppm),F={frontale:false};
-  await s.dici(DAN,'Siamo in missione per conto di Dio, mi aspettavo di mangiare qualcosa di meglio.',F);await pausa(.3);
-  await s.dici(JOHN,"Questo toast alle cavallette non è male in fondo! Certo non è la frittura mista di Settimo ma mi accontento!",F);
+async function scenaBB(s,p){const yh=PROSP.orizzonte(PONTE.YR,PONTE.SR),ppm=(117-yh)/PROSP.HC,g=bavGeom(ppm),F={frontale:false},Z={frontale:false,animale:true};   // Z = solo scritto (nessun borbottio): i Blues Brothers dicono a voce SOLO "Ehiiii"
+  await s.dici(DAN,'Siamo in missione per conto di Dio, mi aspettavo di mangiare qualcosa di meglio.',Z);await pausa(.3);
+  await s.dici(JOHN,"Questo toast alle cavallette non è male in fondo! Certo non è la frittura mista di Settimo ma mi accontento!",Z);
   A.sting('scoperta',.5);await pausa(.2);
   await p.vaiA(g.nx,117,true,'W');p.corsa=false;p.visibile=false;C2.bav=true;A.sting('simbolo',.5);   // Nick scatta e lo afferra
   await s.dici(p,"Settimo?! Cos'è Settimo?? Chi è? Rispondi!",F);
   C2.bav=false;p.x=g.nx;p.y=117;p.dir='W';p.visibile=true;await pausa(.4);   // lo rilascia
-  await s.dici(JOHN,'Ehiiii amico,',{clip:'audio/versi/john_ehi_r1.mp3',frontale:false});
-  await s.dici(JOHN,'calma, che ti prende? Non ti agitare, ti fa male sai?',F);
-  await s.dici(JOHN,"Chi è Settimo dici? Mio fratello qui ci ha lavorato l'anno scorso come lavapiatti.",F);
-  await s.dici(JOHN,'In realtà non lavava nulla e i piatti li svuotava, ma sono dettagli.',F);
+  await s.dici(JOHN,'Ehiiii…',{clip:'audio/versi/john_ehi_r1.mp3',frontale:false});
+  await s.dici(JOHN,'amico, calma, che ti prende? Non ti agitare, ti fa male sai?',Z);
+  await s.dici(JOHN,"Chi è Settimo dici? Mio fratello qui ci ha lavorato l'anno scorso come lavapiatti.",Z);
+  await s.dici(JOHN,'In realtà non lavava nulla e i piatti li svuotava, ma sono dettagli.',Z);
   await s.dici(p,'Dove si trova?! Che posto è?',F);
-  await s.dici(DAN,'Ehiiii amico,',{clip:'audio/versi/dan_ehi_r1.mp3',frontale:false});
-  await s.dici(DAN,'sai, ci ho fatto il lavapiatti lì! Sta giù a Firenze.',F)}
+  await s.dici(DAN,'Ehiiii…',{clip:'audio/versi/dan_ehi_r1.mp3',frontale:false});
+  await s.dici(DAN,'amico, sai, ci ho fatto il lavapiatti lì! Sta giù a Firenze.',Z)}
 registraScena({
   id:'c2-ponte',inventario:true,sfondo:'img/scene/ponte-diavolo-var3.png',
   giocatore:'protagonista-esterno',nomeGiocatore:'NICK',
@@ -605,7 +605,7 @@ registraScena({
       g.save();g.imageSmoothingEnabled=true;g.imageSmoothingQuality='high';const im2=acc||!(CAPRA.macOff.complete&&CAPRA.macOff.naturalWidth)?im:CAPRA.macOff;g.drawImage(im2,Math.round(X+ox),Math.round(Y+oy),Math.round(w),Math.round(h));
       const gx=X+w*CAPRA.YX+ox,gy=Y+h*CAPRA.YY+oy,a=acc?(CAPS.on?.75:.42):.04;   // bagliore neon dei tubi
       g.globalCompositeOperation='lighter';const gr=g.createRadialGradient(gx,gy,0,gx,gy,w*.22);gr.addColorStop(0,`rgba(110,215,255,${a})`);gr.addColorStop(1,'rgba(110,215,255,0)');g.fillStyle=gr;g.fillRect(gx-w*.25,gy-w*.25,w*.5,w*.5);g.restore()}},
-    {baseY:300,disegna(g,s){if(!CAPS.on||C2.finale||Math.floor(CAPS.t*2.2)%2!==0)return;   // freccia gialla lampeggiante sulle scale: da li' si torna indietro
+    {baseY:300,disegna(g,s){return;   // (18 nov) freccia gialla TOLTA dopo l'accensione del motore (Graziano) — era: lampeggiante sulle scale: da li' si torna indietro
       const dx=Math.round(Math.sin(CAPS.t*5)*1.2);g.save();g.translate(150+dx,40);for(const [c,o] of [['#05060a',1],['#ffd23a',0]]){g.fillStyle=c;g.beginPath();g.moveTo(0,-8-o);g.lineTo(-8-o,0);g.lineTo(-3,0);g.lineTo(-3,7+o);g.lineTo(3,7+o);g.lineTo(3,0);g.lineTo(8+o,0);g.closePath();g.fill()}g.restore()}},
     {baseY:CAPRA.TY,disegna(g,s){const c=s.attori&&s.attori.capra;if(!c||!capraPose())return;   // la corda dello sprite continua a terra fino al piede del tavolo (dietro il macchinario): lenta a riposo, tesa quando la capra tira
       let CW=91,CH=85,AX=45.5,t=CODA.idle,teso=false;if(CAP_P.t>=0){CW=230;CH=92;AX=140;t=CODA.t[CAP_P.t];teso=true}else if(CAP_P.w>=0){CW=160;CH=110;AX=80;t=CODA.w[CAP_P.w]}else if(CAP_P.c>=0){CW=160;CH=110;AX=80;t=CODA.c[CAP_P.c]}else if(CAP_P.m>=0){CW=160;CH=110;AX=80;t=CODA.m[CAP_P.m]}
