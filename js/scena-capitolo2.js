@@ -503,16 +503,16 @@ registraScena({
       gg.drawImage(ig.img,fr.x,fr.y,ig.w,ig.h,IGOR_G.x-ig.ax*sc,IGOR_G.fy-ig.h*sc,ig.w*sc,ig.h*sc);
       gg.globalAlpha=.3;gg.fillStyle='#1c3a3a';gg.fillRect(IGOR_G.rx,IGOR_G.ry,IGOR_G.rw,IGOR_G.rh);   // vetro: leggera tinta verde e riflesso
       gg.globalAlpha=.16;gg.fillStyle='#fff';gg.beginPath();gg.moveTo(IGOR_G.rx+2,IGOR_G.ry);gg.lineTo(IGOR_G.rx+5,IGOR_G.ry);gg.lineTo(IGOR_G.rx+1,IGOR_G.ry+IGOR_G.rh);gg.lineTo(IGOR_G.rx,IGOR_G.ry+IGOR_G.rh);gg.fill();gg.restore();return}
-    if(t<IGOR_G.t1+.5)return;   // il vetro e' vuoto: Igor esce e arriva dalla FINE del casello, davanti (da dietro il paracolpi bianco e rosso), fino all'auto; si ferma DI PROFILO
+    if(t<IGOR_G.t1+.5)return;   // il vetro e' vuoto: Igor sbuca dalla FESSURA fra il distributore e il casello a destra (x~195), da dietro, e scende verso di noi fino all'auto; si ferma DI PROFILO
     const u=Math.min(1,(t-IGOR_G.t1-.5)/IGOR_G.dur),e=u*u*(3-2*u),x=IGOR_G.ex0+(IGOR_G.ex1-IGOR_G.ex0)*e,y=IGOR_G.ey0+(IGOR_G.ey1-IGOR_G.ey0)*e,cam=u<1,
-      n=cam?'walk'+(1+Math.floor((t-IGOR_G.t1)*7)%6):'right',fr=ig.fr[n]||ig.fr.front;if(!fr)return;
+      n=cam?'walk_S_'+(1+Math.floor((t-IGOR_G.t1)*7)%8):'right',fr=ig.fr[n]||ig.fr.front;if(!fr)return;
     const pxm=(y-62)/1.8,k=IGOR_G.alt*pxm/ig.h;   // prospettiva (orizzonte y=62, camera 1,8 m): alto 1,6 m, come l'auto accanto a lui
     ell(x,y+.4,pxm*.25,1.6,'#000',.3);
-    gg.save();gg.beginPath();gg.rect(x<IGOR_G.cx1?IGOR_G.cx0:0,0,W,H);gg.clip();gg.imageSmoothingEnabled=false;   // finche' e' dietro il paracolpi (a sinistra di x=165) resta nascosto
+    gg.save();gg.beginPath();if(y<IGOR_G.yl)gg.rect(IGOR_G.cx0,0,IGOR_G.cx1-IGOR_G.cx0,H);else gg.rect(0,0,W,H);gg.clip();gg.imageSmoothingEnabled=false;   // finche' e' nella fessura si vede solo cio' che passa fra i due elementi
     gg.drawImage(ig.img,fr.x,fr.y,ig.w,ig.h,x-ig.ax*k,y-ig.h*k,ig.w*k,ig.h*k);gg.restore()},
   entra(s){A.say('');s.occupato=true;fadeTo(0,.5);document.getElementById('bHint').style.display='none';setTimeout(()=>{try{sfx.portaApre&&sfx.portaApre()}catch(e){}},3150);s.sequenza(async()=>{await pausa(7.5);A.setHint('CONTINUA…',true)})}
 });
-const IGOR_G={x:134,fy:97,h:46,rx:129,ry:46,rw:10,rh:26,t1:3.2,dur:3.4,ex0:150,ex1:190,ey0:112,ey1:113,cx0:165,cx1:178,alt:1.6};   // Igor nella cabina: centro, piedi, altezza (px logici) e riquadro del vetro
+const IGOR_G={x:134,fy:97,h:46,rx:129,ry:46,rw:10,rh:26,t1:3.2,dur:3.4,ex0:195,ex1:193,ey0:93,ey1:113,cx0:191.5,cx1:201,yl:105,alt:1.6};   // Igor nella cabina: centro, piedi, altezza (px logici) e riquadro del vetro
 
 /* la visuale del Ponte del Diavolo senza simbolo: a sinistra del furgone */
 registraScena({
