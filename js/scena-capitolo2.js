@@ -419,6 +419,7 @@ registraScena({
       gg.restore()}},
   oggetti:[{baseY:PONTE.RUOTE,disegna(gg,s){disegnaFurgone(gg,s)}},{baseY:117,disegna(gg,s){disegnaBB(gg,s)}}],
   entra(s){fadeTo(0,2.5);const p=s.giocatore;
+    if(/[?&]dan/.test(location.search)){C2.ritorno=true;C2.corsaFinale=true;C2.ponteVisto=true}   // (19 nov) link diretto ?c2-ponte&dan: salta alla scena dei Blues Brothers e di Dan
     if(C2.ritorno){   // (18 nov) ritorno dalle scale: Nick riattraversa il ponte e arriva davanti al furgone
       C2.ponteVisto=true;s.occupato=true;document.getElementById('bHint').style.display='none';PONTE.muto=false;
       s.sequenza(async()=>{await p.vaiA(C2.corsaFinale?172:100,117,!!C2.corsaFinale,C2.corsaFinale?'W':'N');p.corsa=false;p.dir=C2.corsaFinale?'W':'N';await pausa(1.2);if(C2.corsaFinale)await scenaBB(s,p);A.setHint('CONTINUA…',true)});return}
