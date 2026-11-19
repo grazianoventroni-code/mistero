@@ -539,7 +539,7 @@ registraScena({
       await s.dici(IGOR_ATT,'Eh eh eh eh!',{clip:'audio/versi/igor_risata_r1.mp3',frontale:false});   // risatina isterica (voce vera)
       await pausa(.4);await s.dici(NICK_ATT,'Perché? Che succede?',F);                                  // Nick parla da dentro l'auto
       await pausa(.3);await s.dici(IGOR_ATT,'Eh eh eh eh eh eh!',{clip:'audio/versi/igor_risata_r2.mp3',frontale:false});
-      await pausa(1.2);fadeTo(1,1.0,()=>s.vaiScena('c2-chiosco'))})}
+      await pausa(1.2);s.vaiScena('c2-chiosco')})}
 });
 const IGOR_ATT={nome:'igor',etichetta:'IGOR',talking:false,bocca:1},NICK_ATT={nome:'protagonista-esterno',etichetta:'NICK',talking:false,bocca:1};   // Nick risponde da dentro l'auto (non si vede)
 const IGOR_G={x:134,fy:97,h:46,rx:129,ry:46,rw:10,rh:26,t1:3.2,dur:4.0,ex0:206,xm:205.5,ex1:198,ey0:90.5,ym:93,ey1:113,cx0:199.5,cx1:205.5,r0:101,r1:109,alt:1.6,uA:.07};   // Igor nella cabina: centro, piedi, altezza (px logici) e riquadro del vetro
@@ -550,19 +550,19 @@ const IGOR_G={x:134,fy:97,h:46,rx:129,ry:46,rw:10,rh:26,t1:3.2,dur:4.0,ex0:206,x
 registraScena({
   id:'c2-chiosco',inventario:true,sfondo:'img/scene/casello-chiosco.png',
   giocatore:'protagonista-esterno',nomeGiocatore:'NICK',
-  attori:[{nome:'igor',etichetta:'IGOR',x:178,y:119,dir:'W'}],
-  partenza:{x:66,y:119,dir:'E'},
-  area:[[10,119],[230,119],[230,118],[10,118]],ostacoli:[],
-  scala:y=>2.7,rif:[112,1.7],audioPassi:false,
+  attori:[{nome:'igor',etichetta:'IGOR',x:178,y:150,dir:'W'}],
+  partenza:{x:66,y:150,dir:'E'},
+  area:[[10,150],[230,150],[230,149],[10,149]],ostacoli:[],
+  scala:y=>3.6,rif:[112,1.7],audioPassi:false,
   ambiente:{stanza:0,vento:.15,pioggia:0,fuoco:0},
   suggerimento:'',senzaEtichette:true,
   aggiorna(s,dt){const ig=s.attori.igor;if(ig)ig.visibile=false},   // Igor e' disegnato a mano (speculare) in sopra(): il fotogramma 'left' dell'atlante guarda a destra
-  sopra(gg,s){const c=A.CHARS['igor'];if(!c||!c.ready||!c.img.naturalWidth)return;const fr=c.fr.right;if(!fr)return;const a=s.attori.igor,sc=2.7/RS,t=s.t,
+  sopra(gg,s){const c=A.CHARS['igor'];if(!c||!c.ready||!c.img.naturalWidth)return;const fr=c.fr.right;if(!fr)return;const a=s.attori.igor,sc=2.7/RS*(150/189)*(3.6/2.7),t=s.t,
       sh=a&&a.talking?Math.sin(t*30)*.3:0,bob=a&&a.talking?-Math.abs(Math.sin(t*15))*.6:0;
-    ell(178,119,c.w*sc*.3,2,'#000',.3);gg.save();gg.translate(178+sh,0);gg.scale(-1,1);gg.imageSmoothingEnabled=false;
-    gg.drawImage(c.img,fr.x,fr.y,c.w,c.h,-c.ax*sc,119-c.h*sc+bob,c.w*sc,c.h*sc);gg.restore()},
+    gg.save();gg.translate(178+sh,0);gg.scale(-1,1);gg.imageSmoothingEnabled=false;
+    gg.drawImage(c.img,fr.x,fr.y,c.w,c.h,-c.ax*sc,150-c.h*sc+bob,c.w*sc,c.h*sc);gg.restore()},
   entra(s){fadeTo(0,.9);const p=s.giocatore,ig=s.attori.igor;s.occupato=true;document.getElementById('bHint').style.display='none';
-    p.x=66;p.y=119;p.dir='E';p.state='idle';if(ig){ig.x=178;ig.y=119;ig.dir='W';ig.state='idle'}
+    p.x=66;p.y=150;p.dir='E';p.state='idle';if(ig){ig.x=178;ig.y=150;ig.dir='W';ig.state='idle'}
     s.sequenza(async()=>{await pausa(1.6);await s.dici(ig,'Il pannello di controllo è andato in tilt, è tutto bloccato, la sbarra non si alza.',{frontale:false});await pausa(1.2);A.setHint('CONTINUA…',true)})}
 });
 
