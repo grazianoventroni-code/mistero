@@ -360,8 +360,8 @@ function bavGeom(ppm){const hh=1.86*ppm,dw=hh*103/138,x0=BB.basso.x-dw*.22;retur
 /* NOMI (correzione di Graziano, 19 nov): il basso e grasso e' JAKE (chiave interna 'john'), l'alto e' ELWOOD (chiave interna 'dan') */
 const DAN={nome:'dan',etichetta:'ELWOOD',talking:false,bocca:1},JOHN={nome:'john',etichetta:'JAKE',talking:false,bocca:1};
 /* (19 nov) RADIO DEL FURGONE: il brano di Graziano con effetto autoradio. Web Audio; se dopo 3 s non risulta caricato (decodifica fallita) si ripiega sul normale elemento audio. Si riavvia anche all'inizio della scena dei Blues Brothers se non sta suonando. */
-function radioAvvia(){radioFerma();try{PONTE.radio=A.motore.suonaClip('audio/musica/rawhide_radio.mp3',.1)}catch(e){}
-  setTimeout(()=>{const r=PONTE.radio;if(r&&!r.paused&&!(r.duration>0)&&!PONTE.radioEl){try{const au=new Audio('audio/musica/rawhide_radio.mp3');au.volume=.1;au.play().catch(()=>{});PONTE.radioEl=au}catch(e){}}},3000)}
+function radioAvvia(){radioFerma();try{PONTE.radio=A.motore.suonaClip('audio/musica/rawhide_radio.mp3',.06)}catch(e){}
+  setTimeout(()=>{const r=PONTE.radio;if(r&&!r.paused&&!(r.duration>0)&&!PONTE.radioEl){try{const au=new Audio('audio/musica/rawhide_radio.mp3');au.volume=.06;au.play().catch(()=>{});PONTE.radioEl=au}catch(e){}}},3000)}
 function radioFerma(){try{if(PONTE.radio)PONTE.radio.pause()}catch(e){}PONTE.radio=null;try{if(PONTE.radioEl)PONTE.radioEl.pause()}catch(e){}PONTE.radioEl=null}
 async function scenaBB(s,p){const yh=PROSP.orizzonte(PONTE.YR,PONTE.SR),ppm=(117-yh)/PROSP.HC,g=bavGeom(ppm),F={frontale:false},Z={frontale:false,animale:true};   // Z = solo scritto (nessun borbottio): i Blues Brothers dicono a voce SOLO "Ehiiii"
   BB.basso.x=140;BBS.dbav=false;BBS.bigl=-1;if(!PONTE.radio||PONTE.radio.ended)radioAvvia();
@@ -417,7 +417,7 @@ async function scenaDoc(s,p,F){const d=s.attori['doc-ritorno-al-futuro'];PONTE.m
   PONTE.nf=2;PONTE.df=-1;A.sting('scoperta',.7);A.giveItem('attrezzo');await pausa(.9);
   PONTE.nf=0;await pausa(.6);PONTE.nf=-1;p.visibile=true;p.dir='N';await pausa(.3);
   await s.dici(p,"Ehm… che cos'è?",F);
-  await s.dici(d,"Com'è che cos'è? È l'attrezzo!",{});
+  await s.dici(d,"Come che cos'è? È l'attrezzo!",{});
   await s.dici(p,'Ok, ok, grazie! Ora devo andare! Addio!',F);
   await s.dici(d,'Ci vediamo… in futuro!',{});
   await p.vaiA(236,118,true,'E');p.corsa=false;p.visibile=false;                                // Nick sparisce a DESTRA dello schermo (correzione 19 nov)
