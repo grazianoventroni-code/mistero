@@ -137,12 +137,12 @@ class Pers extends Actor{
       while(cur&&cur[1]>0&&this.st>=cur[1]){this.st-=cur[1];this.si++;cur=this.seq[this.si]}
       if(!cur||cur[0]==='#'){this.seq=null;this.state='idle'}else return}
     if(!this.path.length){if(this.state==='walk'){this.state='idle';this.v=0}
-      if(window.FIATO&&this.state==='idle'&&this.visibile!==false){this.riposo=(this.riposo===undefined?25+Math.random()*50:this.riposo)-dt;if(this.riposo<=0){this.riposo=45+Math.random()*60;FIATO.suona(this.n,Math.random()<.5?'respiro':'sospiro',1,.7)}}   /* (14 nov) ogni tanto un respiro o un sospiro */
+      if(window.FIATO&&this.state==='idle'&&this.visibile!==false&&!(window.__C2&&(__C2.ritorno||__C2.finale))){this.riposo=(this.riposo===undefined?25+Math.random()*50:this.riposo)-dt;if(this.riposo<=0){this.riposo=45+Math.random()*60;FIATO.suona(this.n,Math.random()<.5?'respiro':'sospiro',1,.7)}}   /* (14 nov) ogni tanto un respiro o un sospiro */
       return}
     const [tx,ty]=this.path[0],dx=tx-this.x,dy=ty-this.y,d=Math.hypot(dx,dy),s=this.scala();
     this.v=Math.min(1,this.v+dt*4);
     const vel=this.vel*(s/1.45)*(this.corsa?1.9:1)*(.45+.55*this.v)*(this.path.length===1&&d<5?Math.max(.5,d/5):1),step=Math.min(vel*dt,d);
-    if(d<.6){this.path.shift();if(!this.path.length){this.state='idle';this.v=0;if(this.corsa&&window.FIATO)FIATO.suona(this.n,'affanno',.85,.8);if(this.arrivo)this.dir=this.arrivo;const r=this._res;this._res=null;if(r)r(true)}return}
+    if(d<.6){this.path.shift();if(!this.path.length){this.state='idle';this.v=0;if(this.corsa&&window.FIATO&&!(window.__C2&&(__C2.ritorno||__C2.finale)))FIATO.suona(this.n,'affanno',.85,.8);if(this.arrivo)this.dir=this.arrivo;const r=this._res;this._res=null;if(r)r(true)}return}
     this.x+=dx/d*step;this.y+=dy/d*step;this.lastD=d+(this.path.length-1)*50;this.state='walk';
     const horiz=this.dir==='E'||this.dir==='W';
     if(horiz?Math.abs(dy)>Math.abs(dx)*1.5:Math.abs(dx)>Math.abs(dy)*.8)this.dir=Math.abs(dx)>=Math.abs(dy)*(horiz?1.5:.8)?(dx>0?'E':'W'):(dy>0?'S':'N');
