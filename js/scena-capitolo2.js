@@ -516,12 +516,13 @@ registraScena({
     const fr=ig.fr[n]||ig.fr.front;if(!fr)return;
     const pxm=(y-62)/1.8,k=IGOR_G.alt*pxm/ig.h;   // prospettiva (orizzonte y=62, camera 1,8 m): alto 1,6 m, come l'auto accanto a lui
     ell(x,y+.4,pxm*.25,1.6,'#000',.3);
-    const rv=Math.max(0,Math.min(1,(y-IGOR_G.r0)/(IGOR_G.r1-IGOR_G.r0))),cl=IGOR_G.cx0*(1-rv),cr=W;   // la fessura si "apre" man mano che esce: niente figura tagliata di colpo
-    gg.save();gg.beginPath();gg.rect(cl,0,cr-cl,H);gg.clip();gg.imageSmoothingEnabled=false;   // finche' e' nella fessura si vede solo cio' che passa fra i due elementi
+    const cl=0,cr=W;   // la fessura si "apre" man mano che esce: niente figura tagliata di colpo
+    gg.save();gg.globalAlpha=Math.max(0,Math.min(1,(t-IGOR_G.t1-.5)/.6));   // compare dall'ombra della fessura con una breve dissolvenza: sempre intero, mai ritagliato
+    gg.imageSmoothingEnabled=false;   // finche' e' nella fessura si vede solo cio' che passa fra i due elementi
     gg.drawImage(ig.img,fr.x,fr.y,ig.w,ig.h,x-ig.ax*k,y-ig.h*k,ig.w*k,ig.h*k);gg.restore()},
   entra(s){A.say('');s.occupato=true;fadeTo(0,.5);document.getElementById('bHint').style.display='none';setTimeout(()=>{try{sfx.portaApre&&sfx.portaApre()}catch(e){}},3150);s.sequenza(async()=>{await pausa(7.5);A.setHint('CONTINUA…',true)})}
 });
-const IGOR_G={x:134,fy:97,h:46,rx:129,ry:46,rw:10,rh:26,t1:3.2,dur:4.0,ex0:201,xm:204,ex1:207,ey0:100,ym:111,ey1:114,cx0:199.5,cx1:205.5,r0:101,r1:109,alt:1.6,uA:.5};   // Igor nella cabina: centro, piedi, altezza (px logici) e riquadro del vetro
+const IGOR_G={x:134,fy:97,h:46,rx:129,ry:46,rw:10,rh:26,t1:3.2,dur:4.0,ex0:208.5,xm:210.5,ex1:212,ey0:90.5,ym:104,ey1:113,cx0:199.5,cx1:205.5,r0:101,r1:109,alt:1.6,uA:.5};   // Igor nella cabina: centro, piedi, altezza (px logici) e riquadro del vetro
 
 /* la visuale del Ponte del Diavolo senza simbolo: a sinistra del furgone */
 registraScena({
