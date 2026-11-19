@@ -547,6 +547,7 @@ const IGOR_G={x:134,fy:97,h:46,rx:129,ry:46,rw:10,rh:26,t1:3.2,dur:4.0,ex0:206,x
 
 /* ---------------- (20 nov) CASELLO CHIOSCO: Nick e Igor uno di fronte all'altro (di profilo), davanti alla cabina e al pannello di controllo ----------------
    Igor: «Il pannello di controllo e' andato in tilt, e' tutto bloccato, la sbarra non si alza.» (borbottio). Per ora la scena si ferma qui (CONTINUA…). */
+const CH={punta:false};
 registraScena({
   id:'c2-chiosco',inventario:true,sfondo:'img/scene/casello-chiosco.png',
   giocatore:'protagonista-esterno',nomeGiocatore:'NICK',
@@ -557,13 +558,76 @@ registraScena({
   ambiente:{stanza:0,vento:.15,pioggia:0,fuoco:0},
   suggerimento:'',senzaEtichette:true,
   aggiorna(s,dt){const ig=s.attori.igor;if(ig)ig.visibile=false},   // Igor e' disegnato a mano (speculare) in sopra(): il fotogramma 'left' dell'atlante guarda a destra
-  sopra(gg,s){const c=A.CHARS['igor'];if(!c||!c.ready||!c.img.naturalWidth)return;const fr=c.fr.right;if(!fr)return;const a=s.attori.igor,sc=2.7/RS*(150/189)*(3.6/2.7),t=s.t,
+  sopra(gg,s){const c=A.CHARS['igor'];if(!c||!c.ready||!c.img.naturalWidth)return;const pt=CH.punta&&c.fr.point,fr=pt||c.fr.right;if(!fr)return;const a=s.attori.igor,sc=2.7/RS*(150/189)*(3.6/2.7),t=s.t,
       sh=a&&a.talking?Math.sin(t*30)*.3:0,bob=a&&a.talking?-Math.abs(Math.sin(t*15))*.6:0;
-    gg.save();gg.translate(178+sh,0);gg.scale(-1,1);gg.imageSmoothingEnabled=false;
+    if(pt){const q=.5+.5*Math.sin(t*7);gg.save();gg.globalAlpha=.35+.45*q;gg.strokeStyle='#ffd24a';gg.lineWidth=1.2;gg.strokeRect(126,4,84,62);gg.restore()}   // indica il pannello (a destra): il fotogramma 'point' guarda a destra, non va specchiato
+    gg.save();gg.translate(178+sh,0);if(!pt)gg.scale(-1,1);gg.imageSmoothingEnabled=false;
     gg.drawImage(c.img,fr.x,fr.y,c.w,c.h,-c.ax*sc,150-c.h*sc+bob,c.w*sc,c.h*sc);gg.restore()},
   entra(s){fadeTo(0,.9);const p=s.giocatore,ig=s.attori.igor;s.occupato=true;document.getElementById('bHint').style.display='none';
     p.x=66;p.y=150;p.dir='E';p.state='idle';if(ig){ig.x=178;ig.y=150;ig.dir='W';ig.state='idle'}
-    s.sequenza(async()=>{await pausa(1.6);await s.dici(ig,'Il pannello di controllo è andato in tilt, è tutto bloccato, la sbarra non si alza.',{frontale:false});await pausa(1.2);A.setHint('CONTINUA…',true)})}
+    CH.punta=false;s.sequenza(async()=>{await pausa(1.6);const pr=s.dici(ig,'Il pannello di controllo è andato in tilt, è tutto bloccato, la sbarra non si alza.',{frontale:false});await pausa(1.8);CH.punta=true;await pr;await pausa(1.4);s.vaiScena('c2-pannello')})}
+});
+
+/* ---------------- (20 nov) PANNELLO APERTO: l'enigma dei fili ----------------
+   Primo piano del vano del pannello (nessun personaggio). A sinistra 4 cavi colorati con la spina libera, a destra 4 prese con un simbolo inciso.
+   La targhetta al centro mostra la regola: colore -> simbolo. Si trascina la spina di ogni cavo sulla presa giusta. Con tutte e 4 collegate: giuste = sblocco, sbagliate = scintille e i cavi tornano indietro. */
+const PAN={img:new Image(),ys:[27.7,50.1,72.4,94.7],lx:71.8,rx:184.8,col:['#e23a2e','#f2c230','#3fbf4a','#3a7fe0'],
+  presa:[0,1,2,3],      // simboli delle prese a destra, dall'alto: triangolo, stella, quadrato, cerchio
+  regola:[1,3,0,2],     // simbolo di ogni colore (rosso, giallo, verde, blu) = anche la presa giusta
+  cav:[],sp:[],stato:'gioca',tS:0,fl:0,drag:-1,esito:false};
+PAN.img.src='img/scene/pannello-aperto.png';
+function panSim(gg,k,x,y,r,fill,out){gg.beginPath();
+  if(k===0){gg.moveTo(x,y-r);gg.lineTo(x+r*.95,y+r*.75);gg.lineTo(x-r*.95,y+r*.75);gg.closePath()}
+  else if(k===1){for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5,q=i%2?r*.45:r*1.05;gg[i?'lineTo':'moveTo'](x+Math.cos(a)*q,y+Math.sin(a)*q)}gg.closePath()}
+  else if(k===2){gg.rect(x-r*.8,y-r*.8,r*1.6,r*1.6)}
+  else gg.arc(x,y,r*.85,0,Math.PI*2);
+  gg.fillStyle=fill;gg.fill();if(out){gg.strokeStyle=out;gg.lineWidth=.7;gg.stroke()}}
+function panCavo(gg,ax,ay,bx,by,col){const d=Math.hypot(bx-ax,by-ay);if(d>1.5){const mx=(ax+bx)/2,my=(ay+by)/2+Math.min(20,d*.26);
+    gg.lineCap='round';gg.lineJoin='round';
+    for(const [w,c,dx,dy] of [[3.6,'#0c0e16',0,0],[2.3,col,0,0],[.7,'rgba(255,255,255,.4)',-.5,-.6]]){gg.beginPath();gg.moveTo(ax+dx,ay+dy);gg.quadraticCurveTo(mx+dx,my+dy,bx+dx,by+dy);gg.strokeStyle=c;gg.lineWidth=w;gg.stroke()}}
+  gg.beginPath();gg.arc(bx,by,4.8,0,Math.PI*2);gg.fillStyle='#0c0e16';gg.fill();   // spina
+  gg.beginPath();gg.arc(bx,by,3.8,0,Math.PI*2);gg.fillStyle=col;gg.fill();
+  gg.beginPath();gg.arc(bx,by,1.7,0,Math.PI*2);gg.fillStyle='rgba(0,0,0,.45)';gg.fill();
+  gg.beginPath();gg.arc(bx-1.3,by-1.4,.9,0,Math.PI*2);gg.fillStyle='rgba(255,255,255,.7)';gg.fill()}
+function panReset(){PAN.cav=PAN.col.map((c,i)=>({x:PAN.lx,y:PAN.ys[i],on:-1}));PAN.sp=[];PAN.stato='gioca';PAN.tS=0;PAN.fl=0;PAN.drag=-1}
+function panPresa(x,y){let b=-1,bd=12;for(let j=0;j<4;j++){const d=Math.hypot(x-PAN.rx,y-PAN.ys[j]);if(d<bd){bd=d;b=j}}return b}
+function panControlla(){if(PAN.cav.some(c=>c.on<0))return;PAN.stato='verifica';PAN.tS=0;PAN.esito=PAN.cav.every((c,i)=>c.on===PAN.regola[i])}
+registraScena({
+  id:'c2-pannello',sfondo:'img/scene/pannello-aperto.png',
+  area:[[0,0],[2,0],[2,2],[0,2]],suggerimento:'',senzaEtichette:true,ambiente:{stanza:0,vento:0,pioggia:0,fuoco:0},
+  disegnaSfondo(gg,s){R(0,0,W,H,'#0a0c12');gg.save();gg.imageSmoothingEnabled=true;gg.imageSmoothingQuality='high';if(PAN.img.complete&&PAN.img.naturalWidth)gg.drawImage(PAN.img,0,0,W,H);gg.restore();
+    if(!PAN.cav.length)return;
+    gg.save();
+    // targhetta: la regola (colore -> simbolo) incisa
+    for(let i=0;i<4;i++){const y=48.4+i*7.2;
+      gg.beginPath();gg.arc(106,y,2.3,0,Math.PI*2);gg.fillStyle=PAN.col[i];gg.fill();gg.strokeStyle='#2a1c0c';gg.lineWidth=.6;gg.stroke();
+      gg.strokeStyle='#3a2810';gg.lineWidth=.9;gg.lineCap='round';gg.beginPath();gg.moveTo(113,y);gg.lineTo(137,y);gg.moveTo(133.5,y-2);gg.lineTo(137,y);gg.lineTo(133.5,y+2);gg.stroke();
+      panSim(gg,PAN.regola[i],148,y,2.7,'#3a2810','#241608')}
+    // simboli accanto alle prese di destra
+    for(let j=0;j<4;j++)panSim(gg,PAN.presa[j],203,PAN.ys[j],3.6,PAN.stato==='sbloccato'?'#7be07b':'#e9e0bd','#14100a');
+    // anelli colorati delle prese di sinistra (da dove partono i cavi)
+    for(let i=0;i<4;i++){gg.beginPath();gg.arc(PAN.lx,PAN.ys[i],9.6,0,Math.PI*2);gg.strokeStyle=PAN.col[i];gg.lineWidth=1.7;gg.globalAlpha=.9;gg.stroke();gg.globalAlpha=1}
+    // presa di destra evidenziata quando una spina e' vicina
+    if(PAN.drag>=0){const c=PAN.cav[PAN.drag],j=panPresa(c.x,c.y);if(j>=0){gg.beginPath();gg.arc(PAN.rx,PAN.ys[j],10.6,0,Math.PI*2);gg.strokeStyle='rgba(255,255,255,'+(.5+.3*Math.sin(s.t*10))+')';gg.lineWidth=1.2;gg.stroke()}}
+    // cavi: prima quelli fermi, poi quello trascinato
+    for(const i of [0,1,2,3].sort((a,b)=>(a===PAN.drag)-(b===PAN.drag))){const c=PAN.cav[i];panCavo(gg,PAN.lx,PAN.ys[i],c.x,c.y,PAN.col[i])}
+    gg.restore();
+    // scintille e lampi
+    for(const p of PAN.sp){gg.globalAlpha=Math.max(0,1-p.t*2.2);gg.fillStyle=p.c;gg.fillRect(p.x,p.y,1.2,1.2)}gg.globalAlpha=1;
+    if(PAN.fl>0){gg.globalAlpha=Math.min(.45,PAN.fl*.5);gg.fillStyle=PAN.esito?'#9dff9d':'#ff5a40';gg.fillRect(0,0,W,H);gg.globalAlpha=1}},
+  aggiorna(s,dt){if(!PAN.cav.length)return;
+    PAN.fl=Math.max(0,PAN.fl-dt*1.4);for(const p of PAN.sp){p.t+=dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=60*dt}PAN.sp=PAN.sp.filter(p=>p.t<.5);
+    PAN.cav.forEach((c,i)=>{if(i===PAN.drag)return;const tx=c.on>=0?PAN.rx:PAN.lx,ty=c.on>=0?PAN.ys[c.on]:PAN.ys[i],k=Math.min(1,dt*(c.on>=0?30:11));c.x+=(tx-c.x)*k;c.y+=(ty-c.y)*k});   // le spine rilasciate tornano a casa o si infilano nella presa
+    if(PAN.stato==='verifica'){PAN.tS+=dt;if(PAN.tS>.45){
+      if(PAN.esito){PAN.stato='sbloccato';PAN.fl=1;A.sfx.take();A.setHint('CONTINUA…',true)}
+      else{PAN.stato='gioca';PAN.fl=1;A.sfx.no();for(let j=0;j<4;j++)for(let n=0;n<10;n++)PAN.sp.push({x:PAN.rx,y:PAN.ys[j],vx:(Math.random()-.4)*60,vy:-Math.random()*40,t:0,c:Math.random()<.5?'#ffe27a':'#ffffff'});
+        for(const c of PAN.cav)c.on=-1}}}},
+  giu(s,x,y){if(PAN.stato!=='gioca')return;let b=-1,bd=10;PAN.cav.forEach((c,i)=>{const d=Math.hypot(x-c.x,y-c.y);if(d<bd){bd=d;b=i}});if(b<0)return;
+    PAN.drag=b;PAN.cav[b].on=-1;PAN.cav[b].x=x;PAN.cav[b].y=y;A.sfx.plic()},
+  muovi(s,x,y){if(PAN.drag<0)return;const c=PAN.cav[PAN.drag];c.x=x;c.y=y},
+  su(s,x,y){if(PAN.drag<0)return;const i=PAN.drag;PAN.drag=-1;const c=PAN.cav[i],j=panPresa(c.x,c.y);
+    if(j>=0&&!PAN.cav.some(q=>q.on===j)){c.on=j;A.sfx.thud();panControlla()}else A.sfx.plic()},
+  entra(s){panReset();A.say('');document.getElementById('bHint').style.display='none';fadeTo(0,.9);s.occupato=false}
 });
 
 /* la visuale del Ponte del Diavolo senza simbolo: a sinistra del furgone */

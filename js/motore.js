@@ -422,11 +422,13 @@ class Scena{
     return null}
   canSkip(){return !!(this.cfg.canSkip&&this.cfg.canSkip(this))}   // (17 nov) pulsante SALTA per le scene con filmato
   skip(){if(this.canSkip())this.cfg.skip(this)}
-  move(x,y){if(!this.pronto)return;const t=this.trova(x,y);this.hover=t;if(this.cfg.senzaEtichette)return;setHint(t&&t.nome?t.nome:(this.cfg.suggerimento||''))}   // (16 nov) senzaEtichette: niente nomi sugli oggetti
+  move(x,y){if(!this.pronto)return;if(this.cfg.muovi){this.cfg.muovi(this,x,y);return}const t=this.trova(x,y);this.hover=t;if(this.cfg.senzaEtichette)return;setHint(t&&t.nome?t.nome:(this.cfg.suggerimento||''))}   // (16 nov) senzaEtichette: niente nomi sugli oggetti
   dropItem(id,x,y){if(this.cfg.dropItem)return this.cfg.dropItem(this,id,x,y);sfx.no()}   // oggetto dell'inventario lasciato sulla scena
   hintTargets(id){return this.cfg.hintTargets?this.cfg.hintTargets(this,id):[]}
+  up(x,y){if(this.pronto&&this.cfg.su)this.cfg.su(this,x,y)}   // (20 nov) scene-puzzle con trascinamento: cfg.giu / cfg.muovi / cfg.su
   async down(x,y){
     if(fade.a>.3||!this.pronto)return;
+    if(this.cfg.giu){this.cfg.giu(this,x,y);return}
     if(Dialogo.cor){Dialogo.tocca();return}
     if(this.occupato||Dialogo.scelteEl)return;
     const p=this.giocatore;if(!p)return;
