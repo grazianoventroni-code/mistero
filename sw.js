@@ -1,7 +1,7 @@
 // Service worker: il gioco funziona offline.
 // - i file del gioco (immagini, audio, icone) sono salvati alla prima apertura (sempre scaricati freschi: cache reload) e serviti dalla memoria del telefono;
 // - la pagina, gli script (.js), gli indici (.json) e questo file si chiedono prima alla rete (cosi' gli aggiornamenti arrivano subito) e, senza rete, si usa la copia salvata.
-const VERSION = "20 nov 01:00";
+const VERSION = "20 nov 01:40";
 const CACHE = "mistero-" + VERSION;
 const FILES = [
   "./",
@@ -498,6 +498,8 @@ const FILES = [
   "audio/tuoni.mp3",
   "audio/versi/bela_v2.mp3",
   "audio/versi/dan_ehi_r3.mp3",
+  "audio/versi/igor_risata_r1.mp3",
+  "audio/versi/igor_risata_r2.mp3",
   "audio/versi/john_ehi_r3.mp3",
   "audio/versi/lara_ehila_r1.mp3",
   "audio/versi/miao_khora_v2.mp3",

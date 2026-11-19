@@ -525,7 +525,7 @@ registraScena({
     const u=Math.min(1,(t-IGOR_G.t1-.5)/IGOR_G.dur),ph=(t-IGOR_G.t1)*7,uA=IGOR_G.uA;let x,y,n;
     if(u<uA){const a=u/uA;x=IGOR_G.ex0+(IGOR_G.xm-IGOR_G.ex0)*a;y=IGOR_G.ey0+(IGOR_G.ym-IGOR_G.ey0)*a;n='walk'+(1+Math.floor(ph)%6)}                      // esce dalla fessura: profilo
     else if(u<1){const b=(u-uA)/(1-uA),e=b*b*(3-2*b);x=IGOR_G.xm+(IGOR_G.ex1-IGOR_G.xm)*e;y=IGOR_G.ym+(IGOR_G.ey1-IGOR_G.ym)*e;n='walk_S_'+(1+Math.floor(ph)%8)}   // a figura intera: di fronte
-    else{x=IGOR_G.ex1;y=IGOR_G.ey1;n='right'}                                                                                // fermo accanto all'auto: di profilo
+    else{x=IGOR_G.ex1+(IGOR_ATT.talking?Math.sin(t*34)*.35:0);y=IGOR_G.ey1+(IGOR_ATT.talking?-Math.abs(Math.sin(t*17))*.5:0);n='right'}                                                                                // fermo accanto all'auto: di profilo
     const fr=ig.fr[n]||ig.fr.front;if(!fr)return;
     const pxm=(y-62)/1.8,k=IGOR_G.alt*pxm/ig.h;   // prospettiva (orizzonte y=62, camera 1,8 m): alto 1,6 m, come l'auto accanto a lui
     ell(x,y+.4,pxm*.25,1.6,'#000',.3);
@@ -533,8 +533,15 @@ registraScena({
     gg.save();gg.globalAlpha=Math.max(0,Math.min(1,(t-IGOR_G.t1-.5)/.6));   // compare dall'ombra della fessura con una breve dissolvenza: sempre intero, mai ritagliato
     gg.imageSmoothingEnabled=false;   // finche' e' nella fessura si vede solo cio' che passa fra i due elementi
     gg.drawImage(ig.img,fr.x,fr.y,ig.w,ig.h,x-ig.ax*k,y-ig.h*k,ig.w*k,ig.h*k);gg.restore()},
-  entra(s){A.say('');s.occupato=true;fadeTo(0,.5);document.getElementById('bHint').style.display='none';setTimeout(()=>{try{sfx.portaApre&&sfx.portaApre()}catch(e){}},3150);s.sequenza(async()=>{await pausa(7.5);A.setHint('CONTINUA…',true)})}
+  entra(s){A.say('');s.occupato=true;fadeTo(0,.5);document.getElementById('bHint').style.display='none';setTimeout(()=>{try{sfx.portaApre&&sfx.portaApre()}catch(e){}},3150);s.sequenza(async()=>{await pausa(IGOR_G.t1+.5+IGOR_G.dur+.9);   // Igor e' arrivato accanto all'auto: il blocco al casello
+      const F={frontale:false};
+      await s.dici(IGOR_ATT,'Niente da fare, amico. Di qui non si passa.',F);
+      await s.dici(IGOR_ATT,'Eh eh eh eh!',{clip:'audio/versi/igor_risata_r1.mp3',frontale:false});   // risatina isterica (voce vera)
+      await pausa(.4);await s.dici(NICK_ATT,'Perché? Che succede?',F);                                  // Nick parla da dentro l'auto
+      await pausa(.3);await s.dici(IGOR_ATT,'Eh eh eh eh eh eh!',{clip:'audio/versi/igor_risata_r2.mp3',frontale:false});
+      await pausa(1.2);A.setHint('CONTINUA…',true)})}
 });
+const IGOR_ATT={nome:'igor',etichetta:'IGOR',talking:false,bocca:1},NICK_ATT={nome:'protagonista-esterno',etichetta:'NICK',talking:false,bocca:1};   // Nick risponde da dentro l'auto (non si vede)
 const IGOR_G={x:134,fy:97,h:46,rx:129,ry:46,rw:10,rh:26,t1:3.2,dur:4.0,ex0:206,xm:205.5,ex1:198,ey0:90.5,ym:93,ey1:113,cx0:199.5,cx1:205.5,r0:101,r1:109,alt:1.6,uA:.07};   // Igor nella cabina: centro, piedi, altezza (px logici) e riquadro del vetro
 
 /* la visuale del Ponte del Diavolo senza simbolo: a sinistra del furgone */
