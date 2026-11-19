@@ -443,7 +443,7 @@ registraScena({
     if(/[?&]dan/.test(location.search)){C2.ritorno=true;C2.corsaFinale=true;C2.ponteVisto=true}   // (19 nov) link diretto ?c2-ponte&dan: salta alla scena dei Blues Brothers e di Dan
     if(C2.ritorno){   // (18 nov) ritorno dalle scale: Nick riattraversa il ponte e arriva davanti al furgone
       C2.ponteVisto=true;s.occupato=true;document.getElementById('bHint').style.display='none';PONTE.muto=false;
-      if(C2.corsaFinale){A.musicStop&&A.musicStop(2.5);try{if(PONTE.radio)PONTE.radio.pause();PONTE.radio=A.motore.suonaClip('audio/musica/rawhide_radio.mp3',.9)}catch(e){}}   // (19 nov) il Rawhide dall'autoradio del furgone, di sottofondo e gracchiante
+      if(C2.corsaFinale){A.musicStop&&A.musicStop(2.5);try{if(PONTE.radio)PONTE.radio.pause();PONTE.radio=A.motore.suonaClip('audio/musica/rawhide_radio.mp3',.75)}catch(e){}}   // (19 nov) il Rawhide dall'autoradio del furgone, di sottofondo e gracchiante
       s.sequenza(async()=>{await p.vaiA(C2.corsaFinale?172:100,117,!!C2.corsaFinale,C2.corsaFinale?'W':'N');p.corsa=false;p.dir=C2.corsaFinale?'W':'N';await pausa(1.2);if(C2.corsaFinale)await scenaBB(s,p);A.setHint('CONTINUA…',true)});return}
     if(/[?&](panino|consegna)/.test(location.search)&&!C2.fusibile)C2.ponteVisto=true;   // link diretto ?c2-ponte&panino: salta alla scena del panino e del fusibile
     if(C2.ponteVisto&&!C2.fusibile){s.sequenza(()=>scenaPanino(s))}   // tornato dal ponte: la scena del panino
