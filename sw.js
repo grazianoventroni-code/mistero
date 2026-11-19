@@ -1,7 +1,7 @@
 // Service worker: il gioco funziona offline.
 // - i file del gioco (immagini, audio, icone) sono salvati alla prima apertura (sempre scaricati freschi: cache reload) e serviti dalla memoria del telefono;
 // - la pagina, gli script (.js), gli indici (.json) e questo file si chiedono prima alla rete (cosi' gli aggiornamenti arrivano subito) e, senza rete, si usa la copia salvata.
-const VERSION = "19 nov 15:40";
+const VERSION = "19 nov 17:00";
 const CACHE = "mistero-" + VERSION;
 const FILES = [
   "./",
@@ -492,6 +492,7 @@ const FILES = [
   "audio/gemelle/gemella-de4e9982.mp3",
   "audio/gemelle/indice.json",
   "audio/musica/macchinario.mp3",
+  "audio/musica/rawhide_radio.mp3",
   "audio/prova-16k.mp3",
   "audio/temporale.wav",
   "audio/tuoni.mp3",
@@ -569,6 +570,8 @@ const FILES = [
   "img/char-r19/ramone-4.png",
   "img/emb/ascia_r1.png",
   "img/emb/ascia_r2.png",
+  "img/emb/attrezzo_grande_r1.png",
+  "img/emb/attrezzo_icona_r1.png",
   "img/emb/auto164_34fronte.png",
   "img/emb/auto164_34retro_hd.png",
   "img/emb/auto164_fronte.png",
@@ -587,6 +590,7 @@ const FILES = [
   "img/emb/chiavi_auto_icona_r1.png",
   "img/emb/chiavi_auto_r1.png",
   "img/emb/dan_biglietto_r2.png",
+  "img/emb/doc_attrezzo_r1.png",
   "img/emb/doc_fusibile_r1.png",
   "img/emb/foglie-acero.png",
   "img/emb/furgone_panini_2x.png",
@@ -627,6 +631,7 @@ const FILES = [
   "img/emb/mela_grande_r2.png",
   "img/emb/mela_icona_r2.png",
   "img/emb/mela_r2.png",
+  "img/emb/nick_attrezzo_r1.png",
   "img/emb/nick_dan_bavero_r2.png",
   "img/emb/nick_fusibile_r1.png",
   "img/emb/nick_john_bavero_r2.png",

@@ -265,8 +265,8 @@ registraScena({
    Prospettiva: l'orizzonte si ricava dai segnali (palo con base y=95, cartello in alto y=40: ~3,2 m) -> orizzonte y=68; Nick a y=95 ha scala 0,907 (30 px).
    Il furgone (sprite 348x223 = 5 m di lunghezza, disegnato a 94 px con un uomo di 33 px) con la base a y=112 ha 27,5 px/m -> scala 1,46 = 137x88 px.
    Doc (atlante: figura alta 128 px) e' dietro il bancone dello sportello: 1,75 m a 27,5 px/m = 48 px; si vede dal petto in su (il bancone lo copre). */
-const PONTE={furg:mkImg('img/emb/furgone_panini_hd.png'),YR:95,SR:.907,BASE:108,RUOTE:114,giu:0,df:-1,nf:-1,muto:false,docF:mkImg('img/emb/doc_fusibile_r1.png'),nickF:mkImg('img/emb/nick_fusibile_r1.png'),verso:0,tv:4};
-window.__PONTE=PONTE;
+const PONTE={furg:mkImg('img/emb/furgone_panini_hd.png'),YR:95,SR:.907,BASE:108,RUOTE:114,giu:0,df:-1,nf:-1,muto:false,docF:mkImg('img/emb/doc_fusibile_r1.png'),nickF:mkImg('img/emb/nick_fusibile_r1.png'),docA:mkImg('img/emb/doc_attrezzo_r1.png'),nickA:mkImg('img/emb/nick_attrezzo_r1.png'),radio:null,verso:0,tv:4};
+PONTE.docF0=PONTE.docF;PONTE.nickF0=PONTE.nickF;window.__PONTE=PONTE;
 function linea(gg,x0,y0,x1,y1,w,c){gg.strokeStyle=c;gg.lineWidth=w;gg.lineCap='square';gg.beginPath();gg.moveTo(Math.round(x0),Math.round(y0));gg.lineTo(Math.round(x1),Math.round(y1));gg.stroke()}
 function disegnaFurgone(gg,s){
   const im=PONTE.furg;if(!(im.complete&&im.naturalWidth))return;
@@ -396,7 +396,28 @@ async function scenaDan(s,p,ppm,F,Z){const gb=danGeom('bav',ppm),gs=danGeom('big
   const an=(async()=>{for(let i=0;i<8;i++){BBS.bigl=i;if(i===7){A.sting('scoperta',.6);A.giveItem('biglietto')}await pausa(DUR[i])}})();
   await s.dici(DAN,"Stai calmo amico, ti scrivo l'indirizzo.",F);await an;
   BBS.bigl=-1;p.x=gs.nx;p.y=117;p.dir='W';p.visibile=true;await pausa(.6);
-  await p.vaiA(236,112,true,'E');p.corsa=false;   // Nick corre verso destra: parte il filmato
+  await scenaDoc(s,p,F)}   // poi Doc chiama Nick: regalo dell'attrezzo; infine Nick sparisce a sinistra e parte il filmato
+/* (19 nov) DOC: "Ehi, non vuoi il tuo panino?" -> "No, non c'e' tempo." -> sparisce sotto il banco e ricompare con l'ATTREZZO (torcia multiuso con cacciaviti), stesse pose e movimenti dello scambio del fusibile
+   (strisce doc_attrezzo_r1 / nick_attrezzo_r1: stessa struttura di doc_fusibile_r1 / nick_fusibile_r1). L'attrezzo resta per sempre nell'inventario. La radio del furgone suona il Rawhide fino a che Nick non sparisce. */
+async function scenaDoc(s,p,F){const d=s.attori['doc-ritorno-al-futuro'];PONTE.muto=true;
+  await s.dici(d,"Ehi, non vuoi il tuo panino? È gratis per l'aiuto che mi hai dato!",{});
+  await s.dici(p,"No, non c'è tempo.",F);
+  await s.dici(d,'Va bene, allora ti devo fare un regalo perlomeno. Aspetta.',{});
+  await giuDoc(0,1,.7);rumoriAttrezzi(1.6,false);await pausa(1.6);await giuDoc(1,0,.5);      // sparisce sotto il banco e ricompare con l'attrezzo in mano
+  p.visibile=true;await p.vaiA(54,118,false,'N');p.dir='N';await pausa(.3);
+  PONTE.docF=PONTE.docA;PONTE.nickF=PONTE.nickA;                                               // pose con l'attrezzo al posto del fusibile
+  PONTE.df=0;await pausa(.5);PONTE.df=1;await pausa(.45);
+  await s.dici(d,'Ecco, tieni.',{});
+  p.visibile=false;PONTE.nf=0;await pausa(.3);PONTE.nf=1;await pausa(.5);
+  PONTE.nf=2;PONTE.df=-1;A.sting('scoperta',.7);A.giveItem('attrezzo');await pausa(.9);
+  PONTE.nf=0;await pausa(.6);PONTE.nf=-1;p.visibile=true;p.dir='N';await pausa(.3);
+  await s.dici(p,"Ehm… che cos'è?",F);
+  await s.dici(d,"Com'è che cos'è? È l'attrezzo!",{});
+  await s.dici(p,'Ok, ok, grazie! Ora devo andare! Addio!',F);
+  await s.dici(d,'Ci vediamo… in futuro!',{});
+  await p.vaiA(2,118,true,'W');p.corsa=false;p.visibile=false;                                   // Nick sparisce a sinistra dello schermo
+  if(PONTE.radio){try{PONTE.radio.pause()}catch(e){}PONTE.radio=null}
+  PONTE.docF=PONTE.docF0;PONTE.nickF=PONTE.nickF0;
   s.vaiScena('c2-viaggio')}
 registraScena({
   id:'c2-ponte',inventario:true,sfondo:'img/scene/ponte-diavolo-var3.png',
@@ -422,6 +443,7 @@ registraScena({
     if(/[?&]dan/.test(location.search)){C2.ritorno=true;C2.corsaFinale=true;C2.ponteVisto=true}   // (19 nov) link diretto ?c2-ponte&dan: salta alla scena dei Blues Brothers e di Dan
     if(C2.ritorno){   // (18 nov) ritorno dalle scale: Nick riattraversa il ponte e arriva davanti al furgone
       C2.ponteVisto=true;s.occupato=true;document.getElementById('bHint').style.display='none';PONTE.muto=false;
+      if(C2.corsaFinale){A.musicStop&&A.musicStop(2.5);try{if(PONTE.radio)PONTE.radio.pause();PONTE.radio=A.motore.suonaClip('audio/musica/rawhide_radio.mp3',.3)}catch(e){}}   // (19 nov) il Rawhide dall'autoradio del furgone, di sottofondo e gracchiante
       s.sequenza(async()=>{await p.vaiA(C2.corsaFinale?172:100,117,!!C2.corsaFinale,C2.corsaFinale?'W':'N');p.corsa=false;p.dir=C2.corsaFinale?'W':'N';await pausa(1.2);if(C2.corsaFinale)await scenaBB(s,p);A.setHint('CONTINUA…',true)});return}
     if(/[?&](panino|consegna)/.test(location.search)&&!C2.fusibile)C2.ponteVisto=true;   // link diretto ?c2-ponte&panino: salta alla scena del panino e del fusibile
     if(C2.ponteVisto&&!C2.fusibile){s.sequenza(()=>scenaPanino(s))}   // tornato dal ponte: la scena del panino
@@ -481,15 +503,16 @@ registraScena({
       gg.drawImage(ig.img,fr.x,fr.y,ig.w,ig.h,IGOR_G.x-ig.ax*sc,IGOR_G.fy-ig.h*sc,ig.w*sc,ig.h*sc);
       gg.globalAlpha=.3;gg.fillStyle='#1c3a3a';gg.fillRect(IGOR_G.rx,IGOR_G.ry,IGOR_G.rw,IGOR_G.rh);   // vetro: leggera tinta verde e riflesso
       gg.globalAlpha=.16;gg.fillStyle='#fff';gg.beginPath();gg.moveTo(IGOR_G.rx+2,IGOR_G.ry);gg.lineTo(IGOR_G.rx+5,IGOR_G.ry);gg.lineTo(IGOR_G.rx+1,IGOR_G.ry+IGOR_G.rh);gg.lineTo(IGOR_G.rx,IGOR_G.ry+IGOR_G.rh);gg.fill();gg.restore();return}
-    if(t<IGOR_G.t1+.5)return;   // il vetro e' vuoto: e' uscito
-    const u=Math.min(1,(t-IGOR_G.t1-.5)/IGOR_G.dur),x=IGOR_G.ex0+(IGOR_G.ex1-IGOR_G.ex0)*u,cam=u<1,
+    if(t<IGOR_G.t1+.5)return;   // il vetro e' vuoto: e' uscito dal lato opposto (a destra, da dietro il distributore) e viene DAVANTI, accanto all'auto
+    const u=Math.min(1,(t-IGOR_G.t1-.5)/IGOR_G.dur),e=u*u*(3-2*u),x=IGOR_G.ex0+(IGOR_G.ex1-IGOR_G.ex0)*e,y=IGOR_G.ey0+(IGOR_G.ey1-IGOR_G.ey0)*e,cam=u<1,
       n=cam?'walk'+(1+Math.floor((t-IGOR_G.t1)*7)%6):(Math.floor((t-IGOR_G.t1-.5-IGOR_G.dur)/2.2)%3===2?'talk_S_'+(1+Math.floor(t*6)%4):'idle_S_'+(1+Math.floor(t*1.1)%4)),fr=ig.fr[n]||ig.fr.front;if(!fr)return;
-    ell(x,IGOR_G.ey+.4,7,1.6,'#000',.3);
-    gg.save();gg.beginPath();gg.rect(IGOR_G.cx0,0,IGOR_G.cx1-IGOR_G.cx0,H);gg.clip();gg.imageSmoothingEnabled=false;   // l'armadietto a sinistra e il paracolpi a destra restano davanti a lui
-    gg.drawImage(ig.img,fr.x,fr.y,ig.w,ig.h,x-ig.ax*sc,IGOR_G.ey-ig.h*sc,ig.w*sc,ig.h*sc);gg.restore()},
+    const k=sc*(y-62)/(99-62);   // prospettiva: scende verso di noi, quindi cresce
+    ell(x,y+.4,7*(y-62)/37,1.7,'#000',.3);
+    gg.save();gg.beginPath();gg.rect(y<IGOR_G.ey0+4?IGOR_G.cx0:0,0,W,H);gg.clip();gg.imageSmoothingEnabled=false;   // finche' e' dietro il distributore (a sinistra di x=192) resta nascosto
+    gg.drawImage(ig.img,fr.x,fr.y,ig.w,ig.h,x-ig.ax*k,y-ig.h*k,ig.w*k,ig.h*k);gg.restore()},
   entra(s){A.say('');s.occupato=true;fadeTo(0,.5);document.getElementById('bHint').style.display='none';setTimeout(()=>{try{sfx.portaApre&&sfx.portaApre()}catch(e){}},3150);s.sequenza(async()=>{await pausa(7.5);A.setHint('CONTINUA…',true)})}
 });
-const IGOR_G={x:134,fy:97,h:46,rx:129,ry:46,rw:10,rh:26,t1:3.2,dur:2.8,ex0:112,ex1:133,ey:99,cx0:121,cx1:143};   // Igor nella cabina: centro, piedi, altezza (px logici) e riquadro del vetro
+const IGOR_G={x:134,fy:97,h:46,rx:129,ry:46,rw:10,rh:26,t1:3.2,dur:3.0,ex0:184,ex1:198,ey0:100,ey1:112,cx0:192};   // Igor nella cabina: centro, piedi, altezza (px logici) e riquadro del vetro
 
 /* la visuale del Ponte del Diavolo senza simbolo: a sinistra del furgone */
 registraScena({
@@ -539,14 +562,14 @@ registraScena({
     ell(m.x,m.y+.4,w*.5,1,'#000',.3);gg.save();gg.imageSmoothingEnabled=false;gg.drawImage(MELA_IMG,Math.round(m.x-w/2),Math.round(m.y-h-w+1),w,w);
     if(FP.melaPronta&&!FP.melaRaccolta&&Math.sin(FP.t*5)>.3){gg.fillStyle='#fff';const cx=Math.round(m.x+w*.3),cy=Math.round(m.y-w-1);gg.fillRect(cx-2,cy,5,1);gg.fillRect(cx,cy-2,1,5)}
     gg.restore()},
-  entra(s){Object.assign(FP,{mela:null,melaT:0,melaPronta:false,melaRaccolta:false,attesaMela:false,patch:false,t:0,zn:6.95,zl:40,alphaL:1,incontro:false,laraFine:false,nickFermo:false,fine:false});s.occupato=true;document.getElementById('bHint').style.display='none';fadeTo(0,1.2)},
+  entra(s){Object.assign(FP,{mela:null,melaCaduta:false,melaT:0,melaPronta:false,melaRaccolta:false,attesaMela:false,patch:false,t:0,zn:6.95,zl:40,alphaL:1,incontro:false,laraFine:false,nickFermo:false,fine:false});s.occupato=true;document.getElementById('bHint').style.display='none';fadeTo(0,1.2)},
   aggiorna(s,dt){
     const n=s.giocatore,l=s.attori['lara-croft'];if(!n||!l)return;FP.t+=dt;
     if(!l._alfa){const d0=l.draw.bind(l);l.draw=function(sc){g.save();g.globalAlpha=FP.alphaL;d0(sc);g.restore()};l._alfa=1}   // Lara emerge dalla lontananza (trasparenza che sale)
     if(!FP.patch&&LARA_WALK.complete&&LARA_WALK.naturalWidth&&l.c&&l.c.ready){FP.patch=true;const c0=l.c,fr={...c0.fr};for(let i=0;i<8;i++)fr['walk_S_'+(i+1)]={x:i*c0.w,y:0,w:c0.w,h:c0.h};l.c={...c0,img:LARA_WALK,fr}}
     if(!FP.nickFermo){FP.zn+=PF.V*dt;muovi(n,FP.zn,.30,'N',false,dt)}else{n.state='idle'}
     if(!FP.laraFine){FP.zl-=PF.VL*dt;muovi(l,FP.zl,.62+.16*Math.max(0,Math.min(1,(yZ(FP.zl)-108)/14)),'S',false,dt,PF.VL);if(l.x>246){FP.laraFine=true;l.visibile=false}}
-    if(FP.melaT&&!FP.mela&&FP.t>=FP.melaT){FP.mela={x:l.x+1,y:l.y,t0:FP.t};setTimeout(()=>{A.tone(210,.09,'sine',.05,120,.2,.3);A.nburst(900,4,.02,.02,'bandpass',.2,.3)},500);setTimeout(()=>{A.tone(260,.05,'sine',.025,170,.2,.3)},690)}
+    if(FP.melaT&&!FP.mela&&!FP.melaCaduta&&FP.t>=FP.melaT){FP.melaCaduta=true;FP.mela={x:l.x+1,y:l.y,t0:FP.t};setTimeout(()=>{A.tone(210,.09,'sine',.05,120,.2,.3);A.nburst(900,4,.02,.02,'bandpass',.2,.3)},500);setTimeout(()=>{A.tone(260,.05,'sine',.025,170,.2,.3)},690)}
     if(FP.mela&&!FP.melaPronta&&!FP.melaRaccolta&&FP.t>=FP.mela.t0+.75){FP.melaPronta=true;const m=FP.mela,w=Math.max(4,6*(m.y-40)/60);FP.melaPunto.rect=[Math.round(m.x-7),Math.round(m.y-12),14,14];FP.melaPunto.cammina={x:n.x,y:n.y,dir:'E'}}
     if(!FP.incontro&&FP.zn>=FP.zl-.3){FP.incontro=true;FP.nickFermo=true;
       s.dici(l,'Ehilà!',{clip:'audio/versi/lara_ehila_r1.mp3',frontale:false});FP.melaT=FP.t+.6;   // (voce vera) Lara saluta e continua a camminare
@@ -750,7 +773,7 @@ registraScena({
 });
 const VOLTO=mkImg('img/emb/nick_primo_piano_r1.png');
 const PRIMO={t:0,salta:false,fin:true};
-const RIGHE_PRIMO=['Ma allora è tutto vero!',"Ma com'è possibile? Cosa significa tutto questo?",'Che devo fare ora?',"La torre dell'orologio, la chiesa nera… ho idea di dove siano.",'Non so nemmeno se sono reali.','E quella donna…'];
+const RIGHE_PRIMO=['Ma allora è tutto vero!',"Ma com'è possibile? Cosa significa tutto questo?",'Che devo fare ora?',"La torre dell'orologio, la chiesa nera… non ho idea di dove siano.",'Non so nemmeno se sono reali.','E quella donna…'];
 function vortice(gg,cx,cy,t){   // spirale rotante in leggera trasparenza che nasce dalla fronte e si allarga (effetto vertigine)
   const q=v=>Math.round(v*4)/4,R=Math.min(210,t*60);gg.save();gg.globalCompositeOperation='lighter';
   for(let k=0;k<4;k++)for(let r=1;r<R;r+=.3){const th=k*1.5708+r*.07-t*1.9,x=cx+Math.cos(th)*r*1.45,y=cy+Math.sin(th)*r*.78,f=1-r/Math.max(R,1),a=.30*Math.pow(Math.max(0,f),.6)*Math.min(1,r/5);
@@ -773,7 +796,8 @@ registraScena({
 
 /* (18 nov) il LIBRO resta nell'inventario per tutta la durata del gioco: ogni scena del capitolo 2 controlla che ci sia (anche se si entra da un link diretto) */
 function assicuraLibro(){const S=A.S;if(S&&S.inv&&!S.inv.includes('book')){S.inv.unshift('book');S.bookOpen=true;if(A.refreshInv)A.refreshInv()}}
-for(const id of ['capitolo2','c2-esterno','c2-auto','c2-strada','c2-ponte','c2-ponte-vista','c2-ponte-film','c2-scale','c2-ritorno','c2-capra','c2-simbolo','c2-primopiano']){const sc=scenes[id];if(sc&&sc.cfg){const e=sc.cfg.entra;sc.cfg.entra=function(s){assicuraLibro();return e?e.call(this,s):undefined}}}
+for(const id of ['capitolo2','c2-esterno','c2-auto','c2-strada','c2-ponte','c2-ponte-vista','c2-ponte-film','c2-scale','c2-ritorno','c2-capra','c2-simbolo','c2-primopiano']){const sc=scenes[id];if(sc&&sc.cfg){const e=sc.cfg.entra;sc.cfg.entra=function(s){assicuraLibro();if(id==='c2-primopiano'||(C2.finale&&(id==='c2-capra'||id==='c2-ritorno')))A.musicStart&&A.musicStart('mystery',2);   // (19 nov) la musica della rivelazione continua dopo la spirale, fino al furgone
+      return e?e.call(this,s):undefined}}}
 /* da fine capitolo 1 (sogno) al capitolo 2 */
 window.__capitolo2=A.capitolo2=()=>{for(const k in C2)C2[k]=typeof C2[k]==='boolean'?false:0;fadeTo(1,1.8,()=>{setScene('capitolo2');fadeTo(0,9)})};   // (14 nov) la velocita' e' al secondo: 9 = schiarita in un decimo di secondo (prima 0,01: nero per minuti)
 });
