@@ -360,8 +360,8 @@ function bavGeom(ppm){const hh=1.86*ppm,dw=hh*103/138,x0=BB.basso.x-dw*.22;retur
 /* NOMI (correzione di Graziano, 19 nov): il basso e grasso e' JAKE (chiave interna 'john'), l'alto e' ELWOOD (chiave interna 'dan') */
 const DAN={nome:'dan',etichetta:'ELWOOD',talking:false,bocca:1},JOHN={nome:'john',etichetta:'JAKE',talking:false,bocca:1};
 /* (19 nov) RADIO DEL FURGONE: il brano di Graziano con effetto autoradio. Web Audio; se dopo 3 s non risulta caricato (decodifica fallita) si ripiega sul normale elemento audio. Si riavvia anche all'inizio della scena dei Blues Brothers se non sta suonando. */
-function radioAvvia(){radioFerma();try{PONTE.radio=A.motore.suonaClip('audio/musica/rawhide_radio.mp3',.4)}catch(e){}
-  setTimeout(()=>{const r=PONTE.radio;if(r&&!r.paused&&!(r.duration>0)&&!PONTE.radioEl){try{const au=new Audio('audio/musica/rawhide_radio.mp3');au.volume=.4;au.play().catch(()=>{});PONTE.radioEl=au}catch(e){}}},3000)}
+function radioAvvia(){radioFerma();try{PONTE.radio=A.motore.suonaClip('audio/musica/rawhide_radio.mp3',.2)}catch(e){}
+  setTimeout(()=>{const r=PONTE.radio;if(r&&!r.paused&&!(r.duration>0)&&!PONTE.radioEl){try{const au=new Audio('audio/musica/rawhide_radio.mp3');au.volume=.2;au.play().catch(()=>{});PONTE.radioEl=au}catch(e){}}},3000)}
 function radioFerma(){try{if(PONTE.radio)PONTE.radio.pause()}catch(e){}PONTE.radio=null;try{if(PONTE.radioEl)PONTE.radioEl.pause()}catch(e){}PONTE.radioEl=null}
 async function scenaBB(s,p){const yh=PROSP.orizzonte(PONTE.YR,PONTE.SR),ppm=(117-yh)/PROSP.HC,g=bavGeom(ppm),F={frontale:false},Z={frontale:false,animale:true};   // Z = solo scritto (nessun borbottio): i Blues Brothers dicono a voce SOLO "Ehiiii"
   BB.basso.x=140;BBS.dbav=false;BBS.bigl=-1;if(!PONTE.radio||PONTE.radio.ended)radioAvvia();
@@ -522,7 +522,7 @@ registraScena({
     gg.drawImage(ig.img,fr.x,fr.y,ig.w,ig.h,x-ig.ax*k,y-ig.h*k,ig.w*k,ig.h*k);gg.restore()},
   entra(s){A.say('');s.occupato=true;fadeTo(0,.5);document.getElementById('bHint').style.display='none';setTimeout(()=>{try{sfx.portaApre&&sfx.portaApre()}catch(e){}},3150);s.sequenza(async()=>{await pausa(7.5);A.setHint('CONTINUA…',true)})}
 });
-const IGOR_G={x:134,fy:97,h:46,rx:129,ry:46,rw:10,rh:26,t1:3.2,dur:4.0,ex0:208.5,xm:210.5,ex1:212,ey0:90.5,ym:104,ey1:113,cx0:199.5,cx1:205.5,r0:101,r1:109,alt:1.6,uA:.5};   // Igor nella cabina: centro, piedi, altezza (px logici) e riquadro del vetro
+const IGOR_G={x:134,fy:97,h:46,rx:129,ry:46,rw:10,rh:26,t1:3.2,dur:4.0,ex0:208.5,xm:210.5,ex1:212,ey0:90.5,ym:104,ey1:113,cx0:199.5,cx1:205.5,r0:101,r1:109,alt:1.6,uA:.2};   // Igor nella cabina: centro, piedi, altezza (px logici) e riquadro del vetro
 
 /* la visuale del Ponte del Diavolo senza simbolo: a sinistra del furgone */
 registraScena({
@@ -788,11 +788,11 @@ const CAPRA_LINK={fatto:false};   // (19 nov) gli oggetti di prova del link ?c2-
 function fumo(gg,x,y,r,a,col){const g=gg.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,'rgba('+col+','+a+')');g.addColorStop(.5,'rgba('+col+','+(a*.45)+')');g.addColorStop(1,'rgba('+col+',0)');gg.fillStyle=g;gg.fillRect(x-r,y-r,2*r,2*r)}
 function vortice(gg,cx,cy,t){   // (19 nov) spirale FUMOSA: sbuffi morbidi e semitrasparenti che si arrotolano dalla fronte e si allargano, con un'ondulazione lenta (come fumo), niente puntini
   const R=Math.min(215,t*60);gg.save();gg.globalCompositeOperation='lighter';
-  fumo(gg,cx,cy,12+Math.min(34,t*6),.28,'170,235,255');   // alone alla fronte
+  fumo(gg,cx,cy,14+Math.min(40,t*6),.36,'170,235,255');   // alone alla fronte
   for(let L=0;L<2;L++)for(let k=0;k<3;k++)for(let r=2+L*2;r<R;r+=4.2){
     const f=1-r/Math.max(R,1),th=k*2.0944+r*.05-t*(1.35+L*.35)+Math.sin(r*.12+t*.8+k*2)*.32,w=1+.06*Math.sin(r*.2-t),
-      x=cx+Math.cos(th)*r*1.5*w,y=cy+Math.sin(th)*r*.8*w,a=(.11+.05*L)*Math.pow(Math.max(0,f),.65)*Math.min(1,r/9);
-    if(x<-20||x>W+20||y<-20||y>H+20)continue;fumo(gg,x,y,6+r*.09+L*2.5,a,(k+L)%2?'190,225,255':'170,255,225')}
+      x=cx+Math.cos(th)*r*1.5*w,y=cy+Math.sin(th)*r*.8*w,a=(.17+.07*L)*Math.pow(Math.max(0,f),.6)*Math.min(1,r/8);
+    if(x<-20||x>W+20||y<-20||y>H+20)continue;fumo(gg,x,y,7+r*.11+L*3,a,(k+L)%2?'190,225,255':'170,255,225')}
   gg.restore()}
 registraScena({
   id:'c2-primopiano',giocatore:'protagonista-esterno',nomeGiocatore:'NICK',partenza:{x:120,y:60,dir:'S'},
