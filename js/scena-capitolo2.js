@@ -360,8 +360,8 @@ function bavGeom(ppm){const hh=1.86*ppm,dw=hh*103/138,x0=BB.basso.x-dw*.22;retur
 /* NOMI (correzione di Graziano, 19 nov): il basso e grasso e' JAKE (chiave interna 'john'), l'alto e' ELWOOD (chiave interna 'dan') */
 const DAN={nome:'dan',etichetta:'ELWOOD',talking:false,bocca:1},JOHN={nome:'john',etichetta:'JAKE',talking:false,bocca:1};
 /* (19 nov) RADIO DEL FURGONE: il brano di Graziano con effetto autoradio. Web Audio; se dopo 3 s non risulta caricato (decodifica fallita) si ripiega sul normale elemento audio. Si riavvia anche all'inizio della scena dei Blues Brothers se non sta suonando. */
-function radioAvvia(){radioFerma();try{PONTE.radio=A.motore.suonaClip('audio/musica/rawhide_radio.mp3',.85)}catch(e){}
-  setTimeout(()=>{const r=PONTE.radio;if(r&&!r.paused&&!(r.duration>0)&&!PONTE.radioEl){try{const au=new Audio('audio/musica/rawhide_radio.mp3');au.volume=.9;au.play().catch(()=>{});PONTE.radioEl=au}catch(e){}}},3000)}
+function radioAvvia(){radioFerma();try{PONTE.radio=A.motore.suonaClip('audio/musica/rawhide_radio.mp3',.4)}catch(e){}
+  setTimeout(()=>{const r=PONTE.radio;if(r&&!r.paused&&!(r.duration>0)&&!PONTE.radioEl){try{const au=new Audio('audio/musica/rawhide_radio.mp3');au.volume=.4;au.play().catch(()=>{});PONTE.radioEl=au}catch(e){}}},3000)}
 function radioFerma(){try{if(PONTE.radio)PONTE.radio.pause()}catch(e){}PONTE.radio=null;try{if(PONTE.radioEl)PONTE.radioEl.pause()}catch(e){}PONTE.radioEl=null}
 async function scenaBB(s,p){const yh=PROSP.orizzonte(PONTE.YR,PONTE.SR),ppm=(117-yh)/PROSP.HC,g=bavGeom(ppm),F={frontale:false},Z={frontale:false,animale:true};   // Z = solo scritto (nessun borbottio): i Blues Brothers dicono a voce SOLO "Ehiiii"
   BB.basso.x=140;BBS.dbav=false;BBS.bigl=-1;if(!PONTE.radio||PONTE.radio.ended)radioAvvia();
@@ -756,7 +756,7 @@ registraScena({
     if(s.attori.capra)s.attori.capra.visibile=false;   // lo sprite normale e' sostituito dalle pose (anche da fermo)
     Object.assign(CAPS,{nutrita:false,on:false,busy:false,t:0});if(CAPS.hum){CAPS.hum.stop();CAPS.hum=null}CAP_P.n=CAP_P.c=CAP_P.m=CAP_P.o=CAP_P.t=CAP_P.w=-1;CAP_P.davanti=false;
     const rip=window.__ripresa;window.__ripresa=false;   // ripresa da salvataggio: non rimetto nell'inventario gli oggetti di prova
-    const S=A.S;if(S&&S.inv&&!rip&&/[?&]c2-capra/.test(location.search)){let m=false;for(const id of ['book','fusibile','mela'])if(!S.inv.includes(id)){S.inv.push(id);m=true}S.bookOpen=true;if(m&&A.refreshInv)A.refreshInv()}
+    const S=A.S;if(S&&S.inv&&!rip&&!CAPRA_LINK.fatto&&!C2.finale&&/[?&]c2-capra/.test(location.search)){CAPRA_LINK.fatto=true;let m=false;for(const id of ['book','fusibile','mela'])if(!S.inv.includes(id)){S.inv.push(id);m=true}S.bookOpen=true;if(m&&A.refreshInv)A.refreshInv()}
     if(C2.finale){   // (18 nov) FILMATO FINALE: macchinario acceso, capra sazia; Nick corre fino alle scale, le sale e poi corre lungo il ponte verso il furgone
       Object.assign(CAPS,{nutrita:true,on:true});ronzio();const p=s.giocatore;s.occupato=true;document.getElementById('bHint').style.display='none';
       s.sequenza(async()=>{await pausa(.9);p.vaiA(150,80,true,'N');await pausa(2.3);   // (18 nov) corre verso le scale: il filmato si interrompe PRIMA che le raggiunga
@@ -782,12 +782,17 @@ registraScena({
       s.vaiScena('c2-primopiano')})}
 });
 const VOLTO=mkImg('img/emb/nick_primo_piano_r1.png');
-const PRIMO={t:0,salta:false,fin:true};
+const PRIMO={t:0,salta:false,fin:true};window.__PRIMO=PRIMO;
 const RIGHE_PRIMO=['Ma allora è tutto vero!',"Ma com'è possibile? Cosa significa tutto questo?",'Che devo fare ora?',"La torre dell'orologio, la chiesa nera… non ho idea di dove siano.",'Non so nemmeno se sono reali.','E quella donna…'];
-function vortice(gg,cx,cy,t){   // spirale rotante in leggera trasparenza che nasce dalla fronte e si allarga (effetto vertigine)
-  const q=v=>Math.round(v*4)/4,R=Math.min(210,t*60);gg.save();gg.globalCompositeOperation='lighter';
-  for(let k=0;k<4;k++)for(let r=1;r<R;r+=.3){const th=k*1.5708+r*.07-t*1.9,x=cx+Math.cos(th)*r*1.45,y=cy+Math.sin(th)*r*.78,f=1-r/Math.max(R,1),a=.30*Math.pow(Math.max(0,f),.6)*Math.min(1,r/5);
-    if(x<-2||x>W+2||y<-2||y>H+2)continue;gg.globalAlpha=a;gg.fillStyle=(k+Math.floor(r/9))%2?'#cfe6ff':'#a8ffe0';gg.fillRect(q(x),q(y),1,1)}
+const CAPRA_LINK={fatto:false};   // (19 nov) gli oggetti di prova del link ?c2-capra si danno UNA volta sola: prima rientrando nella scena (finale) mela e fusibile ricomparivano nell'inventario
+function fumo(gg,x,y,r,a,col){const g=gg.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,'rgba('+col+','+a+')');g.addColorStop(.5,'rgba('+col+','+(a*.45)+')');g.addColorStop(1,'rgba('+col+',0)');gg.fillStyle=g;gg.fillRect(x-r,y-r,2*r,2*r)}
+function vortice(gg,cx,cy,t){   // (19 nov) spirale FUMOSA: sbuffi morbidi e semitrasparenti che si arrotolano dalla fronte e si allargano, con un'ondulazione lenta (come fumo), niente puntini
+  const R=Math.min(215,t*60);gg.save();gg.globalCompositeOperation='lighter';
+  fumo(gg,cx,cy,12+Math.min(34,t*6),.28,'170,235,255');   // alone alla fronte
+  for(let L=0;L<2;L++)for(let k=0;k<3;k++)for(let r=2+L*2;r<R;r+=4.2){
+    const f=1-r/Math.max(R,1),th=k*2.0944+r*.05-t*(1.35+L*.35)+Math.sin(r*.12+t*.8+k*2)*.32,w=1+.06*Math.sin(r*.2-t),
+      x=cx+Math.cos(th)*r*1.5*w,y=cy+Math.sin(th)*r*.8*w,a=(.11+.05*L)*Math.pow(Math.max(0,f),.65)*Math.min(1,r/9);
+    if(x<-20||x>W+20||y<-20||y>H+20)continue;fumo(gg,x,y,6+r*.09+L*2.5,a,(k+L)%2?'190,225,255':'170,255,225')}
   gg.restore()}
 registraScena({
   id:'c2-primopiano',giocatore:'protagonista-esterno',nomeGiocatore:'NICK',partenza:{x:120,y:60,dir:'S'},
