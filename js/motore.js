@@ -222,7 +222,7 @@ function suonaClip(u,vol=1){
     get currentTime(){return this.src?Math.max(0,c.currentTime-this.t0):0},
     pause(){this.paused=true;try{this.src&&this.src.stop()}catch(e){}},play(){return Promise.resolve()}};
   if(c.state==='suspended')c.resume();
-  caricaClip(u).then(b=>{if(!b){o.ended=true;return}if(o.paused)return;
+  caricaClip(u).then(b=>{if(!b){o.ended=true;if(!o.paused){try{const au=new Audio(u);au.volume=Math.min(1,vol);au.play().catch(()=>{});o.pause=()=>{o.paused=true;try{au.pause()}catch(e){}}}catch(e){}}return}if(o.paused)return;   // (19 nov) se la decodifica Web Audio fallisce si ripiega sul normale elemento audio
     const s=c.createBufferSource(),gn=c.createGain();s.buffer=b;gn.gain.value=vol;s.connect(gn);gn.connect(AU.master);
     s.onended=()=>{o.ended=true};o.duration=b.duration;o.t0=c.currentTime+.02;o.src=s;s.start(o.t0)});
   return o}
