@@ -511,7 +511,7 @@ registraScena({
     const fr=ig.fr[n]||ig.fr.front;if(!fr)return;
     const pxm=(y-62)/1.8,k=IGOR_G.alt*pxm/ig.h;   // prospettiva (orizzonte y=62, camera 1,8 m): alto 1,6 m, come l'auto accanto a lui
     ell(x,y+.4,pxm*.25,1.6,'#000',.3);
-    const rv=Math.max(0,Math.min(1,(y-IGOR_G.r0)/(IGOR_G.r1-IGOR_G.r0))),cl=IGOR_G.cx0*(1-rv),cr=IGOR_G.cx1+(W-IGOR_G.cx1)*rv;   // la fessura si "apre" man mano che esce: niente figura tagliata di colpo
+    const rv=Math.max(0,Math.min(1,(y-IGOR_G.r0)/(IGOR_G.r1-IGOR_G.r0))),cl=IGOR_G.cx0*(1-rv),cr=W;   // la fessura si "apre" man mano che esce: niente figura tagliata di colpo
     gg.save();gg.beginPath();gg.rect(cl,0,cr-cl,H);gg.clip();gg.imageSmoothingEnabled=false;   // finche' e' nella fessura si vede solo cio' che passa fra i due elementi
     gg.drawImage(ig.img,fr.x,fr.y,ig.w,ig.h,x-ig.ax*k,y-ig.h*k,ig.w*k,ig.h*k);gg.restore()},
   entra(s){A.say('');s.occupato=true;fadeTo(0,.5);document.getElementById('bHint').style.display='none';setTimeout(()=>{try{sfx.portaApre&&sfx.portaApre()}catch(e){}},3150);s.sequenza(async()=>{await pausa(7.5);A.setHint('CONTINUA…',true)})}
