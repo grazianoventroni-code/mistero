@@ -1,7 +1,7 @@
 // Service worker: il gioco funziona offline.
 // - i file del gioco (immagini, audio, icone) sono salvati alla prima apertura (sempre scaricati freschi: cache reload) e serviti dalla memoria del telefono;
 // - la pagina, gli script (.js), gli indici (.json) e questo file si chiedono prima alla rete (cosi' gli aggiornamenti arrivano subito) e, senza rete, si usa la copia salvata.
-const VERSION = "18 nov 23:40";
+const VERSION = "19 nov 13:00";
 const CACHE = "mistero-" + VERSION;
 const FILES = [
   "./",
@@ -497,7 +497,9 @@ const FILES = [
   "audio/tuoni.mp3",
   "audio/versi/bela_v2.mp3",
   "audio/versi/dan_ehi_r1.mp3",
+  "audio/versi/dan_ehi_r2.mp3",
   "audio/versi/john_ehi_r1.mp3",
+  "audio/versi/john_ehi_r2.mp3",
   "audio/versi/lara_ehila_r1.mp3",
   "audio/versi/miao_khora_v2.mp3",
   "audio/versi/miao_mia_v4.mp3",
@@ -578,12 +580,16 @@ const FILES = [
   "img/emb/bg_bagno.png",
   "img/emb/bg_out.png",
   "img/emb/bg_stufa.png",
+  "img/emb/biglietto_grande_r1.png",
+  "img/emb/biglietto_icona_r1.png",
   "img/emb/capra_cammina_r1.png",
   "img/emb/capra_cariche_r2.png",
   "img/emb/capra_mangia_r1.png",
   "img/emb/capra_tesa_r1.png",
   "img/emb/chiavi_auto_icona_r1.png",
   "img/emb/chiavi_auto_r1.png",
+  "img/emb/dan_biglietto_r1.json",
+  "img/emb/dan_biglietto_r1.png",
   "img/emb/doc_fusibile_r1.png",
   "img/emb/foglie-acero.png",
   "img/emb/furgone_panini_2x.png",
@@ -624,6 +630,8 @@ const FILES = [
   "img/emb/mela_grande_r2.png",
   "img/emb/mela_icona_r2.png",
   "img/emb/mela_r2.png",
+  "img/emb/nick_dan_bavero_r1.json",
+  "img/emb/nick_dan_bavero_r1.png",
   "img/emb/nick_fusibile_r1.png",
   "img/emb/nick_john_bavero_r1.png",
   "img/emb/nick_offre_r1.png",
@@ -660,6 +668,7 @@ const FILES = [
   "img/scene/casello-chiosco.png",
   "img/scene/casello-piazzale.png",
   "img/scene/casello-stile-retro.png",
+  "img/scene/casello-tramonto-arrivo.png",
   "img/scene/casello-tramonto.png",
   "img/scene/chiesa-nera.png",
   "img/scene/donna-ritratto.png",
@@ -698,6 +707,8 @@ const FILES = [
   "img/scene/strada-alpi.png",
   "img/scene/strada-arrivo-ponte.png",
   "img/scene/strada-autunno.png",
+  "img/scene/strada-cartello-verde.png",
+  "img/scene/strada-e35-firenze.png",
   "img/scene/strada-lago.png",
   "img/scene/torre-orologio-2.png",
   "img/scene/torre-orologio.png",

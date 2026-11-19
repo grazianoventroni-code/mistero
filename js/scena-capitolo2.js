@@ -347,6 +347,7 @@ const BB={alto:{img:mkImg('img/emb/bb_alto_mangia_r1.png'),H:1.85,x:112,f:0},bas
 const BB_DUR=[1.0,.3,.3,.5,.55,.5,.5,.45],BB_TOT=BB_DUR.reduce((a,b)=>a+b,0);
 function disegnaBB(gg,s){if(!C2.corsaFinale)return;const yh=PROSP.orizzonte(PONTE.YR,PONTE.SR),y=117,ppm=(y-yh)/PROSP.HC;
   for(const k of ['alto','basso']){const b=BB[k],im=b.img;if(!(im.complete&&im.naturalWidth))continue;
+    if(k==='alto'&&(BBS.dbav||BBS.bigl>=0)){disegnaDanPair(gg,s,ppm);continue}   // (19 nov) Dan: Nick lo afferra / scrive il biglietto (coppia Nick+Dan)
     let t=(s.t+b.f)%BB_TOT,i=0;while(i<7&&t>=BB_DUR[i]){t-=BB_DUR[i];i++}
     const cw=im.naturalWidth/8,ch=im.naturalHeight,hh=b.H*ppm,dw=hh*cw/ch;ell(b.x,y+.4,dw*.4,1.5,'#000',.32);
     gg.save();gg.imageSmoothingEnabled=true;gg.imageSmoothingQuality='high';
@@ -358,19 +359,45 @@ const BAV=mkImg('img/emb/nick_john_bavero_r1.png');
 function bavGeom(ppm){const hh=1.86*ppm,dw=hh*935/1249,x0=BB.basso.x-dw*.22;return{hh,dw,x0,nx:x0+dw*.73}}
 const DAN={nome:'dan',etichetta:'DAN',talking:false,bocca:1},JOHN={nome:'john',etichetta:'JOHN',talking:false,bocca:1};
 async function scenaBB(s,p){const yh=PROSP.orizzonte(PONTE.YR,PONTE.SR),ppm=(117-yh)/PROSP.HC,g=bavGeom(ppm),F={frontale:false},Z={frontale:false,animale:true};   // Z = solo scritto (nessun borbottio): i Blues Brothers dicono a voce SOLO "Ehiiii"
+  BB.basso.x=140;BBS.dbav=false;BBS.bigl=-1;
   await s.dici(DAN,'Siamo in missione per conto di Dio, mi aspettavo di mangiare qualcosa di meglio.',Z);await pausa(.3);
   await s.dici(JOHN,"Questo toast alle cavallette non è male in fondo! Certo non è la frittura mista di Settimo ma mi accontento!",Z);
   A.sting('scoperta',.5);await pausa(.2);
   await p.vaiA(g.nx,117,true,'W');p.corsa=false;p.visibile=false;C2.bav=true;A.sting('simbolo',.5);   // Nick scatta e lo afferra
   await s.dici(p,"Settimo?! Cos'è Settimo?? Chi è? Rispondi!",F);
   C2.bav=false;p.x=g.nx;p.y=117;p.dir='W';p.visibile=true;await pausa(.4);   // lo rilascia
-  await s.dici(JOHN,'Ehiiii…',{clip:'audio/versi/john_ehi_r1.mp3',frontale:false});
+  await s.dici(JOHN,'Ehiiii…',{clip:'audio/versi/john_ehi_r2.mp3',frontale:false});
   await s.dici(JOHN,'amico, calma, che ti prende? Non ti agitare, ti fa male sai?',Z);
   await s.dici(JOHN,"Chi è Settimo dici? Mio fratello qui ci ha lavorato l'anno scorso come lavapiatti.",Z);
   await s.dici(JOHN,'In realtà non lavava nulla e i piatti li svuotava, ma sono dettagli.',Z);
   await s.dici(p,'Dove si trova?! Che posto è?',F);
-  await s.dici(DAN,'Ehiiii…',{clip:'audio/versi/dan_ehi_r1.mp3',frontale:false});
-  await s.dici(DAN,'amico, sai, ci ho fatto il lavapiatti lì! Sta giù a Firenze.',Z)}
+  await s.dici(DAN,'Ehiiii…',{clip:'audio/versi/dan_ehi_r2.mp3',frontale:false});
+  await s.dici(DAN,'amico, sai, ci ho fatto il lavapiatti lì! Sta giù a Firenze.',Z);await scenaDan(s,p,ppm,F,Z)}
+
+/* (19 nov) DAN: Nick lo afferra per il bavero ("A Firenze dove?"), Dan scrive l'indirizzo su un bloc notes e gli da' il BIGLIETTO (finisce nell'inventario).
+   Immagini ChatGPT gventroni (_strumenti/bb_dan.py): nick_dan_bavero_r1 (singola) e dan_biglietto_r1 (striscia di 8 coppie, Dan a sinistra, Nick a destra). */
+const BBS={dbav:false,bigl:-1};window.__BBS=BBS;
+const DANI={bav:mkImg('img/emb/nick_dan_bavero_r1.png'),big:mkImg('img/emb/dan_biglietto_r1.png')};
+const DANM={bav:{w:954,h:1264,dt:0,db:1263,dc:238,nc:715},big:{w:372,h:434,dt:4,db:431,dc:84.5,nc:288}};   // cella, testa e piedi di Dan, centro di Dan e di Nick (px dell'immagine)
+function danGeom(k,ppm){const m=DANM[k],sc=BB.alto.H*ppm/(m.db-m.dt);return{sc,m,x0:BB.alto.x-m.dc*sc,y0:117-m.db*sc,nx:BB.alto.x+(m.nc-m.dc)*sc}}
+function disegnaDanPair(gg,s,ppm){const k=BBS.dbav?'bav':'big',im=DANI[k];if(!(im.complete&&im.naturalWidth))return;
+  const g=danGeom(k,ppm),m=g.m,fr=BBS.dbav?0:Math.max(0,BBS.bigl),j=BBS.dbav?Math.sin(s.t*38)*.5:0;
+  ell(BB.alto.x+(m.nc-m.dc)*g.sc*.5,117.4,m.w*g.sc*.4,1.6,'#000',.32);
+  gg.save();gg.imageSmoothingEnabled=true;gg.imageSmoothingQuality='high';gg.drawImage(im,fr*m.w,0,m.w,m.h,g.x0+j,g.y0,m.w*g.sc,m.h*g.sc);gg.restore()}
+async function scenaDan(s,p,ppm,F,Z){const gb=danGeom('bav',ppm),gs=danGeom('big',ppm),sm01=x=>{x=Math.max(0,Math.min(1,x));return x*x*(3-2*x)};
+  await pausa(.3);
+  const pr=p.vaiA(gb.nx,119,true,'W');   // Nick corre davanti a John (che si scansa a destra) fino a Dan
+  for(let k=1;k<=20;k++){BB.basso.x=140+16*sm01(k/20);await pausa(.045)}
+  await pr;p.corsa=false;p.visibile=false;BBS.dbav=true;A.sting('simbolo',.5);
+  await s.dici(p,'A Firenze? A Firenze dove? Sii più preciso!',F);
+  BBS.dbav=false;BBS.bigl=0;await pausa(.5);   // lo lascia: Dan si aggiusta la giacca
+  await s.dici(DAN,'Ehiii.',{clip:'audio/versi/dan_ehi_r2.mp3',frontale:false});
+  const DUR=[.7,.7,.7,.8,.9,.7,.9,1.3];   // 0 giacca, 1 mano in tasca, 2 estrae bloc notes e penna, 3-4 scrive, 5 strappa il foglio, 6 porge il biglietto, 7 Nick lo mette in tasca
+  const an=(async()=>{for(let i=0;i<8;i++){BBS.bigl=i;if(i===7){A.sting('scoperta',.6);A.giveItem('biglietto')}await pausa(DUR[i])}})();
+  await s.dici(DAN,"Stai calmo amico, ti scrivo l'indirizzo.",Z);await an;
+  BBS.bigl=-1;p.x=gs.nx;p.y=117;p.dir='W';p.visibile=true;await pausa(.6);
+  await p.vaiA(236,112,true,'E');p.corsa=false;   // Nick corre verso destra: parte il filmato
+  s.vaiScena('c2-viaggio')}
 registraScena({
   id:'c2-ponte',inventario:true,sfondo:'img/scene/ponte-diavolo-var3.png',
   giocatore:'protagonista-esterno',nomeGiocatore:'NICK',
@@ -400,6 +427,61 @@ registraScena({
     else if(!C2.ponteVisto)s.sequenza(async()=>{await pausa(1.0);C2.ponteDetto=true;await dn(s,p,'Vediamo se il mio sogno aveva ragione.')})},   // subito: parla e compare la freccia
   punti:[{nome:'',rect:[0,36,56,46],cammina:{x:5,y:118,dir:'W'},visibile:()=>C2.ponteDetto&&!C2.ponteVisto,usa:async(s,p)=>{C2.ponteVisto=true;s.vaiScena('c2-ponte-vista',{x:226,y:112,dir:'W'})}}]
 });
+
+
+/* ---------------- (19 nov) VIAGGIO IN AUTO VERSO FIRENZE ----------------
+   Dopo il biglietto di Dan Nick corre a destra e parte UN filmato (video/viaggio.mp4, sei spezzoni uniti da _strumenti/aggiorna_viaggio.py; ognuno fatto con
+   _strumenti/film_auto.py, stesso motore dei filmati della guida): l'Alfa 164 esce dallo slargo sulla strada del ponte e svolta a sinistra verso il ponte,
+   poi la strada E35 con FIRENZE sull'asfalto, la strada con il portale verde, il casello (stile retro), il piazzale e il casello al tramonto dove si ferma.
+   Rombo del motore (Web Audio, segue velocita' e curve) e fischio delle gomme negli intervalli indicati. Poi scena c2-casello: Igor lavora nella cabina. */
+const VIAGGIO=[{"t0":0.0,"v":[3.5,4.1,4.6,5.2,5.7,6.8,8.3,9.8,11.3,12.9,14.5,16.5,18.5,20.5,22.5,24.5,26.3,27.5,28.7,29.9,31.0,32.2,33.4,34.3,34.8,35.3,35.9,36.4,36.9,37.5,38.0,38.5,39.1,39.6],"c":[0.02,0.12,0.57,1.97,3.0,3.0,3.0,3.0,2.1,1.63,1.52,0.84,0.04,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"sq":[[0.4,2.4,0.9]]},{"t0":9.0,"v":[27.0,27.4,27.7,28.1,28.4,28.8,29.1,29.5,29.8,30.2,30.6,30.9,31.2,31.5,31.7,32.0,32.3,32.5,32.8,33.1,33.3,33.6,33.9,34.1,34.4,34.7,34.9,35.2,35.5,35.7],"c":[0.0,0.0,0.0,0.0,0.0,0.41,0.77,0.47,0.01,0.38,0.6,0.6,0.09,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"sq":[[2.0,3.4,0.55]]},{"t0":17.0,"v":[28.0,28.4,28.7,29.1,29.4,29.8,30.1,30.5,30.8,31.2,31.6,31.9,32.2,32.4,32.6,32.8,33.0,33.2,33.4,33.7,33.9,34.1,34.3,34.5,34.7,34.9,35.1,35.4,35.6,35.8],"c":[0.0,0.0,0.0,0.0,0.06,0.86,0.84,0.08,0.56,0.69,0.6,0.73,0.8,0.23,0.51,0.65,0.5,0.12,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"sq":[[1.8,3.2,0.5],[4.0,5.4,0.55]]},{"t0":25.0,"v":[22.0,21.6,21.2,20.8,20.4,20.0,19.6,19.2,18.7,18.0,17.3,16.7,16.0,15.3,14.7,14.0,13.3,12.7,12.0,11.3,10.7,10.0,9.3],"c":[0.02,0.79,1.63,1.64,0.87,0.3,1.06,1.2,1.04,0.82,0.48,0.05,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"sq":[[0.9,2.4,0.6],[4.6,5.9,0.6]]},{"t0":31.0,"v":[16.0,15.7,15.5,15.2,14.9,14.7,14.4,14.1,13.9,13.6,13.3,13.1,12.8,12.5,12.3,12.0,11.7,11.5,11.2,10.9,10.7,10.4,10.1],"c":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"sq":[[3.6,5.2,0.45]]},{"t0":37.0,"v":[9.0,8.9,8.8,8.7,8.6,8.5,8.4,8.3,8.1,8.0,7.8,7.5,7.2,6.9,6.5,6.2,5.7,4.7,3.6,2.5,1.6,0.9,0.1,0.0,0.0,0.0,0.0,0.0,0.0],"c":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"sq":[[3.6,5.9,0.8]]}]; // VIAGGIO-DATI (generato da _strumenti/aggiorna_viaggio.py)
+const VG={fin:false,partito:false,t0:0,sq:0};
+function gommeSuono(dur,vol){const U=A.AU;if(!U||!U.ctx||U.muted||U.ctx.state!=='running')return;const c=U.ctx,t=c.currentTime+.01,f0=880+Math.random()*160;
+  const o=c.createOscillator(),o2=c.createOscillator(),lf=c.createOscillator(),lg=c.createGain(),g=c.createGain(),f=c.createBiquadFilter();
+  o.type='sawtooth';o2.type='square';
+  o.frequency.setValueAtTime(f0,t);o.frequency.linearRampToValueAtTime(f0*1.38,t+dur*.45);o.frequency.linearRampToValueAtTime(f0*1.12,t+dur);
+  o2.frequency.setValueAtTime(f0*1.5,t);o2.frequency.linearRampToValueAtTime(f0*2.05,t+dur*.45);o2.frequency.linearRampToValueAtTime(f0*1.68,t+dur);
+  f.type='bandpass';f.frequency.value=1750;f.Q.value=2.2;lf.frequency.value=22;lg.gain.value=.035*vol;lf.connect(lg);lg.connect(g.gain);
+  g.gain.setValueAtTime(.0001,t);g.gain.linearRampToValueAtTime(.075*vol,t+.14);g.gain.setValueAtTime(.075*vol,t+Math.max(.2,dur-.3));g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+  o.connect(f);o2.connect(f);f.connect(g);g.connect(U.master);
+  if(U.buf){const n=c.createBufferSource(),nf=c.createBiquadFilter(),ng=c.createGain();n.buffer=U.buf;n.loop=true;nf.type='bandpass';nf.frequency.value=2600;nf.Q.value=.9;
+    ng.gain.setValueAtTime(.0001,t);ng.gain.linearRampToValueAtTime(.05*vol,t+.12);ng.gain.setValueAtTime(.05*vol,t+Math.max(.2,dur-.3));ng.gain.exponentialRampToValueAtTime(.0001,t+dur);n.connect(nf);nf.connect(ng);ng.connect(U.master);n.start(t);n.stop(t+dur+.05)}
+  for(const n of [o,o2,lf]){n.start(t);n.stop(t+dur+.05)}}
+function viaggioAvvia(s){const v=filmEl();VG.fin=false;VG.partito=false;VG.sq=0;VG.t0=performance.now();
+  v.onended=()=>viaggioFine(s);v.onerror=()=>viaggioFine(s);if(v.getAttribute('src')!=='video/viaggio.mp4'){v.src='video/viaggio.mp4';v.load()}
+  filmPosiziona(v);v.style.display='block';try{v.currentTime=0}catch(e){}const p=v.play();if(p&&p.catch)p.catch(()=>viaggioFine(s))}
+function viaggioFine(s){if(VG.fin)return;VG.fin=true;A.setEng&&A.setEng(0,false);A.musicStop(3);if(FILM.el){try{FILM.el.pause()}catch(e){}FILM.el.style.display='none'}s.vaiScena('c2-casello')}
+registraScena({
+  id:'c2-viaggio',canSkip:()=>!VG.fin,skip:s=>{viaggioFine(s)},area:[[0,0],[2,0],[2,2],[0,2]],suggerimento:'',
+  ambiente:{stanza:0,vento:.3,pioggia:0,fuoco:0},
+  disegnaSfondo(gg){R(0,0,W,H,'#000')},
+  entra(s){A.say('');s.occupato=true;document.getElementById('bHint').style.display='none';viaggioAvvia(s);A.setEng&&A.setEng(.8,true);A.musicStart('viaggio',3)},
+  aggiorna(s,dt){const v=FILM.el;if(!v||VG.fin)return;filmPosiziona(v);
+    if(v.currentTime>.05)VG.partito=true;
+    if(!VG.partito&&performance.now()-VG.t0>6000)return viaggioFine(s);
+    if(v.ended||(v.duration>0&&v.currentTime>=v.duration-.04))return viaggioFine(s);
+    const t=v.currentTime;let sg=VIAGGIO[0];for(const q of VIAGGIO)if(t>=q.t0)sg=q;if(!sg)return;
+    const n=Math.min(sg.v.length-1,Math.max(0,Math.floor((t-sg.t0)*30/8))),vel=sg.v[n]||0,c=sg.c[n]||0;
+    A.engHz&&A.engHz(31+.9*vel+7*Math.min(1,c)+1.4*Math.sin(s.t*2.2));
+    for(const q of VIAGGIO)for(const x of q.sq){const t0=q.t0+x[0];if(t>=t0&&t<t0+.6&&!x.f){x.f=1;gommeSuono(x[1]-x[0],x[2])}}}
+});
+/* casello al tramonto: la scena finale del viaggio (sfondo = ultimo fotogramma del filmato, con l'auto ferma alla cabina); Igor lavora dietro il vetro della cabina */
+registraScena({
+  id:'c2-casello',sfondo:'img/scene/casello-tramonto-arrivo.png',
+  attori:[{nome:'igor',etichetta:'IGOR',x:-50,y:-50,dir:'S',visibile:false}],   // solo per caricare l'atlante: Igor e' disegnato dietro il vetro
+  area:[[0,0],[2,0],[2,2],[0,2]],suggerimento:'',senzaEtichette:true,
+  ambiente:{stanza:0,vento:.2,pioggia:0,fuoco:0},
+  aggiorna(s,dt){const a=s.attori.igor;if(a)a.visibile=false},
+  sopra(gg,s){const ig=A.CHARS['igor'];if(!ig||!ig.ready||!ig.img.naturalWidth)return;
+    const talk=Math.floor(s.t/3)%4===3,n=talk?'talk_S_'+(1+Math.floor(s.t*6)%4):'idle_S_'+(1+Math.floor(s.t*1.1)%4),fr=ig.fr[n]||ig.fr.front;if(!fr)return;
+    const sc=IGOR_G.h/ig.h,cx=IGOR_G.x,fy=IGOR_G.fy;
+    gg.save();gg.beginPath();gg.rect(IGOR_G.rx,IGOR_G.ry,IGOR_G.rw,IGOR_G.rh);gg.clip();gg.imageSmoothingEnabled=false;
+    gg.drawImage(ig.img,fr.x,fr.y,ig.w,ig.h,cx-ig.ax*sc,fy-ig.h*sc,ig.w*sc,ig.h*sc);
+    gg.globalAlpha=.3;gg.fillStyle='#1c3a3a';gg.fillRect(IGOR_G.rx,IGOR_G.ry,IGOR_G.rw,IGOR_G.rh);   // vetro: leggera tinta verde e riflesso
+    gg.globalAlpha=.16;gg.fillStyle='#fff';gg.beginPath();gg.moveTo(IGOR_G.rx+2,IGOR_G.ry);gg.lineTo(IGOR_G.rx+5,IGOR_G.ry);gg.lineTo(IGOR_G.rx+1,IGOR_G.ry+IGOR_G.rh);gg.lineTo(IGOR_G.rx,IGOR_G.ry+IGOR_G.rh);gg.fill();gg.restore()},
+  entra(s){A.say('');s.occupato=true;fadeTo(0,.5);document.getElementById('bHint').style.display='none';s.sequenza(async()=>{await pausa(3);A.setHint('CONTINUA…',true)})}
+});
+const IGOR_G={x:134,fy:97,h:46,rx:129,ry:46,rw:10,rh:26};   // Igor nella cabina: centro, piedi, altezza (px logici) e riquadro del vetro
 
 /* la visuale del Ponte del Diavolo senza simbolo: a sinistra del furgone */
 registraScena({
