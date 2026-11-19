@@ -363,6 +363,19 @@ const DAN={nome:'dan',etichetta:'ELWOOD',talking:false,bocca:1},JOHN={nome:'john
 function radioAvvia(){radioFerma();try{PONTE.radio=A.motore.suonaClip('audio/musica/rawhide_radio.mp3',.06)}catch(e){}
   setTimeout(()=>{const r=PONTE.radio;if(r&&!r.paused&&!(r.duration>0)&&!PONTE.radioEl){try{const au=new Audio('audio/musica/rawhide_radio.mp3');au.volume=.06;au.play().catch(()=>{});PONTE.radioEl=au}catch(e){}}},3000)}
 function radioFerma(){try{if(PONTE.radio)PONTE.radio.pause()}catch(e){}PONTE.radio=null;try{if(PONTE.radioEl)PONTE.radioEl.pause()}catch(e){}PONTE.radioEl=null}
+/* (20 nov) NOTE E LINEE DALLA RADIO: dal finestrino del furgone escono piccole note musicali vibranti e brevi linee dinamiche (onde) per far capire che la musica viene da la'. Tutto in funzione del tempo della scena (nessuno stato). */
+const RADIO_FX={x:21,y:50};   // posizione del finestrino (punto di uscita), in px logici
+function nota8(gg,x,y,c){const q=v=>Math.round(v*4)/4;gg.fillStyle=c;gg.fillRect(q(x),q(y+3),2,1.5);gg.fillRect(q(x+.5),q(y+2.5),1.5,1);gg.fillRect(q(x+1.5),q(y-2),.75,5);gg.fillRect(q(x+2.25),q(y-2),1.5,.75);gg.fillRect(q(x+3),q(y-1.25),.75,1.25)}
+function radioFx(gg,s){if(!PONTE.radio&&!PONTE.radioEl)return;const t=s.t,P=.55,n0=Math.floor(t/P);
+  gg.save();
+  for(let n=n0;n>n0-6;n--){const age=t-n*P,L=2.6;if(age<0||age>L)continue;const h1=hash(n*3.1),h2=hash(n*7.7+1),u=age/L,
+      x=RADIO_FX.x+(h1-.35)*6*age+Math.sin(age*13+n)*.6,y=RADIO_FX.y-age*(7+h2*4)+Math.sin(age*9+n*2)*.5,a=Math.min(1,age*4)*Math.pow(1-u,.8)*.9;
+    gg.globalAlpha=a;nota8(gg,x,y,h2>.5?'#fff3c4':'#bfe7ff')}
+  const m0=Math.floor(t/.8);   // linee dinamiche: tre archetti che si allargano dal finestrino, a ritmo
+  for(let m=m0;m>m0-2;m--){const age=t-m*.8;if(age<0||age>1.1)continue;const u=age/1.1;
+    for(let k=0;k<3;k++){const r=2.5+k*2.6+age*7,a=(1-u)*(1-k*.2);gg.globalAlpha=Math.max(0,a);gg.strokeStyle='#fff3c4';gg.lineWidth=.9;
+      gg.beginPath();gg.arc(RADIO_FX.x,RADIO_FX.y,r,-2.55,-0.9+((k+m)%2)*.0);gg.stroke()}}
+  gg.restore()}
 async function scenaBB(s,p){const yh=PROSP.orizzonte(PONTE.YR,PONTE.SR),ppm=(117-yh)/PROSP.HC,g=bavGeom(ppm),F={frontale:false},Z={frontale:false,animale:true};   // Z = solo scritto (nessun borbottio): i Blues Brothers dicono a voce SOLO "Ehiiii"
   BB.basso.x=140;BBS.dbav=false;BBS.bigl=-1;if(!PONTE.radio||PONTE.radio.ended)radioAvvia();
   await s.dici(DAN,'Siamo in missione per conto di Dio, mi aspettavo di mangiare qualcosa di meglio.',Z);await pausa(.3);
@@ -439,7 +452,7 @@ registraScena({
     if(PONTE.verso>0)PONTE.verso-=dt;PONTE.tv-=dt;if(PONTE.tv<=0&&!PONTE.muto){PONTE.tv=5+Math.random()*7;PONTE.verso=1.1;const t=['sforzo','sorpresa','dubbio','sospiro','sforzo'];FIATO.suona('doc-ritorno-al-futuro',t[Math.floor(Math.random()*t.length)],1,.55)}
     const p=s.giocatore;if(p&&C2.ponteDetto&&!C2.ponteVisto&&!s.occupato&&p.x<10){C2.ponteVisto=true;s.vaiScena('c2-ponte-vista',{x:226,y:112,dir:'W'})}},
   suggerimento:'',senzaEtichette:true,
-  sopra(gg,s){disegnaNickFusibile(gg,s);if(C2.ponteDetto&&!C2.ponteVisto&&Math.floor(s.t*2.2)%2===0){   // freccia lampeggiante a sinistra: da li' si va al ponte
+  sopra(gg,s){disegnaNickFusibile(gg,s);radioFx(gg,s);if(C2.ponteDetto&&!C2.ponteVisto&&Math.floor(s.t*2.2)%2===0){   // freccia lampeggiante a sinistra: da li' si va al ponte
       const dx=Math.round(Math.sin(s.t*5)*1.5);gg.save();gg.translate(dx,0);
       for(const [c,o] of [['#05060a',1],['#ffd23a',0]]){gg.fillStyle=c;gg.beginPath();gg.moveTo(3-o,52);gg.lineTo(14,45-o);gg.lineTo(14,49);gg.lineTo(25+o,49);gg.lineTo(25+o,55);gg.lineTo(14,55);gg.lineTo(14,59+o);gg.closePath();gg.fill()}
       gg.restore()}},
