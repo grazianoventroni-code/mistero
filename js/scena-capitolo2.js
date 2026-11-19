@@ -357,9 +357,14 @@ function disegnaBB(gg,s){if(!C2.corsaFinale)return;const yh=PROSP.orizzonte(PONT
 /* (18 nov) SCONTRO: Nick afferra John per il bavero (ChatGPT gventroni, _strumenti/bb_bavero.py). Immagine originale: Nick a sinistra, John a destra; qui e' speculare (Nick a destra) perche' Nick arriva da destra */
 const BAV=mkImg('img/emb/nick_john_bavero_r2.png');
 function bavGeom(ppm){const hh=1.86*ppm,dw=hh*103/138,x0=BB.basso.x-dw*.22;return{hh,dw,x0,nx:x0+dw*.73}}
-const DAN={nome:'dan',etichetta:'DAN',talking:false,bocca:1},JOHN={nome:'john',etichetta:'JOHN',talking:false,bocca:1};
+/* NOMI (correzione di Graziano, 19 nov): il basso e grasso e' JAKE (chiave interna 'john'), l'alto e' ELWOOD (chiave interna 'dan') */
+const DAN={nome:'dan',etichetta:'ELWOOD',talking:false,bocca:1},JOHN={nome:'john',etichetta:'JAKE',talking:false,bocca:1};
+/* (19 nov) RADIO DEL FURGONE: il brano di Graziano con effetto autoradio. Web Audio; se dopo 3 s non risulta caricato (decodifica fallita) si ripiega sul normale elemento audio. Si riavvia anche all'inizio della scena dei Blues Brothers se non sta suonando. */
+function radioAvvia(){radioFerma();try{PONTE.radio=A.motore.suonaClip('audio/musica/rawhide_radio.mp3',.85)}catch(e){}
+  setTimeout(()=>{const r=PONTE.radio;if(r&&!r.paused&&!(r.duration>0)&&!PONTE.radioEl){try{const au=new Audio('audio/musica/rawhide_radio.mp3');au.volume=.9;au.play().catch(()=>{});PONTE.radioEl=au}catch(e){}}},3000)}
+function radioFerma(){try{if(PONTE.radio)PONTE.radio.pause()}catch(e){}PONTE.radio=null;try{if(PONTE.radioEl)PONTE.radioEl.pause()}catch(e){}PONTE.radioEl=null}
 async function scenaBB(s,p){const yh=PROSP.orizzonte(PONTE.YR,PONTE.SR),ppm=(117-yh)/PROSP.HC,g=bavGeom(ppm),F={frontale:false},Z={frontale:false,animale:true};   // Z = solo scritto (nessun borbottio): i Blues Brothers dicono a voce SOLO "Ehiiii"
-  BB.basso.x=140;BBS.dbav=false;BBS.bigl=-1;
+  BB.basso.x=140;BBS.dbav=false;BBS.bigl=-1;if(!PONTE.radio||PONTE.radio.ended)radioAvvia();
   await s.dici(DAN,'Siamo in missione per conto di Dio, mi aspettavo di mangiare qualcosa di meglio.',Z);await pausa(.3);
   await s.dici(JOHN,"Questo toast alle cavallette non è male in fondo! Certo non è la frittura mista di Settimo ma mi accontento!",Z);
   A.sting('scoperta',.5);await pausa(.2);
@@ -416,7 +421,7 @@ async function scenaDoc(s,p,F){const d=s.attori['doc-ritorno-al-futuro'];PONTE.m
   await s.dici(p,'Ok, ok, grazie! Ora devo andare! Addio!',F);
   await s.dici(d,'Ci vediamo… in futuro!',{});
   await p.vaiA(236,118,true,'E');p.corsa=false;p.visibile=false;                                // Nick sparisce a DESTRA dello schermo (correzione 19 nov)
-  if(PONTE.radio){try{PONTE.radio.pause()}catch(e){}PONTE.radio=null}
+  radioFerma();
   PONTE.docF=PONTE.docF0;PONTE.nickF=PONTE.nickF0;
   s.vaiScena('c2-viaggio')}
 registraScena({
@@ -443,7 +448,7 @@ registraScena({
     if(/[?&]dan/.test(location.search)){C2.ritorno=true;C2.corsaFinale=true;C2.ponteVisto=true}   // (19 nov) link diretto ?c2-ponte&dan: salta alla scena dei Blues Brothers e di Dan
     if(C2.ritorno){   // (18 nov) ritorno dalle scale: Nick riattraversa il ponte e arriva davanti al furgone
       C2.ponteVisto=true;s.occupato=true;document.getElementById('bHint').style.display='none';PONTE.muto=false;
-      if(C2.corsaFinale){A.musicStop&&A.musicStop(2.5);try{if(PONTE.radio)PONTE.radio.pause();PONTE.radio=A.motore.suonaClip('audio/musica/rawhide_radio.mp3',.75)}catch(e){}}   // (19 nov) il Rawhide dall'autoradio del furgone, di sottofondo e gracchiante
+      if(C2.corsaFinale){A.musicStop&&A.musicStop(2.5);radioAvvia()}   // (19 nov) il Rawhide dall'autoradio del furgone, di sottofondo e gracchiante
       s.sequenza(async()=>{await p.vaiA(C2.corsaFinale?172:100,117,!!C2.corsaFinale,C2.corsaFinale?'W':'N');p.corsa=false;p.dir=C2.corsaFinale?'W':'N';await pausa(1.2);if(C2.corsaFinale)await scenaBB(s,p);A.setHint('CONTINUA…',true)});return}
     if(/[?&](panino|consegna)/.test(location.search)&&!C2.fusibile)C2.ponteVisto=true;   // link diretto ?c2-ponte&panino: salta alla scena del panino e del fusibile
     if(C2.ponteVisto&&!C2.fusibile){s.sequenza(()=>scenaPanino(s))}   // tornato dal ponte: la scena del panino
