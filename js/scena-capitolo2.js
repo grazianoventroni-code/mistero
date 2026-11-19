@@ -360,8 +360,8 @@ function bavGeom(ppm){const hh=1.86*ppm,dw=hh*103/138,x0=BB.basso.x-dw*.22;retur
 /* NOMI (correzione di Graziano, 19 nov): il basso e grasso e' JAKE (chiave interna 'john'), l'alto e' ELWOOD (chiave interna 'dan') */
 const DAN={nome:'dan',etichetta:'ELWOOD',talking:false,bocca:1},JOHN={nome:'john',etichetta:'JAKE',talking:false,bocca:1};
 /* (19 nov) RADIO DEL FURGONE: il brano di Graziano con effetto autoradio. Web Audio; se dopo 3 s non risulta caricato (decodifica fallita) si ripiega sul normale elemento audio. Si riavvia anche all'inizio della scena dei Blues Brothers se non sta suonando. */
-function radioAvvia(){radioFerma();try{PONTE.radio=A.motore.suonaClip('audio/musica/rawhide_radio.mp3',.2)}catch(e){}
-  setTimeout(()=>{const r=PONTE.radio;if(r&&!r.paused&&!(r.duration>0)&&!PONTE.radioEl){try{const au=new Audio('audio/musica/rawhide_radio.mp3');au.volume=.2;au.play().catch(()=>{});PONTE.radioEl=au}catch(e){}}},3000)}
+function radioAvvia(){radioFerma();try{PONTE.radio=A.motore.suonaClip('audio/musica/rawhide_radio.mp3',.1)}catch(e){}
+  setTimeout(()=>{const r=PONTE.radio;if(r&&!r.paused&&!(r.duration>0)&&!PONTE.radioEl){try{const au=new Audio('audio/musica/rawhide_radio.mp3');au.volume=.1;au.play().catch(()=>{});PONTE.radioEl=au}catch(e){}}},3000)}
 function radioFerma(){try{if(PONTE.radio)PONTE.radio.pause()}catch(e){}PONTE.radio=null;try{if(PONTE.radioEl)PONTE.radioEl.pause()}catch(e){}PONTE.radioEl=null}
 async function scenaBB(s,p){const yh=PROSP.orizzonte(PONTE.YR,PONTE.SR),ppm=(117-yh)/PROSP.HC,g=bavGeom(ppm),F={frontale:false},Z={frontale:false,animale:true};   // Z = solo scritto (nessun borbottio): i Blues Brothers dicono a voce SOLO "Ehiiii"
   BB.basso.x=140;BBS.dbav=false;BBS.bigl=-1;if(!PONTE.radio||PONTE.radio.ended)radioAvvia();
@@ -522,7 +522,7 @@ registraScena({
     gg.drawImage(ig.img,fr.x,fr.y,ig.w,ig.h,x-ig.ax*k,y-ig.h*k,ig.w*k,ig.h*k);gg.restore()},
   entra(s){A.say('');s.occupato=true;fadeTo(0,.5);document.getElementById('bHint').style.display='none';setTimeout(()=>{try{sfx.portaApre&&sfx.portaApre()}catch(e){}},3150);s.sequenza(async()=>{await pausa(7.5);A.setHint('CONTINUA…',true)})}
 });
-const IGOR_G={x:134,fy:97,h:46,rx:129,ry:46,rw:10,rh:26,t1:3.2,dur:4.0,ex0:208.5,xm:210.5,ex1:212,ey0:90.5,ym:104,ey1:113,cx0:199.5,cx1:205.5,r0:101,r1:109,alt:1.6,uA:.2};   // Igor nella cabina: centro, piedi, altezza (px logici) e riquadro del vetro
+const IGOR_G={x:134,fy:97,h:46,rx:129,ry:46,rw:10,rh:26,t1:3.2,dur:4.0,ex0:206,xm:205.5,ex1:198,ey0:90.5,ym:93,ey1:113,cx0:199.5,cx1:205.5,r0:101,r1:109,alt:1.6,uA:.07};   // Igor nella cabina: centro, piedi, altezza (px logici) e riquadro del vetro
 
 /* la visuale del Ponte del Diavolo senza simbolo: a sinistra del furgone */
 registraScena({
