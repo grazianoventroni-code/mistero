@@ -367,12 +367,12 @@ async function scenaBB(s,p){const yh=PROSP.orizzonte(PONTE.YR,PONTE.SR),ppm=(117
   await s.dici(p,"Settimo?! Cos'è Settimo?? Chi è? Rispondi!",F);
   C2.bav=false;p.x=g.nx;p.y=117;p.dir='W';p.visibile=true;await pausa(.4);   // lo rilascia
   await s.dici(JOHN,'Ehiiii…',{clip:'audio/versi/john_ehi_r3.mp3',frontale:false});
-  await s.dici(JOHN,'amico, calma, che ti prende? Non ti agitare, ti fa male sai?',Z);
-  await s.dici(JOHN,"Chi è Settimo dici? Mio fratello qui ci ha lavorato l'anno scorso come lavapiatti.",Z);
-  await s.dici(JOHN,'In realtà non lavava nulla e i piatti li svuotava, ma sono dettagli.',Z);
+  await s.dici(JOHN,'amico, calma, che ti prende? Non ti agitare, ti fa male sai?',F);
+  await s.dici(JOHN,"Chi è Settimo dici? Mio fratello qui ci ha lavorato l'anno scorso come lavapiatti.",F);
+  await s.dici(JOHN,'In realtà non lavava nulla e i piatti li svuotava, ma sono dettagli.',F);
   await s.dici(p,'Dove si trova?! Che posto è?',F);
   await s.dici(DAN,'Ehiiii…',{clip:'audio/versi/dan_ehi_r3.mp3',frontale:false});
-  await s.dici(DAN,'amico, sai, ci ho fatto il lavapiatti lì! Sta giù a Firenze.',Z);await scenaDan(s,p,ppm,F,Z)}
+  await s.dici(DAN,'amico, sai, ci ho fatto il lavapiatti lì! Sta giù a Firenze.',F);await scenaDan(s,p,ppm,F,Z)}
 
 /* (19 nov) DAN: Nick lo afferra per il bavero ("A Firenze dove?"), Dan scrive l'indirizzo su un bloc notes e gli da' il BIGLIETTO (finisce nell'inventario).
    Immagini ChatGPT gventroni (_strumenti/bb_dan.py): nick_dan_bavero_r1 (singola) e dan_biglietto_r1 (striscia di 8 coppie, Dan a sinistra, Nick a destra). */
@@ -394,7 +394,7 @@ async function scenaDan(s,p,ppm,F,Z){const gb=danGeom('bav',ppm),gs=danGeom('big
   await s.dici(DAN,'Ehiii.',{clip:'audio/versi/dan_ehi_r3.mp3',frontale:false});
   const DUR=[.7,.7,.7,.8,.9,.7,.9,1.3];   // 0 giacca, 1 mano in tasca, 2 estrae bloc notes e penna, 3-4 scrive, 5 strappa il foglio, 6 porge il biglietto, 7 Nick lo mette in tasca
   const an=(async()=>{for(let i=0;i<8;i++){BBS.bigl=i;if(i===7){A.sting('scoperta',.6);A.giveItem('biglietto')}await pausa(DUR[i])}})();
-  await s.dici(DAN,"Stai calmo amico, ti scrivo l'indirizzo.",Z);await an;
+  await s.dici(DAN,"Stai calmo amico, ti scrivo l'indirizzo.",F);await an;
   BBS.bigl=-1;p.x=gs.nx;p.y=117;p.dir='W';p.visibile=true;await pausa(.6);
   await p.vaiA(236,112,true,'E');p.corsa=false;   // Nick corre verso destra: parte il filmato
   s.vaiScena('c2-viaggio')}
@@ -435,7 +435,7 @@ registraScena({
    _strumenti/film_auto.py, stesso motore dei filmati della guida): l'Alfa 164 esce dallo slargo sulla strada del ponte e svolta a sinistra verso il ponte,
    poi la strada E35 con FIRENZE sull'asfalto, la strada con il portale verde, il casello (stile retro), il piazzale e il casello al tramonto dove si ferma.
    Rombo del motore (Web Audio, segue velocita' e curve) e fischio delle gomme negli intervalli indicati. Poi scena c2-casello: Igor lavora nella cabina. */
-const VIAGGIO=[{"t0":0.0,"v":[6.0,8.7,11.3,14.0,19.3,24.7,30.0,34.0,38.0,42.0,45.5,47.4,49.3,51.2,53.1],"c":[0.05,1.11,3.0,3.0,3.0,2.93,1.22,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"sq":[[0.2,1.6,0.9]]},{"t0":4.0,"v":[30.0,30.5,31.1,31.6,32.1,32.7,33.2,33.7,34.3,34.8,35.3,35.9,36.4,36.9,37.5],"c":[0.0,0.0,0.0,0.0,0.58,1.01,0.3,0.44,0.75,0.64,0.04,0.0,0.0,0.0,0.0],"sq":[[1.0,2.3,0.55]]},{"t0":8.0,"v":[30.0,30.5,31.1,31.6,32.1,32.7,33.2,33.7,34.3,34.8,35.3,35.9,36.4,36.9,37.5],"c":[0.0,0.0,0.0,0.35,1.54,0.53,1.06,1.4,1.41,0.87,0.8,1.37,0.17,0.0,0.0],"sq":[[0.9,1.9,0.5],[2.2,3.3,0.55]]},{"t0":12.0,"v":[20.0,19.6,19.3,18.9,18.6,18.2,17.7,16.8,16.0,15.1,14.3,13.4,12.6,11.7,10.9],"c":[0.13,1.42,2.02,1.12,0.68,1.62,1.49,0.82,0.08,0.0,0.0,0.0,0.0,0.0,0.0],"sq":[[0.3,1.7,0.6],[2.7,3.8,0.6]]},{"t0":16.0,"v":[15.0,14.7,14.5,14.2,13.9,13.7,13.4,13.1,12.9,12.6,12.3,12.1,11.8,11.5,11.3],"c":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"sq":[[2.4,3.6,0.45]]},{"t0":20.0,"v":[7.0,6.9,6.8,6.8,6.7,6.6,6.5,5.7,4.9,4.2,3.4,2.4,1.3,0.1,0.0],"c":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"sq":[[1.9,3.4,0.8]]}]; // VIAGGIO-DATI (generato da _strumenti/aggiorna_viaggio.py)
+const VIAGGIO=[{"t0":0.0,"v":[8.0,12.7,17.5,25.8,35.3,43.6,50.7,57.8,62.3,65.7,69.1,72.5],"c":[0.09,3.0,3.0,3.0,3.0,0.22,0.0,0.0,0.0,0.0,0.0,0.0],"sq":[[0.15000000000000002,1.2000000000000002,0.9]]},{"t0":3.0,"v":[40.0,40.9,41.9,42.8,43.8,44.7,45.7,46.6,47.6,48.5,49.5,50.4],"c":[0.0,0.0,0.0,0.78,1.06,0.28,0.99,0.56,0.0,0.0,0.0,0.0],"sq":[[0.75,1.7249999999999999,0.55]]},{"t0":6.0,"v":[40.0,40.9,41.9,42.8,43.8,44.7,45.7,46.6,47.6,48.5,49.5,50.4],"c":[0.0,0.0,0.19,1.87,0.07,1.82,1.85,0.43,1.78,0.38,0.0,0.0],"sq":[[0.675,1.4249999999999998,0.5],[1.6500000000000001,2.4749999999999996,0.55]]},{"t0":9.0,"v":[26.7,26.0,25.4,24.8,24.1,22.8,21.3,19.8,18.3,16.7,15.2,13.7],"c":[0.28,2.3,2.03,0.85,2.16,1.44,0.16,0.0,0.0,0.0,0.0,0.0],"sq":[[0.22499999999999998,1.275,0.6],[2.0250000000000004,2.8499999999999996,0.6]]},{"t0":12.0,"v":[20.0,19.5,19.1,18.6,18.1,17.6,17.2,16.7,16.2,15.7,15.3,14.8],"c":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"sq":[[1.7999999999999998,2.7,0.45]]},{"t0":15.0,"v":[9.3,9.2,9.0,8.9,8.7,8.0,6.6,5.2,3.7,1.7,0.0,0.0],"c":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"sq":[[1.4249999999999998,2.55,0.8]]}]; // VIAGGIO-DATI (generato da _strumenti/aggiorna_viaggio.py)
 const VG={fin:false,partito:false,t0:0,sq:0};
 function gommeSuono(dur,vol){const U=A.AU;if(!U||!U.ctx||U.muted||U.ctx.state!=='running')return;const c=U.ctx,t=c.currentTime+.01,f0=880+Math.random()*160;
   const o=c.createOscillator(),o2=c.createOscillator(),lf=c.createOscillator(),lg=c.createGain(),g=c.createGain(),f=c.createBiquadFilter();
