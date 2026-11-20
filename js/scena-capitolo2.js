@@ -618,7 +618,7 @@ function panViteProva(x,y,bit){let b=null,bd=10;for(const v of PAN.viti){if(v.st
   if(bit!==b.t){b.sh=.35;A.sfx.no();return}   // punta sbagliata per questa testa
   if(b.ord!==PAN.nv){panViteFail(b.x,b.y);return}    // punta giusta ma ordine sbagliato
   b.st=1;b.a=0;PAN.nv++;A.sfx.plic()}
-function panPunta(gg,x,y,ghost){gg.save();gg.globalAlpha=ghost?.3:1;   // cacciavite con la punta in (x,y)
+function panPunta(gg,x,y,ghost){gg.save();gg.globalAlpha=ghost?.3:1;gg.translate(x,y);gg.scale(1,-1);gg.translate(-x,-y);   // cacciavite con la punta in (x,y)
   gg.fillStyle='#d2691e';gg.fillRect(x-2.6,y-18,5.2,9);gg.fillStyle='#8a4210';gg.fillRect(x-2.6,y-18,1.2,9);gg.fillStyle='#ff9a4a';gg.fillRect(x+1.2,y-17,.8,7);
   gg.fillStyle='#b8bcc6';gg.fillRect(x-1,y-9,2,8);gg.fillStyle='#eef1f6';gg.fillRect(x-1,y-9,.6,8);
   gg.fillStyle='#8f949f';gg.beginPath();gg.moveTo(x-1.4,y-1);gg.lineTo(x+1.4,y-1);gg.lineTo(x+.6,y+1);gg.lineTo(x-.6,y+1);gg.closePath();gg.fill();gg.restore()}
@@ -672,10 +672,10 @@ registraScena({
       if(PAN.fase==='coperchio'){   // barra delle punte dell'attrezzo (sempre visibile)
         gg.fillStyle='rgba(8,10,14,.94)';gg.fillRect(0,96,W,24);gg.fillStyle='#2a2f3a';gg.fillRect(0,96,W,.8);
         for(let k=0;k<6;k++){const bx=panBitX(k),bit=PAN_BIT[k];gg.fillStyle='#171a22';gg.fillRect(bx-9.5,98,19,21);gg.strokeStyle='#3a4150';gg.lineWidth=.7;gg.strokeRect(bx-9.5,98,19,21);
-          panPunta(gg,bx-3.5,117,PAN.db===bit);   // il cacciavite da trascinare sulla vite
+          panPunta(gg,bx-3.5,100,PAN.db===bit);   // il cacciavite da trascinare sulla vite
           gg.beginPath();gg.arc(bx+5,108,4.4,0,Math.PI*2);gg.fillStyle='#3a3f4a';gg.fill();panTesta(gg,bit,bx+5,108,3.6,null,'#e9e0bd')}   // legenda: forma della punta
         }
-      if(PAN.db>=0&&PAN.fase==='coperchio'){const q=PAN.dp;panPunta(gg,q.x,q.y,false);gg.beginPath();gg.arc(q.x+7,q.y-9,4.4,0,Math.PI*2);gg.fillStyle='#3a3f4a';gg.fill();panTesta(gg,PAN.db,q.x+7,q.y-9,3.6,null,'#ffd24a')}
+      if(PAN.db>=0&&PAN.fase==='coperchio'){const q=PAN.dp;panPunta(gg,q.x,q.y,false);gg.beginPath();gg.arc(q.x+8,q.y+7,4.4,0,Math.PI*2);gg.fillStyle='#3a3f4a';gg.fill();panTesta(gg,PAN.db,q.x+8,q.y+7,3.6,null,'#ffd24a')}
       
       for(const p of PAN.sp){gg.globalAlpha=Math.max(0,1-p.t*2.2);gg.fillStyle=p.c;gg.fillRect(p.x,p.y,1.4,1.4)}gg.globalAlpha=1;
       if(PAN.fl>0){gg.globalAlpha=Math.min(.45,PAN.fl*.5);gg.fillStyle=PAN.esito?'#9dff9d':'#ff5a40';gg.fillRect(0,0,W,H);gg.globalAlpha=1}}},
