@@ -565,7 +565,21 @@ registraScena({
     gg.drawImage(c.img,fr.x,fr.y,c.w,c.h,-c.ax*sc,150-c.h*sc+bob,c.w*sc,c.h*sc);gg.restore()},
   entra(s){fadeTo(0,.9);const p=s.giocatore,ig=s.attori.igor;s.occupato=true;document.getElementById('bHint').style.display='none';
     p.x=66;p.y=150;p.dir='E';p.state='idle';if(ig){ig.x=178;ig.y=150;ig.dir='W';ig.state='idle'}
-    CH.punta=false;s.sequenza(async()=>{await pausa(1.6);const pr=s.dici(ig,'Il pannello di controllo è andato in tilt, è tutto bloccato, la sbarra non si alza.',{frontale:false});await pausa(1.8);CH.punta=true;await pr;await pausa(1.4);s.vaiScena('c2-pannello')})}
+    const F={frontale:false},rit=CH.ritorno||/[?&]ritorno/.test(location.search);CH.ritorno=false;CH.punta=false;
+    s.sequenza(async()=>{await pausa(1.6);
+      if(rit){   // ritorno dopo l'enigma
+        await s.dici(ig,'Wow, bravo! Ce l\'hai fatta, eheheh. L\'avrei fatto io se non fosse per…',F);
+        await s.dici(p,'Per via della gobba, immagino.',F);
+        await pausa(.3);await s.dici(ig,'Gobba? Quale gobba?',F);
+        await pausa(.3);await s.dici(p,'Ehm… nulla nulla, posso andare ora?',F);
+        await pausa(.4);await s.dici(ig,'Ceeeeerto, eheheh.',F);
+        await pausa(1.2);A.setHint('CONTINUA…',true);return}
+      await s.dici(ig,'Il pannello di controllo è andato in tilt, è tutto bloccato, la sbarra non si alza.',F);
+      await pausa(.4);await s.dici(p,'Dov\'è il pannello di controllo?',F);
+      await pausa(.3);CH.punta=true;await s.dici(ig,'Eh eh eh eh!',{clip:'audio/versi/igor_risata_r1.mp3',frontale:false});   // indica un punto del casello ridacchiando
+      await pausa(.5);await s.dici(p,'Posso provare a vedere se riesco ad aggiustarlo?',F);
+      await pausa(.3);CH.punta=false;await s.dici(ig,'Si può fare! Eheheh, attento solo a non prendere la scossa!',F);
+      await pausa(1.2);s.vaiScena('c2-pannello')})}
 });
 
 /* ---------------- (20 nov) PANNELLO: coperchio al buio (torcia dell'attrezzo) + enigma dei fili al buio ----------------
@@ -684,9 +698,10 @@ registraScena({
     if(PAN.fase==='coperchio'){for(const v of PAN.viti){if(v.sh>0)v.sh=Math.max(0,v.sh-dt);if(v.st===1){v.a+=dt*1.5;if(v.a>=1){v.st=2;A.sfx.thud()}}}
       if(PAN.viti.every(v=>v.st===2)){PAN.fase='cade';PAN.cd=0}return}
     if(PAN.fase==='cade'){PAN.cd+=dt;if(PAN.cd>.9){PAN.fase='cavi';PAN.fl=.7;PAN.esito=true;A.sfx.thud()}return}
+    if(PAN.stato==='sbloccato'){PAN.tS+=dt;if(PAN.tS>2.4&&!PAN.fine){PAN.fine=true;CH.ritorno=true;s.vaiScena('c2-chiosco')}}   // risolto: si torna a Nick e Igor davanti al casello
     PAN.cav.forEach((c,i)=>{if(i===PAN.drag)return;const tx=c.on>=0?PAN.rx:PAN.lx,ty=c.on>=0?PAN.ys[c.on]:PAN.ys[i],k=Math.min(1,dt*(c.on>=0?30:11));c.x+=(tx-c.x)*k;c.y+=(ty-c.y)*k});   // le spine rilasciate tornano a casa o si infilano nella presa
     if(PAN.stato==='verifica'){PAN.tS+=dt;if(PAN.tS>.45){
-      if(PAN.esito){PAN.fl=1;A.sfx.take();if(PAN.r<PAN.prove.length-1){PAN.stato='avanza';PAN.tS=0}else{PAN.stato='sbloccato';A.setHint('CONTINUA…',true)}}
+      if(PAN.esito){PAN.fl=1;A.sfx.take();if(PAN.r<PAN.prove.length-1){PAN.stato='avanza';PAN.tS=0}else{PAN.stato='sbloccato';PAN.tS=0}}
       else{PAN.stato='gioca';PAN.fl=1;PAN.next=0;A.sfx.no();for(let j=0;j<4;j++)for(let n=0;n<10;n++)PAN.sp.push({x:PAN.rx,y:PAN.ys[j],vx:(Math.random()-.4)*60,vy:-Math.random()*40,t:0,c:Math.random()<.5?'#ffe27a':'#ffffff'});
         for(const c of PAN.cav)c.on=-1}}}
     else if(PAN.stato==='avanza'){PAN.tS+=dt;if(PAN.tS>1.5){PAN.r++;panReset();PAN.fl=.6;PAN.esito=true;A.sfx.thud()}}},   // il pannello "si riavvia" con una nuova combinazione
@@ -696,7 +711,7 @@ registraScena({
   muovi(s,x,y){if(PAN.fase!=='cavi'){if(PAN.fase==='coperchio'){if(PAN.db>=0)PAN.dp={x,y};PAN.luce={x,y}}return}if(panP().buio)PAN.luce={x,y};if(PAN.drag<0)return;const c=PAN.cav[PAN.drag];c.x=x;c.y=y},
   su(s,x,y){if(PAN.fase==='coperchio'&&PAN.db>=0){const b=PAN.db;PAN.db=-1;if(y<96)panViteProva(x,y,b);return}if(PAN.drag<0)return;const i=PAN.drag;PAN.drag=-1;const c=PAN.cav[i],j=panPresa(c.x,c.y);
     if(j>=0&&!PAN.cav.some(q=>q.on===j)){A.sfx.thud();panInfila(i,j)}else A.sfx.plic()},
-  entra(s){PAN.r=0;PAN.fase=/[?&](cavi|prova)/.test(location.search)?'cavi':'coperchio';PAN.viti=panViti();PAN.punta=-1;PAN.db=-1;PAN.dp={x:120,y:60};PAN.nv=0;PAN.cd=0;PAN.luce={x:120,y:60};panReset();A.say('');document.getElementById('bHint').style.display='none';fadeTo(0,.9);s.occupato=false}
+  entra(s){PAN.r=0;PAN.fase=/[?&](cavi|prova)/.test(location.search)?'cavi':'coperchio';PAN.viti=panViti();PAN.fine=false;PAN.punta=-1;PAN.db=-1;PAN.dp={x:120,y:60};PAN.nv=0;PAN.cd=0;PAN.luce={x:120,y:60};panReset();A.say('');document.getElementById('bHint').style.display='none';fadeTo(0,.9);s.occupato=false}
 });
 
 /* la visuale del Ponte del Diavolo senza simbolo: a sinistra del furgone */
