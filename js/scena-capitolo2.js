@@ -613,12 +613,15 @@ function panCoperchio(gg,s,dy){gg.save();gg.translate(0,dy);
   gg.restore()}
 function panBuio(gg,l){const gr=gg.createRadialGradient(l.x,l.y,7,l.x,l.y,31);gr.addColorStop(0,'rgba(4,5,9,0)');gr.addColorStop(1,'rgba(4,5,9,.97)');gg.fillStyle=gr;gg.fillRect(0,0,W,H)}
 function panViteFail(x,y){for(const v of PAN.viti){v.st=0;v.a=0}PAN.nv=0;PAN.fl=1;PAN.esito=false;A.sfx.no();for(let n=0;n<30;n++)PAN.sp.push({x,y,vx:(Math.random()-.5)*80,vy:-Math.random()*40,t:0,c:Math.random()<.5?'#ffe27a':'#ffffff'})}
-function panViteTocca(x,y){
-  if(y>=104){for(let k=0;k<6;k++)if(Math.abs(x-panBitX(k))<9){PAN.punta=PAN_BIT[k];A.sfx.plic();return}return}
-  let b=null,bd=9;for(const v of PAN.viti){if(v.st)continue;const d=Math.hypot(x-v.x,y-v.y);if(d<bd){bd=d;b=v}}if(!b)return;
-  if(PAN.punta!==b.t){b.sh=.35;A.sfx.no();return}   // punta sbagliata per questa testa
+const panBitIdx=(x,y)=>{if(y<96)return -1;for(let k=0;k<6;k++)if(Math.abs(x-panBitX(k))<10)return k;return -1};
+function panViteProva(x,y,bit){let b=null,bd=10;for(const v of PAN.viti){if(v.st)continue;const d=Math.hypot(x-v.x,y-v.y);if(d<bd){bd=d;b=v}}if(!b){A.sfx.plic();return}
+  if(bit!==b.t){b.sh=.35;A.sfx.no();return}   // punta sbagliata per questa testa
   if(b.ord!==PAN.nv){panViteFail(b.x,b.y);return}    // punta giusta ma ordine sbagliato
   b.st=1;b.a=0;PAN.nv++;A.sfx.plic()}
+function panPunta(gg,x,y,ghost){gg.save();gg.globalAlpha=ghost?.3:1;   // cacciavite con la punta in (x,y)
+  gg.fillStyle='#d2691e';gg.fillRect(x-2.6,y-18,5.2,9);gg.fillStyle='#8a4210';gg.fillRect(x-2.6,y-18,1.2,9);gg.fillStyle='#ff9a4a';gg.fillRect(x+1.2,y-17,.8,7);
+  gg.fillStyle='#b8bcc6';gg.fillRect(x-1,y-9,2,8);gg.fillStyle='#eef1f6';gg.fillRect(x-1,y-9,.6,8);
+  gg.fillStyle='#8f949f';gg.beginPath();gg.moveTo(x-1.4,y-1);gg.lineTo(x+1.4,y-1);gg.lineTo(x+.6,y+1);gg.lineTo(x-.6,y+1);gg.closePath();gg.fill();gg.restore()}
 const panBersaglio=i=>panP().presa.indexOf(panP().regola[i]);   // presa giusta del cavo i
 function panSim(gg,k,x,y,r,fill,out){gg.beginPath();
   if(k===0){gg.moveTo(x,y-r);gg.lineTo(x+r*.95,y+r*.75);gg.lineTo(x-r*.95,y+r*.75);gg.closePath()}
@@ -667,8 +670,13 @@ registraScena({
     if(PAN.fl>0){gg.globalAlpha=Math.min(.45,PAN.fl*.5);gg.fillStyle=PAN.esito?'#9dff9d':'#ff5a40';gg.fillRect(0,0,W,H);gg.globalAlpha=1}
     if(PAN.fase!=='cavi'){const dy=PAN.fase==='cade'?Math.pow(PAN.cd/.9,2)*130:0;panCoperchio(gg,s,dy);panBuio(gg,PAN.luce);
       if(PAN.fase==='coperchio'){   // barra delle punte dell'attrezzo (sempre visibile)
-        gg.fillStyle='rgba(8,10,14,.92)';gg.fillRect(0,104,W,16);gg.fillStyle='#2a2f3a';gg.fillRect(0,104,W,.8);
-        for(let k=0;k<6;k++){const bx=panBitX(k),sel=PAN.punta===PAN_BIT[k];gg.fillStyle=sel?'#3a3520':'#171a22';gg.fillRect(bx-8,106,16,12);gg.strokeStyle=sel?'#ffd24a':'#3a4150';gg.lineWidth=sel?1.2:.7;gg.strokeRect(bx-8,106,16,12);panTesta(gg,PAN_BIT[k],bx,112,4.6,null,sel?'#ffd24a':'#d8d2b4')}}
+        gg.fillStyle='rgba(8,10,14,.94)';gg.fillRect(0,96,W,24);gg.fillStyle='#2a2f3a';gg.fillRect(0,96,W,.8);
+        for(let k=0;k<6;k++){const bx=panBitX(k),bit=PAN_BIT[k];gg.fillStyle='#171a22';gg.fillRect(bx-9.5,98,19,21);gg.strokeStyle='#3a4150';gg.lineWidth=.7;gg.strokeRect(bx-9.5,98,19,21);
+          panPunta(gg,bx-3.5,117,PAN.db===bit);   // il cacciavite da trascinare sulla vite
+          gg.beginPath();gg.arc(bx+5,108,4.4,0,Math.PI*2);gg.fillStyle='#3a3f4a';gg.fill();panTesta(gg,bit,bx+5,108,3.6,null,'#e9e0bd')}   // legenda: forma della punta
+        }
+      if(PAN.db>=0&&PAN.fase==='coperchio'){const q=PAN.dp;panPunta(gg,q.x,q.y,false);gg.beginPath();gg.arc(q.x+7,q.y-9,4.4,0,Math.PI*2);gg.fillStyle='#3a3f4a';gg.fill();panTesta(gg,PAN.db,q.x+7,q.y-9,3.6,null,'#ffd24a')}
+      
       for(const p of PAN.sp){gg.globalAlpha=Math.max(0,1-p.t*2.2);gg.fillStyle=p.c;gg.fillRect(p.x,p.y,1.4,1.4)}gg.globalAlpha=1;
       if(PAN.fl>0){gg.globalAlpha=Math.min(.45,PAN.fl*.5);gg.fillStyle=PAN.esito?'#9dff9d':'#ff5a40';gg.fillRect(0,0,W,H);gg.globalAlpha=1}}},
   aggiorna(s,dt){if(!PAN.cav.length)return;
@@ -682,13 +690,13 @@ registraScena({
       else{PAN.stato='gioca';PAN.fl=1;PAN.next=0;A.sfx.no();for(let j=0;j<4;j++)for(let n=0;n<10;n++)PAN.sp.push({x:PAN.rx,y:PAN.ys[j],vx:(Math.random()-.4)*60,vy:-Math.random()*40,t:0,c:Math.random()<.5?'#ffe27a':'#ffffff'});
         for(const c of PAN.cav)c.on=-1}}}
     else if(PAN.stato==='avanza'){PAN.tS+=dt;if(PAN.tS>1.5){PAN.r++;panReset();PAN.fl=.6;PAN.esito=true;A.sfx.thud()}}},   // il pannello "si riavvia" con una nuova combinazione
-  giu(s,x,y){if(PAN.fase!=='cavi'){if(PAN.fase==='coperchio'){if(y<104)PAN.luce={x,y};panViteTocca(x,y)}return}if(panP().buio)PAN.luce={x,y};if(PAN.stato!=='gioca')return;let b=-1,bd=10;PAN.cav.forEach((c,i)=>{const d=Math.hypot(x-c.x,y-c.y);if(d<bd){bd=d;b=i}});if(b<0)return;
+  giu(s,x,y){if(PAN.fase!=='cavi'){if(PAN.fase==='coperchio'){const k=panBitIdx(x,y);if(k>=0){PAN.db=PAN_BIT[k];PAN.dp={x,y};PAN.luce={x,y};A.sfx.plic()}else PAN.luce={x,y}}return}if(panP().buio)PAN.luce={x,y};if(PAN.stato!=='gioca')return;let b=-1,bd=10;PAN.cav.forEach((c,i)=>{const d=Math.hypot(x-c.x,y-c.y);if(d<bd){bd=d;b=i}});if(b<0)return;
     if(PAN.cav[b].on>=0&&panP().ord){for(const c of PAN.cav)c.on=-1;PAN.next=0;A.sfx.no();return}   // con l'ordine obbligato, staccare un cavo gia' collegato fa ripartire la sequenza
     PAN.drag=b;PAN.cav[b].on=-1;PAN.cav[b].x=x;PAN.cav[b].y=y;A.sfx.plic()},
-  muovi(s,x,y){if(PAN.fase!=='cavi'){if(PAN.fase==='coperchio'&&y<104)PAN.luce={x,y};return}if(panP().buio)PAN.luce={x,y};if(PAN.drag<0)return;const c=PAN.cav[PAN.drag];c.x=x;c.y=y},
-  su(s,x,y){if(PAN.drag<0)return;const i=PAN.drag;PAN.drag=-1;const c=PAN.cav[i],j=panPresa(c.x,c.y);
+  muovi(s,x,y){if(PAN.fase!=='cavi'){if(PAN.fase==='coperchio'){if(PAN.db>=0)PAN.dp={x,y};PAN.luce={x,y}}return}if(panP().buio)PAN.luce={x,y};if(PAN.drag<0)return;const c=PAN.cav[PAN.drag];c.x=x;c.y=y},
+  su(s,x,y){if(PAN.fase==='coperchio'&&PAN.db>=0){const b=PAN.db;PAN.db=-1;if(y<96)panViteProva(x,y,b);return}if(PAN.drag<0)return;const i=PAN.drag;PAN.drag=-1;const c=PAN.cav[i],j=panPresa(c.x,c.y);
     if(j>=0&&!PAN.cav.some(q=>q.on===j)){A.sfx.thud();panInfila(i,j)}else A.sfx.plic()},
-  entra(s){PAN.r=0;PAN.fase=/[?&](cavi|prova)/.test(location.search)?'cavi':'coperchio';PAN.viti=panViti();PAN.punta=-1;PAN.nv=0;PAN.cd=0;PAN.luce={x:120,y:60};panReset();A.say('');document.getElementById('bHint').style.display='none';fadeTo(0,.9);s.occupato=false}
+  entra(s){PAN.r=0;PAN.fase=/[?&](cavi|prova)/.test(location.search)?'cavi':'coperchio';PAN.viti=panViti();PAN.punta=-1;PAN.db=-1;PAN.dp={x:120,y:60};PAN.nv=0;PAN.cd=0;PAN.luce={x:120,y:60};panReset();A.say('');document.getElementById('bHint').style.display='none';fadeTo(0,.9);s.occupato=false}
 });
 
 /* la visuale del Ponte del Diavolo senza simbolo: a sinistra del furgone */
