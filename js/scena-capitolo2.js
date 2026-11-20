@@ -568,7 +568,11 @@ registraScena({
     CH.punta=false;s.sequenza(async()=>{await pausa(1.6);const pr=s.dici(ig,'Il pannello di controllo è andato in tilt, è tutto bloccato, la sbarra non si alza.',{frontale:false});await pausa(1.8);CH.punta=true;await pr;await pausa(1.4);s.vaiScena('c2-pannello')})}
 });
 
-/* ---------------- (20 nov) PANNELLO APERTO: l'enigma dei fili, in 3 prove ----------------
+/* ---------------- (20 nov) PANNELLO: coperchio al buio (torcia dell'attrezzo) + enigma dei fili al buio ----------------
+   FASE 1 'coperchio': si vede solo dove punta la torcia (il dito). Sul coperchio graffiti (simbolo + numero d'ordine) e 4 viti con teste diverse, ognuna con un simbolo inciso accanto.
+   Si sceglie la punta giusta dell'attrezzo (barra in basso) e si svitano le viti nell'ordine dei graffiti: punta sbagliata = errore, ordine sbagliato = le viti si riavvitano.
+   FASE 2 'cade' il coperchio, FASE 3 'cavi' = la vecchia prova 3. Query: ?c2-pannello&cavi salta il coperchio.
+   (testo storico, enigma dei fili:)
    Primo piano del vano del pannello (nessun personaggio). A sinistra 4 cavi colorati con la spina libera, a destra 4 prese con un simbolo inciso.
    La targhetta al centro mostra la regola: colore -> simbolo. Si trascina la spina di ogni cavo sulla presa giusta.
    PROVA 1: solo colore -> simbolo.   PROVA 2: prese rimescolate, regola nuova E ordine di collegamento (numeri sulla targhetta): un ordine sbagliato fa saltare tutto.
@@ -576,12 +580,45 @@ registraScena({
    Collegate le 4 spine: giuste = prova superata (lampo verde), sbagliate = scintille e cavi indietro. Superate tutte e 3 = sbloccato («CONTINUA…»). */
 const PAN={img:new Image(),ys:[27.7,50.1,72.4,94.7],lx:71.8,rx:184.8,col:['#e23a2e','#f2c230','#3fbf4a','#3a7fe0'],
   prove:[   // simboli: 0 triangolo, 1 stella, 2 quadrato, 3 cerchio. presa = simbolo di ogni presa dall'alto; regola = simbolo di ogni colore (rosso, giallo, verde, blu); ord = posto di ogni colore nell'ordine di collegamento
-    {presa:[0,1,2,3],regola:[1,3,0,2],ord:null,buio:false},
-    {presa:[3,0,2,1],regola:[0,2,3,1],ord:[2,0,3,1],buio:false},
     {presa:[2,3,1,0],regola:[3,0,1,2],ord:[1,3,0,2],buio:true}],
-  r:0,next:0,luce:{x:120,y:60},cav:[],sp:[],stato:'gioca',tS:0,fl:0,drag:-1,esito:false};
+  r:0,next:0,luce:{x:120,y:60},cav:[],sp:[],stato:'gioca',tS:0,fl:0,drag:-1,esito:false,
+  fase:'coperchio',viti:[],punta:-1,nv:0,cd:0};
+const PAN_ORD=[2,0,3,1];   // ordine dei simboli sui graffiti: quadrato, triangolo, cerchio, stella
+const PAN_GRAF=[{sim:2,n:1,x:98,y:36},{sim:0,n:2,x:146,y:42},{sim:3,n:3,x:104,y:70},{sim:1,n:4,x:148,y:74}];
+const PAN_BIT=[1,4,3,0,5,2];   // punte nella barra: 0 croce, 1 taglio, 2 esagono, 3 torx, 4 quadra (inutile), 5 triangolare (inutile)
+const PAN_SP=[];{let z=7;const rnd=()=>{z=(z*16807)%2147483647;return z/2147483647};for(let i=0;i<120;i++)PAN_SP.push({x:38+rnd()*164,y:8+rnd()*96,r:.4+rnd()*1.1,a:.08+rnd()*.25})}
+const panViti=()=>[{x:58,y:24,t:3,sim:1},{x:182,y:24,t:0,sim:2},{x:58,y:88,t:2,sim:3},{x:182,y:88,t:1,sim:0}].map(v=>({...v,ord:PAN_ORD.indexOf(v.sim),st:0,a:0,sh:0}));
+const panBitX=k=>120+(k-2.5)*20;
 PAN.img.src='img/scene/pannello-aperto.png';
 const panP=()=>PAN.prove[PAN.r];
+function panTesta(gg,k,x,y,r,metal,hole){gg.save();gg.translate(x,y);
+  if(metal){gg.beginPath();gg.arc(0,0,r,0,Math.PI*2);gg.fillStyle=metal;gg.fill();gg.strokeStyle='#15171c';gg.lineWidth=.7;gg.stroke();gg.beginPath();gg.arc(-r*.3,-r*.3,r*.35,0,Math.PI*2);gg.fillStyle='rgba(255,255,255,.18)';gg.fill()}
+  gg.fillStyle=hole;const q=r*.62;
+  if(k===0){gg.fillRect(-q,-q*.16,q*2,q*.32);gg.fillRect(-q*.16,-q,q*.32,q*2)}
+  else if(k===1){gg.fillRect(-q,-q*.16,q*2,q*.32)}
+  else if(k===4){gg.fillRect(-q*.7,-q*.7,q*1.4,q*1.4)}
+  else{gg.beginPath();
+    if(k===2){for(let i=0;i<6;i++){const a=i*Math.PI/3;gg[i?'lineTo':'moveTo'](Math.cos(a)*q,Math.sin(a)*q)}}
+    else if(k===3){for(let i=0;i<12;i++){const a=i*Math.PI/6,m=i%2?q*.55:q*1.05;gg[i?'lineTo':'moveTo'](Math.cos(a)*m,Math.sin(a)*m)}}
+    else{gg.moveTo(0,-q);gg.lineTo(q*.95,q*.7);gg.lineTo(-q*.95,q*.7)}
+    gg.closePath();gg.fill()}
+  gg.restore()}
+function panCoperchio(gg,s,dy){gg.save();gg.translate(0,dy);
+  gg.fillStyle='#464a54';gg.fillRect(36,6,168,100);gg.fillStyle='#5a5f6b';gg.fillRect(36,6,168,1.5);gg.fillRect(36,6,1.5,100);gg.fillStyle='#22252d';gg.fillRect(36,104.5,168,1.5);gg.fillRect(202.5,6,1.5,100);
+  for(const p of PAN_SP){gg.globalAlpha=p.a;gg.fillStyle=p.a>.2?'#14161a':'#8a8f9a';gg.beginPath();gg.arc(p.x,p.y,p.r,0,6.3);gg.fill()}gg.globalAlpha=1;
+  for(const v of PAN.viti){const sx=v.x<120?v.x+11:v.x-11,sy=v.y<60?v.y+9:v.y-9;panSim(gg,v.sim,sx+.5,sy+.5,2.7,'#7e8390');panSim(gg,v.sim,sx,sy,2.7,'#262930')}   // simbolo inciso accanto a ogni vite
+  for(const g of PAN_GRAF){panSim(gg,g.sim,g.x,g.y,4.4,'rgba(215,220,230,.88)','rgba(40,44,52,.9)');gg.fillStyle='rgba(215,220,230,.9)';gg.font='bold 8px monospace';gg.textAlign='center';gg.textBaseline='middle';gg.fillText(String(g.n),g.x+10,g.y+.5)}   // graffiti: simbolo + posto nell'ordine
+  for(const v of PAN.viti){if(v.st===2){gg.beginPath();gg.arc(v.x,v.y,4.6,0,Math.PI*2);gg.fillStyle='#101216';gg.fill();continue}
+    const sh=v.sh>0?Math.sin(v.sh*60)*1.2:0,a=v.st===1?v.a:0;gg.save();gg.globalAlpha=1-a*.5;gg.translate(v.x+sh,v.y-a*5);gg.scale(1+a*.5,1+a*.5);gg.rotate(a*Math.PI*5);panTesta(gg,v.t,0,0,4.8,'#9aa0ab','#16181d');gg.restore()}
+  gg.restore()}
+function panBuio(gg,l){const gr=gg.createRadialGradient(l.x,l.y,7,l.x,l.y,31);gr.addColorStop(0,'rgba(4,5,9,0)');gr.addColorStop(1,'rgba(4,5,9,.97)');gg.fillStyle=gr;gg.fillRect(0,0,W,H)}
+function panViteFail(x,y){for(const v of PAN.viti){v.st=0;v.a=0}PAN.nv=0;PAN.fl=1;PAN.esito=false;A.sfx.no();for(let n=0;n<30;n++)PAN.sp.push({x,y,vx:(Math.random()-.5)*80,vy:-Math.random()*40,t:0,c:Math.random()<.5?'#ffe27a':'#ffffff'})}
+function panViteTocca(x,y){
+  if(y>=104){for(let k=0;k<6;k++)if(Math.abs(x-panBitX(k))<9){PAN.punta=PAN_BIT[k];A.sfx.plic();return}return}
+  let b=null,bd=9;for(const v of PAN.viti){if(v.st)continue;const d=Math.hypot(x-v.x,y-v.y);if(d<bd){bd=d;b=v}}if(!b)return;
+  if(PAN.punta!==b.t){b.sh=.35;A.sfx.no();return}   // punta sbagliata per questa testa
+  if(b.ord!==PAN.nv){panViteFail(b.x,b.y);return}    // punta giusta ma ordine sbagliato
+  b.st=1;b.a=0;PAN.nv++;A.sfx.plic()}
 const panBersaglio=i=>panP().presa.indexOf(panP().regola[i]);   // presa giusta del cavo i
 function panSim(gg,k,x,y,r,fill,out){gg.beginPath();
   if(k===0){gg.moveTo(x,y-r);gg.lineTo(x+r*.95,y+r*.75);gg.lineTo(x-r*.95,y+r*.75);gg.closePath()}
@@ -607,7 +644,7 @@ registraScena({
   area:[[0,0],[2,0],[2,2],[0,2]],suggerimento:'',senzaEtichette:true,ambiente:{stanza:0,vento:0,pioggia:0,fuoco:0},
   disegnaSfondo(gg,s){R(0,0,W,H,'#0a0c12');gg.save();gg.imageSmoothingEnabled=true;gg.imageSmoothingQuality='high';if(PAN.img.complete&&PAN.img.naturalWidth)gg.drawImage(PAN.img,0,0,W,H);gg.restore();
     if(!PAN.cav.length)return;const P=panP(),ok=PAN.stato==='sbloccato';
-    gg.save();
+    if(PAN.fase!=='coperchio'){gg.save();
     // targhetta: la regola (colore -> simbolo, ed eventualmente il numero d'ordine) incisa
     for(let i=0;i<4;i++){const y=48.4+i*7.2;
       gg.beginPath();gg.arc(101,y,2.3,0,Math.PI*2);gg.fillStyle=PAN.col[i];gg.fill();gg.strokeStyle='#2a1c0c';gg.lineWidth=.6;gg.stroke();
@@ -624,27 +661,34 @@ registraScena({
     if(PAN.drag>=0){const c=PAN.cav[PAN.drag],j=panPresa(c.x,c.y);if(j>=0){gg.beginPath();gg.arc(PAN.rx,PAN.ys[j],10.6,0,Math.PI*2);gg.strokeStyle='rgba(255,255,255,'+(.5+.3*Math.sin(s.t*10))+')';gg.lineWidth=1.2;gg.stroke()}}
     // cavi: prima quelli fermi, poi quello trascinato
     for(const i of [0,1,2,3].sort((a,b)=>(a===PAN.drag)-(b===PAN.drag))){const c=PAN.cav[i];panCavo(gg,PAN.lx,PAN.ys[i],c.x,c.y,PAN.col[i])}
-    // spie delle prove superate (sulla porta)
-    for(let k=0;k<3;k++){gg.beginPath();gg.arc(12+k*8,110,2.2,0,Math.PI*2);gg.fillStyle=(k<PAN.r||ok)?'#5cff6a':'#1a2230';gg.fill();gg.strokeStyle='#0a0c12';gg.lineWidth=.7;gg.stroke()}
-    gg.restore();
+    gg.restore()}
     // scintille e lampi
     for(const p of PAN.sp){gg.globalAlpha=Math.max(0,1-p.t*2.2);gg.fillStyle=p.c;gg.fillRect(p.x,p.y,1.2,1.2)}gg.globalAlpha=1;
-    if(PAN.fl>0){gg.globalAlpha=Math.min(.45,PAN.fl*.5);gg.fillStyle=PAN.esito?'#9dff9d':'#ff5a40';gg.fillRect(0,0,W,H);gg.globalAlpha=1}},
+    if(PAN.fl>0){gg.globalAlpha=Math.min(.45,PAN.fl*.5);gg.fillStyle=PAN.esito?'#9dff9d':'#ff5a40';gg.fillRect(0,0,W,H);gg.globalAlpha=1}
+    if(PAN.fase!=='cavi'){const dy=PAN.fase==='cade'?Math.pow(PAN.cd/.9,2)*130:0;panCoperchio(gg,s,dy);panBuio(gg,PAN.luce);
+      if(PAN.fase==='coperchio'){   // barra delle punte dell'attrezzo (sempre visibile)
+        gg.fillStyle='rgba(8,10,14,.92)';gg.fillRect(0,104,W,16);gg.fillStyle='#2a2f3a';gg.fillRect(0,104,W,.8);
+        for(let k=0;k<6;k++){const bx=panBitX(k),sel=PAN.punta===PAN_BIT[k];gg.fillStyle=sel?'#3a3520':'#171a22';gg.fillRect(bx-8,106,16,12);gg.strokeStyle=sel?'#ffd24a':'#3a4150';gg.lineWidth=sel?1.2:.7;gg.strokeRect(bx-8,106,16,12);panTesta(gg,PAN_BIT[k],bx,112,4.6,null,sel?'#ffd24a':'#d8d2b4')}}
+      for(const p of PAN.sp){gg.globalAlpha=Math.max(0,1-p.t*2.2);gg.fillStyle=p.c;gg.fillRect(p.x,p.y,1.4,1.4)}gg.globalAlpha=1;
+      if(PAN.fl>0){gg.globalAlpha=Math.min(.45,PAN.fl*.5);gg.fillStyle=PAN.esito?'#9dff9d':'#ff5a40';gg.fillRect(0,0,W,H);gg.globalAlpha=1}}},
   aggiorna(s,dt){if(!PAN.cav.length)return;
     PAN.fl=Math.max(0,PAN.fl-dt*1.4);for(const p of PAN.sp){p.t+=dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=60*dt}PAN.sp=PAN.sp.filter(p=>p.t<.5);
+    if(PAN.fase==='coperchio'){for(const v of PAN.viti){if(v.sh>0)v.sh=Math.max(0,v.sh-dt);if(v.st===1){v.a+=dt*1.5;if(v.a>=1){v.st=2;A.sfx.thud()}}}
+      if(PAN.viti.every(v=>v.st===2)){PAN.fase='cade';PAN.cd=0}return}
+    if(PAN.fase==='cade'){PAN.cd+=dt;if(PAN.cd>.9){PAN.fase='cavi';PAN.fl=.7;PAN.esito=true;A.sfx.thud()}return}
     PAN.cav.forEach((c,i)=>{if(i===PAN.drag)return;const tx=c.on>=0?PAN.rx:PAN.lx,ty=c.on>=0?PAN.ys[c.on]:PAN.ys[i],k=Math.min(1,dt*(c.on>=0?30:11));c.x+=(tx-c.x)*k;c.y+=(ty-c.y)*k});   // le spine rilasciate tornano a casa o si infilano nella presa
     if(PAN.stato==='verifica'){PAN.tS+=dt;if(PAN.tS>.45){
       if(PAN.esito){PAN.fl=1;A.sfx.take();if(PAN.r<PAN.prove.length-1){PAN.stato='avanza';PAN.tS=0}else{PAN.stato='sbloccato';A.setHint('CONTINUA…',true)}}
       else{PAN.stato='gioca';PAN.fl=1;PAN.next=0;A.sfx.no();for(let j=0;j<4;j++)for(let n=0;n<10;n++)PAN.sp.push({x:PAN.rx,y:PAN.ys[j],vx:(Math.random()-.4)*60,vy:-Math.random()*40,t:0,c:Math.random()<.5?'#ffe27a':'#ffffff'});
         for(const c of PAN.cav)c.on=-1}}}
     else if(PAN.stato==='avanza'){PAN.tS+=dt;if(PAN.tS>1.5){PAN.r++;panReset();PAN.fl=.6;PAN.esito=true;A.sfx.thud()}}},   // il pannello "si riavvia" con una nuova combinazione
-  giu(s,x,y){if(panP().buio)PAN.luce={x,y};if(PAN.stato!=='gioca')return;let b=-1,bd=10;PAN.cav.forEach((c,i)=>{const d=Math.hypot(x-c.x,y-c.y);if(d<bd){bd=d;b=i}});if(b<0)return;
+  giu(s,x,y){if(PAN.fase!=='cavi'){if(PAN.fase==='coperchio'){if(y<104)PAN.luce={x,y};panViteTocca(x,y)}return}if(panP().buio)PAN.luce={x,y};if(PAN.stato!=='gioca')return;let b=-1,bd=10;PAN.cav.forEach((c,i)=>{const d=Math.hypot(x-c.x,y-c.y);if(d<bd){bd=d;b=i}});if(b<0)return;
     if(PAN.cav[b].on>=0&&panP().ord){for(const c of PAN.cav)c.on=-1;PAN.next=0;A.sfx.no();return}   // con l'ordine obbligato, staccare un cavo gia' collegato fa ripartire la sequenza
     PAN.drag=b;PAN.cav[b].on=-1;PAN.cav[b].x=x;PAN.cav[b].y=y;A.sfx.plic()},
-  muovi(s,x,y){if(panP().buio)PAN.luce={x,y};if(PAN.drag<0)return;const c=PAN.cav[PAN.drag];c.x=x;c.y=y},
+  muovi(s,x,y){if(PAN.fase!=='cavi'){if(PAN.fase==='coperchio'&&y<104)PAN.luce={x,y};return}if(panP().buio)PAN.luce={x,y};if(PAN.drag<0)return;const c=PAN.cav[PAN.drag];c.x=x;c.y=y},
   su(s,x,y){if(PAN.drag<0)return;const i=PAN.drag;PAN.drag=-1;const c=PAN.cav[i],j=panPresa(c.x,c.y);
     if(j>=0&&!PAN.cav.some(q=>q.on===j)){A.sfx.thud();panInfila(i,j)}else A.sfx.plic()},
-  entra(s){PAN.r=0;const m=location.search.match(/[?&]prova([23])/);if(m)PAN.r=+m[1]-1;PAN.luce={x:120,y:60};panReset();A.say('');document.getElementById('bHint').style.display='none';fadeTo(0,.9);s.occupato=false}
+  entra(s){PAN.r=0;PAN.fase=/[?&](cavi|prova)/.test(location.search)?'cavi':'coperchio';PAN.viti=panViti();PAN.punta=-1;PAN.nv=0;PAN.cd=0;PAN.luce={x:120,y:60};panReset();A.say('');document.getElementById('bHint').style.display='none';fadeTo(0,.9);s.occupato=false}
 });
 
 /* la visuale del Ponte del Diavolo senza simbolo: a sinistra del furgone */
