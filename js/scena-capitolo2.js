@@ -536,11 +536,12 @@ registraScena({
   entra(s){A.say('');s.occupato=true;fadeTo(0,.5);document.getElementById('bHint').style.display='none';setTimeout(()=>{try{sfx.portaApre&&sfx.portaApre()}catch(e){}},3150);s.sequenza(async()=>{await pausa(IGOR_G.t1+.5+IGOR_G.dur+.9);   // Igor e' arrivato accanto all'auto: il blocco al casello
       const F={frontale:false};
       await s.dici(IGOR_ATT,'Niente da fare, amico. Di qui non si passa.',F);
-      await s.dici(IGOR_ATT,'Eh eh eh eh!',{clip:'audio/versi/igor_risata_r1.mp3',frontale:false});   // risatina isterica (voce vera)
+      await ridiIgor(IGOR_ATT,1);   // risatina isterica (voce vera, non scritta)
       await pausa(.4);await s.dici(NICK_ATT,'Perché? Che succede?',F);                                  // Nick parla da dentro l'auto
-      await pausa(.3);await s.dici(IGOR_ATT,'Eh eh eh eh eh eh!',{clip:'audio/versi/igor_risata_r2.mp3',frontale:false});
+      await pausa(.3);await ridiIgor(IGOR_ATT,2);
       await pausa(1.2);s.vaiScena('c2-chiosco')})}
 });
+async function ridiIgor(att,n){let d=1.6;try{const c=A.motore.suonaClip('audio/versi/igor_risata_r'+n+'.mp3');if(c&&c.duration>0)d=c.duration}catch(e){}att.talking=true;await pausa(d+.15);att.talking=false}   // la risatina di Igor e' solo voce: niente testo
 const IGOR_ATT={nome:'igor',etichetta:'IGOR',talking:false,bocca:1},NICK_ATT={nome:'protagonista-esterno',etichetta:'NICK',talking:false,bocca:1};   // Nick risponde da dentro l'auto (non si vede)
 const IGOR_G={x:134,fy:97,h:46,rx:129,ry:46,rw:10,rh:26,t1:3.2,dur:4.0,ex0:206,xm:205.5,ex1:198,ey0:90.5,ym:93,ey1:113,cx0:199.5,cx1:205.5,r0:101,r1:109,alt:1.6,uA:.07};   // Igor nella cabina: centro, piedi, altezza (px logici) e riquadro del vetro
 
@@ -568,18 +569,43 @@ registraScena({
     const F={frontale:false},rit=CH.ritorno||/[?&]ritorno/.test(location.search);CH.ritorno=false;CH.punta=false;
     s.sequenza(async()=>{await pausa(1.6);
       if(rit){   // ritorno dopo l'enigma
-        await s.dici(ig,'Wow, bravo! Ce l\'hai fatta, eheheh. L\'avrei fatto io se non fosse per…',F);
+        await s.dici(ig,'Wow, bravo! Ce l\'hai fatta.',F);await ridiIgor(ig,1);
+        await s.dici(ig,'L\'avrei fatto io se non fosse per…',F);
         await s.dici(p,'Per via della gobba, immagino.',F);
         await pausa(.3);await s.dici(ig,'Gobba? Quale gobba?',F);
         await pausa(.3);await s.dici(p,'Ehm… nulla nulla, posso andare ora?',F);
-        await pausa(.4);await s.dici(ig,'Ceeeeerto, eheheh.',F);
-        await pausa(1.2);A.setHint('CONTINUA…',true);return}
+        await pausa(.4);await s.dici(ig,'Ceeeeerto.',F);await ridiIgor(ig,2);
+        await pausa(.8);s.vaiScena('c2-partenza');return}
       await s.dici(ig,'Il pannello di controllo è andato in tilt, è tutto bloccato, la sbarra non si alza.',F);
       await pausa(.4);await s.dici(p,'Dov\'è il pannello di controllo?',F);
-      await pausa(.3);CH.punta=true;await s.dici(ig,'Eh eh eh eh!',{clip:'audio/versi/igor_risata_r1.mp3',frontale:false});   // indica un punto del casello ridacchiando
+      await pausa(.3);CH.punta=true;await ridiIgor(ig,1);   // indica un punto del casello ridacchiando
       await pausa(.5);await s.dici(p,'Posso provare a vedere se riesco ad aggiustarlo?',F);
-      await pausa(.3);CH.punta=false;await s.dici(ig,'Si può fare! Eheheh, attento solo a non prendere la scossa!',F);
+      await pausa(.3);CH.punta=false;await s.dici(ig,'Si può fare!',F);await ridiIgor(ig,2);await s.dici(ig,'Attento solo a non prendere la scossa!',F);
       await pausa(1.2);s.vaiScena('c2-pannello')})}
+});
+
+/* ---------------- (20 nov) PARTENZA DAL CASELLO: sfondo = piazzale del casello (come il fotogramma del viaggio). L'auto di Nick, da dietro, e' all'altezza del casello
+   (piu' avanti rispetto alla fine del viaggio), riparte sgommando e va dritta verso l'orizzonte; poi dissolvenza. Orizzonte y=49.5, punto di fuga x=106. */
+const IMG_AUTO_RETRO=mkImg('img/emb/auto164_retro_hd.png');
+const PT={t:0,fumo:[],sg:false,fade:false,fine:false};
+const ptPos=d=>({yb:78-25.5*d,x:110-3.5*d});   // d: 0 = ferma al casello, 1 = lontana verso l'orizzonte
+registraScena({
+  id:'c2-partenza',sfondo:'img/scene/casello-piazzale.png',area:[[0,0],[2,0],[2,2],[0,2]],suggerimento:'',senzaEtichette:true,
+  ambiente:{stanza:0,vento:.2,pioggia:0,fuoco:0},
+  entra(s){PT.t=0;PT.fumo=[];PT.sg=false;PT.fade=false;PT.fine=false;A.say('');s.occupato=true;document.getElementById('bHint').style.display='none';fadeTo(0,.9);A.setEng&&A.setEng(.8,true)},
+  aggiorna(s,dt){PT.t+=dt;const t=PT.t;
+    if(t>1.0&&!PT.sg){PT.sg=true;gommeSuono(2.4,1)}   // sgommata
+    const d=t<2.1?0:Math.min(1,Math.pow((t-2.1)/2.7,2.1)),P=ptPos(d),r=(P.yb-49.5)/43.5,w=35*r;
+    if(t>1.0&&t<4.6&&Math.random()<dt*70){const sp=t<2.1?1:.5+d;PT.fumo.push({x:P.x+(Math.random()<.5?-1:1)*w*.3,y:P.yb-.3,vx:(Math.random()-.5)*14*r,vy:-(2+Math.random()*5)*r,r:(.8+Math.random()*1.3)*r*sp,t:0})}
+    for(const p of PT.fumo){p.t+=dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.r+=dt*4.5*r}PT.fumo=PT.fumo.filter(p=>p.t<1.5);
+    A.engHz&&A.engHz(31+(t<1?3*t:t<2.1?16+Math.sin(t*40)*2:19+d*34));
+    if(t>4.3&&!PT.fade){PT.fade=true;fadeTo(1,1.1)}
+    if(t>6.2&&!PT.fine){PT.fine=true;A.setEng&&A.setEng(0,false);A.setHint('CONTINUA…',true)}},
+  sopra(gg,s){if(!(IMG_AUTO_RETRO.complete&&IMG_AUTO_RETRO.naturalWidth))return;const t=PT.t,d=t<2.1?0:Math.min(1,Math.pow((t-2.1)/2.7,2.1)),P=ptPos(d),r=(P.yb-49.5)/43.5,w=35*r,h=w*IMG_AUTO_RETRO.naturalHeight/IMG_AUTO_RETRO.naturalWidth;
+    const tr=(t>1.0&&t<2.1)?Math.sin(t*90)*.35*r:0;   // l'auto vibra mentre le ruote slittano
+    gg.save();gg.globalAlpha=.32;gg.fillStyle='#000';gg.beginPath();gg.ellipse(P.x,P.yb+.3,w*.5,1.6*r+.4,0,0,Math.PI*2);gg.fill();gg.restore();   // ombra
+    gg.save();gg.imageSmoothingEnabled=true;gg.imageSmoothingQuality='high';gg.drawImage(IMG_AUTO_RETRO,P.x-w/2+tr,P.yb-h,w,h);gg.restore();
+    for(const p of PT.fumo){gg.globalAlpha=Math.max(0,.4*(1-p.t/1.5));gg.fillStyle='#d4d4da';gg.beginPath();gg.arc(p.x,p.y,p.r,0,Math.PI*2);gg.fill()}gg.globalAlpha=1}
 });
 
 /* ---------------- (20 nov) PANNELLO: coperchio al buio (torcia dell'attrezzo) + enigma dei fili al buio ----------------
