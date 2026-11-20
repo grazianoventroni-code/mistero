@@ -568,14 +568,21 @@ registraScena({
     CH.punta=false;s.sequenza(async()=>{await pausa(1.6);const pr=s.dici(ig,'Il pannello di controllo è andato in tilt, è tutto bloccato, la sbarra non si alza.',{frontale:false});await pausa(1.8);CH.punta=true;await pr;await pausa(1.4);s.vaiScena('c2-pannello')})}
 });
 
-/* ---------------- (20 nov) PANNELLO APERTO: l'enigma dei fili ----------------
+/* ---------------- (20 nov) PANNELLO APERTO: l'enigma dei fili, in 3 prove ----------------
    Primo piano del vano del pannello (nessun personaggio). A sinistra 4 cavi colorati con la spina libera, a destra 4 prese con un simbolo inciso.
-   La targhetta al centro mostra la regola: colore -> simbolo. Si trascina la spina di ogni cavo sulla presa giusta. Con tutte e 4 collegate: giuste = sblocco, sbagliate = scintille e i cavi tornano indietro. */
+   La targhetta al centro mostra la regola: colore -> simbolo. Si trascina la spina di ogni cavo sulla presa giusta.
+   PROVA 1: solo colore -> simbolo.   PROVA 2: prese rimescolate, regola nuova E ordine di collegamento (numeri sulla targhetta): un ordine sbagliato fa saltare tutto.
+   PROVA 3: come la 2 ma al BUIO: si vede solo dove punta la luce della torcia (il dito), regola e simboli vanno letti e ricordati.
+   Collegate le 4 spine: giuste = prova superata (lampo verde), sbagliate = scintille e cavi indietro. Superate tutte e 3 = sbloccato («CONTINUA…»). */
 const PAN={img:new Image(),ys:[27.7,50.1,72.4,94.7],lx:71.8,rx:184.8,col:['#e23a2e','#f2c230','#3fbf4a','#3a7fe0'],
-  presa:[0,1,2,3],      // simboli delle prese a destra, dall'alto: triangolo, stella, quadrato, cerchio
-  regola:[1,3,0,2],     // simbolo di ogni colore (rosso, giallo, verde, blu) = anche la presa giusta
-  cav:[],sp:[],stato:'gioca',tS:0,fl:0,drag:-1,esito:false};
+  prove:[   // simboli: 0 triangolo, 1 stella, 2 quadrato, 3 cerchio. presa = simbolo di ogni presa dall'alto; regola = simbolo di ogni colore (rosso, giallo, verde, blu); ord = posto di ogni colore nell'ordine di collegamento
+    {presa:[0,1,2,3],regola:[1,3,0,2],ord:null,buio:false},
+    {presa:[3,0,2,1],regola:[0,2,3,1],ord:[2,0,3,1],buio:false},
+    {presa:[2,3,1,0],regola:[3,0,1,2],ord:[1,3,0,2],buio:true}],
+  r:0,next:0,luce:{x:120,y:60},cav:[],sp:[],stato:'gioca',tS:0,fl:0,drag:-1,esito:false};
 PAN.img.src='img/scene/pannello-aperto.png';
+const panP=()=>PAN.prove[PAN.r];
+const panBersaglio=i=>panP().presa.indexOf(panP().regola[i]);   // presa giusta del cavo i
 function panSim(gg,k,x,y,r,fill,out){gg.beginPath();
   if(k===0){gg.moveTo(x,y-r);gg.lineTo(x+r*.95,y+r*.75);gg.lineTo(x-r*.95,y+r*.75);gg.closePath()}
   else if(k===1){for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5,q=i%2?r*.45:r*1.05;gg[i?'lineTo':'moveTo'](x+Math.cos(a)*q,y+Math.sin(a)*q)}gg.closePath()}
@@ -589,28 +596,36 @@ function panCavo(gg,ax,ay,bx,by,col){const d=Math.hypot(bx-ax,by-ay);if(d>1.5){c
   gg.beginPath();gg.arc(bx,by,3.8,0,Math.PI*2);gg.fillStyle=col;gg.fill();
   gg.beginPath();gg.arc(bx,by,1.7,0,Math.PI*2);gg.fillStyle='rgba(0,0,0,.45)';gg.fill();
   gg.beginPath();gg.arc(bx-1.3,by-1.4,.9,0,Math.PI*2);gg.fillStyle='rgba(255,255,255,.7)';gg.fill()}
-function panReset(){PAN.cav=PAN.col.map((c,i)=>({x:PAN.lx,y:PAN.ys[i],on:-1}));PAN.sp=[];PAN.stato='gioca';PAN.tS=0;PAN.fl=0;PAN.drag=-1}
+function panReset(){PAN.cav=PAN.col.map((c,i)=>({x:PAN.lx,y:PAN.ys[i],on:-1}));PAN.sp=[];PAN.stato='gioca';PAN.tS=0;PAN.fl=0;PAN.drag=-1;PAN.next=0}
 function panPresa(x,y){let b=-1,bd=12;for(let j=0;j<4;j++){const d=Math.hypot(x-PAN.rx,y-PAN.ys[j]);if(d<bd){bd=d;b=j}}return b}
-function panControlla(){if(PAN.cav.some(c=>c.on<0))return;PAN.stato='verifica';PAN.tS=0;PAN.esito=PAN.cav.every((c,i)=>c.on===PAN.regola[i])}
+function panInnesca(esito){PAN.esito=esito;PAN.stato='verifica';PAN.tS=0}
+function panInfila(i,j){const P=panP();PAN.cav[i].on=j;
+  if(P.ord&&P.ord[i]!==PAN.next){panInnesca(false);return}   // ordine di collegamento sbagliato: salta subito
+  PAN.next++;if(PAN.cav.every(c=>c.on>=0))panInnesca(PAN.cav.every((c,k)=>c.on===panBersaglio(k)))}
 registraScena({
   id:'c2-pannello',sfondo:'img/scene/pannello-aperto.png',
   area:[[0,0],[2,0],[2,2],[0,2]],suggerimento:'',senzaEtichette:true,ambiente:{stanza:0,vento:0,pioggia:0,fuoco:0},
   disegnaSfondo(gg,s){R(0,0,W,H,'#0a0c12');gg.save();gg.imageSmoothingEnabled=true;gg.imageSmoothingQuality='high';if(PAN.img.complete&&PAN.img.naturalWidth)gg.drawImage(PAN.img,0,0,W,H);gg.restore();
-    if(!PAN.cav.length)return;
+    if(!PAN.cav.length)return;const P=panP(),ok=PAN.stato==='sbloccato';
     gg.save();
-    // targhetta: la regola (colore -> simbolo) incisa
+    // targhetta: la regola (colore -> simbolo, ed eventualmente il numero d'ordine) incisa
     for(let i=0;i<4;i++){const y=48.4+i*7.2;
-      gg.beginPath();gg.arc(106,y,2.3,0,Math.PI*2);gg.fillStyle=PAN.col[i];gg.fill();gg.strokeStyle='#2a1c0c';gg.lineWidth=.6;gg.stroke();
-      gg.strokeStyle='#3a2810';gg.lineWidth=.9;gg.lineCap='round';gg.beginPath();gg.moveTo(113,y);gg.lineTo(137,y);gg.moveTo(133.5,y-2);gg.lineTo(137,y);gg.lineTo(133.5,y+2);gg.stroke();
-      panSim(gg,PAN.regola[i],148,y,2.7,'#3a2810','#241608')}
+      gg.beginPath();gg.arc(101,y,2.3,0,Math.PI*2);gg.fillStyle=PAN.col[i];gg.fill();gg.strokeStyle='#2a1c0c';gg.lineWidth=.6;gg.stroke();
+      gg.strokeStyle='#3a2810';gg.lineWidth=.9;gg.lineCap='round';gg.beginPath();gg.moveTo(108,y);gg.lineTo(127,y);gg.moveTo(123.5,y-2);gg.lineTo(127,y);gg.lineTo(123.5,y+2);gg.stroke();
+      panSim(gg,P.regola[i],135,y,2.7,'#3a2810','#241608');
+      if(P.ord){gg.fillStyle='#3a2810';gg.font='bold 6.5px monospace';gg.textAlign='center';gg.textBaseline='middle';gg.fillText(String(P.ord[i]+1),152,y+.4)}}
     // simboli accanto alle prese di destra
-    for(let j=0;j<4;j++)panSim(gg,PAN.presa[j],203,PAN.ys[j],3.6,PAN.stato==='sbloccato'?'#7be07b':'#e9e0bd','#14100a');
+    for(let j=0;j<4;j++)panSim(gg,P.presa[j],203,PAN.ys[j],3.6,ok?'#7be07b':'#e9e0bd','#14100a');
+    // prova 3: buio, si vede solo dove punta la torcia (il dito)
+    if(P.buio&&!ok){const l=PAN.luce,gr=gg.createRadialGradient(l.x,l.y,12,l.x,l.y,43);gr.addColorStop(0,'rgba(4,5,9,0)');gr.addColorStop(1,'rgba(4,5,9,.975)');gg.fillStyle=gr;gg.fillRect(0,0,W,H)}
     // anelli colorati delle prese di sinistra (da dove partono i cavi)
     for(let i=0;i<4;i++){gg.beginPath();gg.arc(PAN.lx,PAN.ys[i],9.6,0,Math.PI*2);gg.strokeStyle=PAN.col[i];gg.lineWidth=1.7;gg.globalAlpha=.9;gg.stroke();gg.globalAlpha=1}
     // presa di destra evidenziata quando una spina e' vicina
     if(PAN.drag>=0){const c=PAN.cav[PAN.drag],j=panPresa(c.x,c.y);if(j>=0){gg.beginPath();gg.arc(PAN.rx,PAN.ys[j],10.6,0,Math.PI*2);gg.strokeStyle='rgba(255,255,255,'+(.5+.3*Math.sin(s.t*10))+')';gg.lineWidth=1.2;gg.stroke()}}
     // cavi: prima quelli fermi, poi quello trascinato
     for(const i of [0,1,2,3].sort((a,b)=>(a===PAN.drag)-(b===PAN.drag))){const c=PAN.cav[i];panCavo(gg,PAN.lx,PAN.ys[i],c.x,c.y,PAN.col[i])}
+    // spie delle prove superate (sulla porta)
+    for(let k=0;k<3;k++){gg.beginPath();gg.arc(12+k*8,110,2.2,0,Math.PI*2);gg.fillStyle=(k<PAN.r||ok)?'#5cff6a':'#1a2230';gg.fill();gg.strokeStyle='#0a0c12';gg.lineWidth=.7;gg.stroke()}
     gg.restore();
     // scintille e lampi
     for(const p of PAN.sp){gg.globalAlpha=Math.max(0,1-p.t*2.2);gg.fillStyle=p.c;gg.fillRect(p.x,p.y,1.2,1.2)}gg.globalAlpha=1;
@@ -619,15 +634,17 @@ registraScena({
     PAN.fl=Math.max(0,PAN.fl-dt*1.4);for(const p of PAN.sp){p.t+=dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=60*dt}PAN.sp=PAN.sp.filter(p=>p.t<.5);
     PAN.cav.forEach((c,i)=>{if(i===PAN.drag)return;const tx=c.on>=0?PAN.rx:PAN.lx,ty=c.on>=0?PAN.ys[c.on]:PAN.ys[i],k=Math.min(1,dt*(c.on>=0?30:11));c.x+=(tx-c.x)*k;c.y+=(ty-c.y)*k});   // le spine rilasciate tornano a casa o si infilano nella presa
     if(PAN.stato==='verifica'){PAN.tS+=dt;if(PAN.tS>.45){
-      if(PAN.esito){PAN.stato='sbloccato';PAN.fl=1;A.sfx.take();A.setHint('CONTINUA…',true)}
-      else{PAN.stato='gioca';PAN.fl=1;A.sfx.no();for(let j=0;j<4;j++)for(let n=0;n<10;n++)PAN.sp.push({x:PAN.rx,y:PAN.ys[j],vx:(Math.random()-.4)*60,vy:-Math.random()*40,t:0,c:Math.random()<.5?'#ffe27a':'#ffffff'});
-        for(const c of PAN.cav)c.on=-1}}}},
-  giu(s,x,y){if(PAN.stato!=='gioca')return;let b=-1,bd=10;PAN.cav.forEach((c,i)=>{const d=Math.hypot(x-c.x,y-c.y);if(d<bd){bd=d;b=i}});if(b<0)return;
+      if(PAN.esito){PAN.fl=1;A.sfx.take();if(PAN.r<PAN.prove.length-1){PAN.stato='avanza';PAN.tS=0}else{PAN.stato='sbloccato';A.setHint('CONTINUA…',true)}}
+      else{PAN.stato='gioca';PAN.fl=1;PAN.next=0;A.sfx.no();for(let j=0;j<4;j++)for(let n=0;n<10;n++)PAN.sp.push({x:PAN.rx,y:PAN.ys[j],vx:(Math.random()-.4)*60,vy:-Math.random()*40,t:0,c:Math.random()<.5?'#ffe27a':'#ffffff'});
+        for(const c of PAN.cav)c.on=-1}}}
+    else if(PAN.stato==='avanza'){PAN.tS+=dt;if(PAN.tS>1.5){PAN.r++;panReset();PAN.fl=.6;PAN.esito=true;A.sfx.thud()}}},   // il pannello "si riavvia" con una nuova combinazione
+  giu(s,x,y){if(panP().buio)PAN.luce={x,y};if(PAN.stato!=='gioca')return;let b=-1,bd=10;PAN.cav.forEach((c,i)=>{const d=Math.hypot(x-c.x,y-c.y);if(d<bd){bd=d;b=i}});if(b<0)return;
+    if(PAN.cav[b].on>=0&&panP().ord){for(const c of PAN.cav)c.on=-1;PAN.next=0;A.sfx.no();return}   // con l'ordine obbligato, staccare un cavo gia' collegato fa ripartire la sequenza
     PAN.drag=b;PAN.cav[b].on=-1;PAN.cav[b].x=x;PAN.cav[b].y=y;A.sfx.plic()},
-  muovi(s,x,y){if(PAN.drag<0)return;const c=PAN.cav[PAN.drag];c.x=x;c.y=y},
+  muovi(s,x,y){if(panP().buio)PAN.luce={x,y};if(PAN.drag<0)return;const c=PAN.cav[PAN.drag];c.x=x;c.y=y},
   su(s,x,y){if(PAN.drag<0)return;const i=PAN.drag;PAN.drag=-1;const c=PAN.cav[i],j=panPresa(c.x,c.y);
-    if(j>=0&&!PAN.cav.some(q=>q.on===j)){c.on=j;A.sfx.thud();panControlla()}else A.sfx.plic()},
-  entra(s){panReset();A.say('');document.getElementById('bHint').style.display='none';fadeTo(0,.9);s.occupato=false}
+    if(j>=0&&!PAN.cav.some(q=>q.on===j)){A.sfx.thud();panInfila(i,j)}else A.sfx.plic()},
+  entra(s){PAN.r=0;const m=location.search.match(/[?&]prova([23])/);if(m)PAN.r=+m[1]-1;PAN.luce={x:120,y:60};panReset();A.say('');document.getElementById('bHint').style.display='none';fadeTo(0,.9);s.occupato=false}
 });
 
 /* la visuale del Ponte del Diavolo senza simbolo: a sinistra del furgone */
