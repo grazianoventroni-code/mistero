@@ -1,50 +1,50 @@
 {
  "mj_uh_r1.mp3": {
-  "durata": 0.32,
-  "kb": 2.9
+  "durata": 0.34,
+  "kb": 3.1
  },
  "mj_uh_r2.mp3": {
-  "durata": 0.26,
-  "kb": 2.2
+  "durata": 0.28,
+  "kb": 2.4
  },
  "mj_uh_r3.mp3": {
-  "durata": 0.42,
-  "kb": 3.7
+  "durata": 0.4,
+  "kb": 3.5
  },
  "mj_ah_r1.mp3": {
-  "durata": 0.32,
-  "kb": 2.9
+  "durata": 0.34,
+  "kb": 3.1
  },
  "mj_ah_r2.mp3": {
-  "durata": 0.26,
-  "kb": 2.2
+  "durata": 0.28,
+  "kb": 2.4
  },
  "mj_ah_r3.mp3": {
-  "durata": 0.42,
-  "kb": 3.7
+  "durata": 0.4,
+  "kb": 3.5
  },
  "mj_hi_r1.mp3": {
-  "durata": 0.32,
-  "kb": 2.9
+  "durata": 0.34,
+  "kb": 3.1
  },
  "mj_hi_r2.mp3": {
-  "durata": 0.26,
-  "kb": 2.2
+  "durata": 0.28,
+  "kb": 2.4
  },
  "mj_hi_r3.mp3": {
-  "durata": 0.42,
-  "kb": 3.7
+  "durata": 0.4,
+  "kb": 3.5
  },
  "mj_eh_r1.mp3": {
-  "durata": 0.32,
-  "kb": 2.9
+  "durata": 0.34,
+  "kb": 3.1
  },
  "mj_eh_r2.mp3": {
-  "durata": 0.26,
-  "kb": 2.2
+  "durata": 0.28,
+  "kb": 2.4
  },
  "mj_eh_r3.mp3": {
-  "durata": 0.42,
-  "kb": 3.7
+  "durata": 0.4,
+  "kb": 3.5
  }
 }
