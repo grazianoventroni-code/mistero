@@ -654,7 +654,15 @@ registraScena({
 /* ---------------- (25 nov) TRIBUNALE: Nick arriva dalla strada, sale sul marciapiede e incontra Michael Jackson che balla ----------------
    Sfondo tribunale.png (orizzonte ~81: px per metro = (y-81)/1,6). MJ e' disegnato a mano con le pose di ballo (mj_danza_r1: moonwalk, cappello, giro, inclinazione, saluto, calcio),
    specchiate quando guardano a destra perche' Nick arriva da sinistra. Nessun dialogo: decide l'utente. */
-const TRI={mj:mkImg('img/emb/mj_danza_r1.png'),t:0,x:156,y:110,ord:[0,1,2,3,4,5,4,1,5,3,2,0],flip:[1,0,1,1,0,1]};
+const TRI={mj:mkImg('img/emb/mj_danza_r1.png'),t:0,x:156,y:110,ord:[0,1,2,3,4,5,4,1,5,3,2,0],flip:[1,0,1,1,0,1],fase:0,k:-1,furia:0,voci:true,
+  MJV:{uh:'mj_uh_v1',ah:'mj_ah_v1',eh:'mj_eh_v3',hi:'mj_hi_v1'},verso:['uh','hi','ah','eh','hi','uh']};   // pose -> versetto (voce vera dall'a cappella)
+/* loop musicale con Web Audio (la musica di Michael Jackson che balla: billie_jean_loop.mp3, 13 battute = 26,56 s) */
+const LOOPM={src:null,g:null};
+async function loopAvvia(url,vol){loopFerma();const U=A.AU;if(!U||!U.ctx)return false;let b=null;try{b=await A.motore.caricaClip(url)}catch(e){}if(!b)return false;if(U.ctx.state==='suspended')U.ctx.resume();
+  const o=U.ctx.createBufferSource(),g=U.ctx.createGain();o.buffer=b;o.loop=true;g.gain.value=0;o.connect(g);g.connect(U.master);o.start();g.gain.linearRampToValueAtTime(vol,U.ctx.currentTime+1.2);LOOPM.src=o;LOOPM.g=g;return true}
+function loopFerma(){const U=A.AU;if(LOOPM.src&&U&&U.ctx){try{LOOPM.g.gain.cancelScheduledValues(U.ctx.currentTime);LOOPM.g.gain.setValueAtTime(LOOPM.g.gain.value,U.ctx.currentTime);LOOPM.g.gain.linearRampToValueAtTime(0,U.ctx.currentTime+1.0);LOOPM.src.stop(U.ctx.currentTime+1.05)}catch(e){}}LOOPM.src=null;LOOPM.g=null}
+function triVoce(v,n){try{A.motore.suonaClip('audio/versi/'+TRI.MJV[v]+(n>1?'_x'+n:'')+'.mp3',.9)}catch(e){}}
+async function triRaffica(v,n,furia){TRI.furia=furia;triVoce(v,n);await pausa(furia)}   // MJ interrompe: versetto ripetuto e ballo piu' scatenato
 registraScena({
   id:'c2-tribunale',inventario:true,sfondo:'img/scene/tribunale.png',
   giocatore:'protagonista-esterno',nomeGiocatore:'NICK',
@@ -664,13 +672,24 @@ registraScena({
   rif:[112,1.04],audioPassi:false,
   ambiente:{stanza:0,vento:.25,pioggia:0,fuoco:0},
   suggerimento:'',senzaEtichette:true,
-  aggiorna(s,dt){const m=s.attori['michael-jackson'];if(m)m.visibile=false;TRI.t+=dt},
-  sopra(gg,s){const im=TRI.mj;if(!(im.complete&&im.naturalWidth))return;const t=TRI.t,n=TRI.ord.length,k=Math.floor(t/.55)%n,pz=TRI.ord[k],kk=1.75*(TRI.y-81)/1.6/25;
+  aggiorna(s,dt){const m=s.attori['michael-jackson'];if(m)m.visibile=false;TRI.t+=dt;
+    if(TRI.mu===0&&A.AU&&A.AU.ctx){TRI.mu=1;loopAvvia('audio/musica/billie_jean_loop.mp3',.5).then(ok=>{TRI.mu=ok?2:0})}   // la musica parte appena l'audio e' sbloccato dal primo tocco
+    if(TRI.furia>0)TRI.furia=Math.max(0,TRI.furia-dt);
+    TRI.fase+=dt/(TRI.furia>0?.3:.55);const k=Math.floor(TRI.fase);
+    if(k!==TRI.k){TRI.k=k;if(TRI.voci&&TRI.furia<=0&&Math.random()<.55){const r=Math.random();triVoce(TRI.verso[TRI.ord[k%TRI.ord.length]],r<.7?1:r<.9?2:3)}}},   // un versetto a tempo con alcune pose del ballo
+  sopra(gg,s){const im=TRI.mj;if(!(im.complete&&im.naturalWidth))return;const t=TRI.t,n=TRI.ord.length,k=Math.max(0,TRI.k)%n,pz=TRI.ord[k],kk=1.75*(TRI.y-81)/1.6/25;
     let x=TRI.x+(pz===0?Math.sin(t*3)*2.5:0),w=200/4*kk,h=110/4*kk,ox=100/4*kk,oy=108/4*kk;
     gg.save();gg.imageSmoothingEnabled=false;gg.globalAlpha=.3;gg.fillStyle='#000';gg.beginPath();gg.ellipse(x,TRI.y+.5,7*kk,1.6,0,0,Math.PI*2);gg.fill();gg.globalAlpha=1;
     gg.translate(x,TRI.y-oy);if(TRI.flip[pz]){gg.scale(-1,1)}gg.drawImage(im,pz*200,0,200,110,-ox,0,w,h);gg.restore()},
-  entra(s){TRI.t=0;const p=s.giocatore;fadeTo(0,.9);s.occupato=true;document.getElementById('bHint').style.display='none';if(p){p.x=18;p.y=116;p.dir='E';p.state='idle'}
-    s.sequenza(async()=>{await pausa(1.4);await p.vaiA(112,112,false,'E');p.dir='E';await pausa(1.0);A.setHint('CONTINUA…',true)})}
+  entra(s){TRI.t=0;TRI.fase=0;TRI.k=-1;TRI.furia=0;TRI.voci=true;const p=s.giocatore;fadeTo(0,.9);s.occupato=true;document.getElementById('bHint').style.display='none';if(p){p.x=18;p.y=116;p.dir='E';p.state='idle'}
+    for(const v of ['uh','ah','eh','hi'])for(const n of ['','_x2','_x3'])try{A.motore.caricaClip('audio/versi/'+TRI.MJV[v]+n+'.mp3')}catch(e){}
+    TRI.mu=0;
+    s.sequenza(async()=>{await pausa(1.4);await p.vaiA(112,112,false,'E');p.dir='E';await pausa(1.0);const F={frontale:false};
+      await s.dici(p,'Scusi, mi sa dire…',F);await triRaffica('uh',3,2.2);                  // Nick prova a chiedere e MJ lo interrompe solo con i suoi versetti
+      await pausa(.5);await s.dici(p,'Dove si trova…',F);await triRaffica('hi',2,2.0);
+      await pausa(.5);await s.dici(p,'Da che parte…',F);await triRaffica('ah',3,2.4);
+      await pausa(.4);gagCappello(s,true);try{window.FIATO&&FIATO.suona('protagonista-esterno','dubbio',1,.9)}catch(e){}   // Nick e' interdetto
+      await pausa(3.2);A.setHint('CONTINUA…',true)})}
 });
 
 /* ---------------- (20 nov) PANNELLO: coperchio al buio (torcia dell'attrezzo) + enigma dei fili al buio ----------------
