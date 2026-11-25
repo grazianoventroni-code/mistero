@@ -1,7 +1,7 @@
 // Service worker: il gioco funziona offline.
 // - i file del gioco (immagini, audio, icone) sono salvati alla prima apertura (sempre scaricati freschi: cache reload) e serviti dalla memoria del telefono;
 // - la pagina, gli script (.js), gli indici (.json) e questo file si chiedono prima alla rete (cosi' gli aggiornamenti arrivano subito) e, senza rete, si usa la copia salvata.
-const VERSION = "20 nov 06:10";
+const VERSION = "25 nov 12:00";
 const CACHE = "mistero-" + VERSION;
 const FILES = [
   "./",
@@ -581,6 +581,8 @@ const FILES = [
   "img/emb/auto164_fronte.png",
   "img/emb/auto164_retro.png",
   "img/emb/auto164_retro_hd.png",
+  "img/emb/auto_aiuola_porta_r1.png",
+  "img/emb/auto_aiuola_r1.png",
   "img/emb/bb_alto_mangia_r1.png",
   "img/emb/bb_basso_mangia_r1.png",
   "img/emb/bg_bagno.png",
@@ -637,6 +639,7 @@ const FILES = [
   "img/emb/mela_grande_r2.png",
   "img/emb/mela_icona_r2.png",
   "img/emb/mela_r2.png",
+  "img/emb/nick_aiuola_r1.png",
   "img/emb/nick_attrezzo_r1.png",
   "img/emb/nick_dan_bavero_r2.png",
   "img/emb/nick_fusibile_r1.png",

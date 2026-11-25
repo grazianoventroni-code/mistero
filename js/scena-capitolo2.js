@@ -476,7 +476,9 @@ registraScena({
    poi la strada E35 con FIRENZE sull'asfalto, la strada con il portale verde, il casello (stile retro), il piazzale e il casello al tramonto dove si ferma.
    Rombo del motore (Web Audio, segue velocita' e curve) e fischio delle gomme negli intervalli indicati. Poi scena c2-casello: Igor lavora nella cabina. */
 const VIAGGIO=[{"t0":0.0,"v":[8.0,12.7,17.5,25.8,35.3,43.6,50.7,57.8,62.3,65.7,69.1,72.5],"c":[0.09,3.0,3.0,3.0,3.0,0.22,0.0,0.0,0.0,0.0,0.0,0.0],"sq":[[0.15000000000000002,1.2000000000000002,0.9]]},{"t0":3.0,"v":[40.0,40.9,41.9,42.8,43.8,44.7,45.7,46.6,47.6,48.5,49.5,50.4],"c":[0.0,0.0,0.0,0.78,1.06,0.28,0.99,0.56,0.0,0.0,0.0,0.0],"sq":[[0.75,1.7249999999999999,0.55]]},{"t0":6.0,"v":[40.0,40.9,41.9,42.8,43.8,44.7,45.7,46.6,47.6,48.5,49.5,50.4],"c":[0.0,0.0,0.19,1.87,0.07,1.82,1.85,0.43,1.78,0.38,0.0,0.0],"sq":[[0.675,1.4249999999999998,0.5],[1.6500000000000001,2.4749999999999996,0.55]]},{"t0":9.0,"v":[26.7,26.0,25.4,24.8,24.1,22.8,21.3,19.8,18.3,16.7,15.2,13.7],"c":[0.28,2.3,2.03,0.85,2.16,1.44,0.16,0.0,0.0,0.0,0.0,0.0],"sq":[[0.22499999999999998,1.275,0.6],[2.0250000000000004,2.8499999999999996,0.6]]},{"t0":12.0,"v":[20.0,19.5,19.1,18.6,18.1,17.6,17.2,16.7,16.2,15.7,15.3,14.8],"c":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"sq":[[1.7999999999999998,2.7,0.45]]},{"t0":15.0,"v":[9.3,9.2,9.0,8.9,8.7,8.0,6.6,5.2,3.7,1.7,0.0,0.0],"c":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"sq":[[1.4249999999999998,2.55,0.8]]}]; // VIAGGIO-DATI (generato da _strumenti/aggiorna_viaggio.py)
+const VIAGGIO2=[{"t0":0.0,"v":[13.0,13.1,13.2,13.4,13.5,13.6,13.7,13.8,13.9,14.1,14.2,14.3,14.4,14.5,14.7,14.8,14.9],"c":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"sq":[]},{"t0":4.5,"v":[11.0,10.8,10.6,10.4,10.1,9.9,9.5,8.7,7.8,7.0,6.2,5.3,4.6,4.0,3.4,2.8,2.2,1.6,1.2,0.7,0.3],"c":[0.0,0.07,1.45,3.0,3.0,3.0,1.16,0.31,1.84,3.0,3.0,3.0,2.3,0.91,0.32,0.04,0.0,0.0,0.0,0.0,0.0],"sq":[[3.0,4.3,0.5]]}]; // VIAGGIO2-DATI (generato da _strumenti/aggiorna_viaggio2.py)
 const VG={fin:false,partito:false,t0:0,sq:0};
+let VGS={src:'video/viaggio.mp4',dati:VIAGGIO,next:'c2-casello'};   // quale filmato, con quali dati, e quale scena segue
 function gommeSuono(dur,vol){const U=A.AU;if(!U||!U.ctx||U.muted||U.ctx.state!=='running')return;const c=U.ctx,t=c.currentTime+.01,f0=880+Math.random()*160;
   const o=c.createOscillator(),o2=c.createOscillator(),lf=c.createOscillator(),lg=c.createGain(),g=c.createGain(),f=c.createBiquadFilter();
   o.type='sawtooth';o2.type='square';
@@ -488,25 +490,27 @@ function gommeSuono(dur,vol){const U=A.AU;if(!U||!U.ctx||U.muted||U.ctx.state!==
   if(U.buf){const n=c.createBufferSource(),nf=c.createBiquadFilter(),ng=c.createGain();n.buffer=U.buf;n.loop=true;nf.type='bandpass';nf.frequency.value=2600;nf.Q.value=.9;
     ng.gain.setValueAtTime(.0001,t);ng.gain.linearRampToValueAtTime(.05*vol,t+.12);ng.gain.setValueAtTime(.05*vol,t+Math.max(.2,dur-.3));ng.gain.exponentialRampToValueAtTime(.0001,t+dur);n.connect(nf);nf.connect(ng);ng.connect(U.master);n.start(t);n.stop(t+dur+.05)}
   for(const n of [o,o2,lf]){n.start(t);n.stop(t+dur+.05)}}
-function viaggioAvvia(s){const v=filmEl();VG.fin=false;VG.off=false;VG.partito=false;VG.sq=0;VG.t0=performance.now();
-  v.onended=()=>viaggioFine(s);v.onerror=()=>viaggioFine(s);if(v.getAttribute('src')!=='video/viaggio.mp4'){v.src='video/viaggio.mp4';v.load()}
+function viaggioAvvia(s,cfg){VGS=cfg||{src:'video/viaggio.mp4',dati:VIAGGIO,next:'c2-casello'};const v=filmEl();VG.fin=false;VG.off=false;VG.partito=false;VG.sq=0;VG.t0=performance.now();
+  v.onended=()=>viaggioFine(s);v.onerror=()=>viaggioFine(s);if(v.getAttribute('src')!==VGS.src){v.src=VGS.src;v.load()}
   filmPosiziona(v);v.style.display='block';try{v.currentTime=0}catch(e){}const p=v.play();if(p&&p.catch)p.catch(()=>viaggioFine(s))}
-function viaggioFine(s){if(VG.fin)return;VG.fin=true;A.setEng&&A.setEng(0,false);A.musicStop(3);if(FILM.el){try{FILM.el.pause()}catch(e){}FILM.el.style.display='none'}s.vaiScena('c2-casello')}
-registraScena({
-  id:'c2-viaggio',canSkip:()=>!VG.fin,skip:s=>{viaggioFine(s)},area:[[0,0],[2,0],[2,2],[0,2]],suggerimento:'',
+function viaggioFine(s){if(VG.fin)return;VG.fin=true;A.setEng&&A.setEng(0,false);A.musicStop(3);if(FILM.el){try{FILM.el.pause()}catch(e){}FILM.el.style.display='none'}s.vaiScena(VGS.next)}
+const viaggioScena=(id,cfg,musica)=>({
+  id,canSkip:()=>!VG.fin,skip:s=>{viaggioFine(s)},area:[[0,0],[2,0],[2,2],[0,2]],suggerimento:'',
   ambiente:{stanza:0,vento:.3,pioggia:0,fuoco:0},
   disegnaSfondo(gg){R(0,0,W,H,'#000')},
-  entra(s){A.say('');s.occupato=true;document.getElementById('bHint').style.display='none';viaggioAvvia(s);A.setEng&&A.setEng(.8,true);A.musicStart('viaggio',3)},
+  entra(s){A.say('');s.occupato=true;document.getElementById('bHint').style.display='none';viaggioAvvia(s,cfg());A.setEng&&A.setEng(.8,true);if(musica)A.musicStart('viaggio',3)},
   aggiorna(s,dt){const v=FILM.el;if(!v||VG.fin)return;filmPosiziona(v);
     if(v.currentTime>.05)VG.partito=true;
     if(!VG.partito&&performance.now()-VG.t0>6000)return viaggioFine(s);
     if(v.ended||(v.duration>0&&v.currentTime>=v.duration-.04))return viaggioFine(s);
-    const t=v.currentTime;let sg=VIAGGIO[0];for(const q of VIAGGIO)if(t>=q.t0)sg=q;if(!sg)return;
+    const D=VGS.dati,t=v.currentTime;let sg=D[0];for(const q of D)if(t>=q.t0)sg=q;if(!sg)return;
     const n=Math.min(sg.v.length-1,Math.max(0,Math.floor((t-sg.t0)*30/8))),vel=sg.v[n]||0,c=sg.c[n]||0;
-    if(sg===VIAGGIO[VIAGGIO.length-1]&&vel<.4&&n>2){if(!VG.off){VG.off=true;A.setEng&&A.setEng(0,false);A.musicStop(1.5)}}   // l'auto e' ferma al casello: niente piu' rumori
+    if(sg===D[D.length-1]&&vel<.4&&n>2){if(!VG.off){VG.off=true;A.setEng&&A.setEng(0,false);A.musicStop(1.5)}}   // l'auto e' ferma: niente piu' rumori
     else A.engHz&&A.engHz(31+.9*vel+7*Math.min(1,c)+1.4*Math.sin(s.t*2.2));
-    for(const q of VIAGGIO)for(const x of q.sq){const t0=q.t0+x[0];if(t>=t0&&t<t0+.6&&!x.f){x.f=1;gommeSuono(x[1]-x[0],x[2])}}}
+    for(const q of D)for(const x of q.sq){const t0=q.t0+x[0];if(t>=t0&&t<t0+.6&&!x.f){x.f=1;gommeSuono(x[1]-x[0],x[2])}}}
 });
+registraScena(viaggioScena('c2-viaggio',()=>{for(const q of VIAGGIO)for(const x of q.sq)x.f=0;return {src:'video/viaggio.mp4',dati:VIAGGIO,next:'c2-casello'}},true));
+registraScena(viaggioScena('c2-viaggio2',()=>{for(const q of VIAGGIO2)for(const x of q.sq)x.f=0;return {src:'video/viaggio2.mp4',dati:VIAGGIO2,next:'c2-aiuola'}},false));   // ingresso a Firenze: cavalcavia con FIRENZE, poi il viale e l'aiuola
 /* casello al tramonto: la scena finale del viaggio (sfondo = ultimo fotogramma del filmato, con l'auto ferma alla cabina); Igor lavora dietro il vetro della cabina */
 registraScena({
   id:'c2-casello',sfondo:'img/scene/casello-tramonto-arrivo.png',
@@ -599,13 +603,47 @@ registraScena({
     if(t>1.0&&t<4.6&&Math.random()<dt*70){const sp=t<2.1?1:.5+d;PT.fumo.push({x:P.x+(Math.random()<.5?-1:1)*w*.3,y:P.yb-.3,vx:(Math.random()-.5)*14*r,vy:-(2+Math.random()*5)*r,r:(.8+Math.random()*1.3)*r*sp,t:0})}
     for(const p of PT.fumo){p.t+=dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.r+=dt*4.5*r}PT.fumo=PT.fumo.filter(p=>p.t<1.5);
     A.engHz&&A.engHz(31+(t<1?3*t:t<2.1?16+Math.sin(t*40)*2:19+d*34));
-    if(t>4.3&&!PT.fade){PT.fade=true;fadeTo(1,1.1)}
-    if(t>6.2&&!PT.fine){PT.fine=true;A.setEng&&A.setEng(0,false);A.setHint('CONTINUA…',true)}},
+    if(t>4.3&&!PT.fade){PT.fade=true;PT.fine=true;s.vaiScena('c2-viaggio2')}   // dissolvenza e partenza del viaggio verso Firenze
+    if(false){}},
   sopra(gg,s){if(!(IMG_AUTO_RETRO.complete&&IMG_AUTO_RETRO.naturalWidth))return;const t=PT.t,d=t<2.1?0:Math.min(1,Math.pow((t-2.1)/2.7,2.1)),P=ptPos(d),r=(P.yb-49.5)/43.5,w=35*r,h=w*IMG_AUTO_RETRO.naturalHeight/IMG_AUTO_RETRO.naturalWidth;
     const tr=(t>1.0&&t<2.1)?Math.sin(t*90)*.35*r:0;   // l'auto vibra mentre le ruote slittano
     gg.save();gg.globalAlpha=.32;gg.fillStyle='#000';gg.beginPath();gg.ellipse(P.x,P.yb+.3,w*.5,1.6*r+.4,0,0,Math.PI*2);gg.fill();gg.restore();   // ombra
     gg.save();gg.imageSmoothingEnabled=true;gg.imageSmoothingQuality='high';gg.drawImage(IMG_AUTO_RETRO,P.x-w/2+tr,P.yb-h,w,h);gg.restore();
     for(const p of PT.fumo){gg.globalAlpha=Math.max(0,.4*(1-p.t/1.5));gg.fillStyle='#d4d4da';gg.beginPath();gg.arc(p.x,p.y,p.r,0,Math.PI*2);gg.fill()}gg.globalAlpha=1}
+});
+
+/* ---------------- (25 nov) AIUOLA DEL VIALE A FIRENZE: l'auto e' ferma sul bordo verde (ultimo fotogramma di viaggio2.mp4), Nick apre lo sportello e scende,
+   si volta verso di noi, prende dalla tasca interna il biglietto con l'indirizzo e lo guarda: primo piano del biglietto, macchiato di ketchup. Nessun dialogo (decide l'utente).
+   Sprite: auto ferma (auto_aiuola_r1, dal film) + sportello socchiuso/aperto (auto_aiuola_porta_r1, ChatGPT), Nick che scende / mano alla tasca / biglietto (nick_aiuola_r1) + fotogrammi dell'atlante. */
+const AIU={car:mkImg('img/emb/auto_aiuola_r1.png'),porta:mkImg('img/emb/auto_aiuola_porta_r1.png'),nick:mkImg('img/emb/nick_aiuola_r1.png'),
+  fa:{x:134.58,y:91.46,w:43.96,h:19.79},NX:140,NY:116,t:0,mot:false,fine:false,porteSuoni:[false,false]};
+const aiuSeg=(t,a,b)=>Math.max(0,Math.min(1,(t-a)/(b-a)));
+function aiuNickAtl(gg,nome,alpha){if(alpha<=0)return;const c=A.CHARS['protagonista-esterno'];if(!c||!c.ready||!c.img.naturalWidth)return;const fr=c.fr[nome];if(!fr)return;const sc=21/128;
+  gg.save();gg.globalAlpha=alpha;gg.imageSmoothingEnabled=false;gg.drawImage(c.img,fr.x,fr.y,c.w,c.h,AIU.NX-c.ax*sc,AIU.NY-c.h*sc,c.w*sc,c.h*sc);gg.restore()}
+function aiuNickCella(gg,n,alpha){if(alpha<=0||!AIU.nick.complete)return;gg.save();gg.globalAlpha=alpha;gg.drawImage(AIU.nick,n*100,0,100,100,AIU.NX-12.5,AIU.NY-24.5,25,25);gg.restore()}
+registraScena({
+  id:'c2-aiuola',sfondo:'img/scene/ingresso-firenze-viale.png',
+  attori:[{nome:'protagonista-esterno',etichetta:'NICK',x:-50,y:-50,dir:'S',visibile:false}],   // solo per caricare l'atlante di Nick: e' disegnato a mano in sopra()
+  area:[[0,0],[2,0],[2,2],[0,2]],suggerimento:'',senzaEtichette:true,
+  ambiente:{stanza:0,vento:.2,pioggia:0,fuoco:0},
+  entra(s){AIU.t=(location.search.match(/[?&]t=([0-9.]+)/)||[0,0])[1]*1;AIU.fine=false;AIU.porteSuoni=[false,false];A.say('');s.occupato=true;document.getElementById('bHint').style.display='none';fadeTo(0,AIU.t>0?50:.9);A.setEng&&A.setEng(.55,true);AIU.mot=true},
+  aggiorna(s,dt){const a=s.attori['protagonista-esterno'];if(a)a.visibile=false;AIU.t+=dt;const t=AIU.t;
+    if(AIU.mot){if(t<1.6)A.engHz&&A.engHz(31+1.2*Math.sin(t*9));else{AIU.mot=false;A.setEng&&A.setEng(0,false)}}   // motore al minimo, poi spento
+    if(t>2.4&&!AIU.porteSuoni[0]){AIU.porteSuoni[0]=true;A.sfx.plic()}
+    if(t>3.0&&!AIU.porteSuoni[1]){AIU.porteSuoni[1]=true;A.sfx.thud()}
+    if(t>10.4&&!AIU.fine){AIU.fine=true;try{window.risolviCasello&&window.risolviCasello();window.leggiBiglietto&&window.leggiBiglietto();openCU('biglietto')}catch(e){}A.setHint('CONTINUA…',true)}},   // primo piano del biglietto
+  sopra(gg,s){const t=AIU.t,f=AIU.fa;if(!(AIU.car.complete&&AIU.car.naturalWidth))return;
+    const aperto=aiuSeg(t,3.0,3.3),socchiuso=aiuSeg(t,2.4,2.7),dx=f.x+f.w-178/4,dy=f.y+f.h-80/4;
+    gg.save();gg.imageSmoothingEnabled=false;
+    if(aperto<1){gg.drawImage(AIU.car,f.x,f.y,f.w,f.h);if(socchiuso>0){gg.globalAlpha=socchiuso;gg.drawImage(AIU.porta,0,0,178,80,dx,dy,178/4,80/4);gg.globalAlpha=1}}
+    if(aperto>0){gg.globalAlpha=aperto;gg.drawImage(AIU.porta,178,0,178,80,dx,dy,178/4,80/4);gg.globalAlpha=1}
+    gg.restore();
+    // Nick: scende (di spalle), si alza, si volta, mano alla tasca interna, biglietto in mano
+    aiuNickCella(gg,0,aiuSeg(t,3.6,3.85)*(1-aiuSeg(t,5.2,5.5)));
+    aiuNickAtl(gg,'back',aiuSeg(t,5.2,5.5)*(1-aiuSeg(t,6.0,6.3)));
+    aiuNickAtl(gg,'front',aiuSeg(t,6.0,6.3)*(1-aiuSeg(t,7.0,7.3)));
+    aiuNickCella(gg,1,aiuSeg(t,7.0,7.3)*(1-aiuSeg(t,8.4,8.7)));
+    aiuNickCella(gg,2,aiuSeg(t,8.4,8.7))}
 });
 
 /* ---------------- (20 nov) PANNELLO: coperchio al buio (torcia dell'attrezzo) + enigma dei fili al buio ----------------
