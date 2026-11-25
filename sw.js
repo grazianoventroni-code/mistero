@@ -1,7 +1,7 @@
 // Service worker: il gioco funziona offline.
 // - i file del gioco (immagini, audio, icone) sono salvati alla prima apertura (sempre scaricati freschi: cache reload) e serviti dalla memoria del telefono;
 // - la pagina, gli script (.js), gli indici (.json) e questo file si chiedono prima alla rete (cosi' gli aggiornamenti arrivano subito) e, senza rete, si usa la copia salvata.
-const VERSION = "25 nov 13:00";
+const VERSION = "25 nov 14:00";
 const CACHE = "mistero-" + VERSION;
 const FILES = [
   "./",
@@ -647,6 +647,7 @@ const FILES = [
   "img/emb/nick_john_bavero_r2.png",
   "img/emb/nick_offre_r1.png",
   "img/emb/nick_primo_piano_r1.png",
+  "img/emb/nick_rabbia_r1.png",
   "img/emb/nick_scale_r1.png",
   "img/emb/nick_scale_r2.png",
   "img/emb/nick_spavento_r1.png",
@@ -741,6 +742,7 @@ const FILES = [
   "img/scene/treno-interno.png",
   "img/scene/treno-ponte.png",
   "img/scene/treno-stazione-partenza.png",
+  "img/scene/tribunale.png",
   "img/sprite/book_locked.png",
   "img/sprite/book_locked_small.png",
   "img/sprite/book_open.png",

@@ -616,22 +616,25 @@ registraScena({
    si volta verso di noi, prende dalla tasca interna il biglietto con l'indirizzo e lo guarda: primo piano del biglietto, macchiato di ketchup. Nessun dialogo (decide l'utente).
    Sprite: auto ferma (auto_aiuola_r1, dal film) + sportello socchiuso/aperto (auto_aiuola_porta_r1, ChatGPT), Nick che scende / mano alla tasca / biglietto (nick_aiuola_r1) + fotogrammi dell'atlante. */
 const AIU={car:mkImg('img/emb/auto_aiuola_r1.png'),porta:mkImg('img/emb/auto_aiuola_porta_r1.png'),nick:mkImg('img/emb/nick_aiuola_r1.png'),
-  fa:{x:134.58,y:91.46,w:43.96,h:19.79},NX:140,NY:116,t:0,mot:false,fine:false,porteSuoni:[false,false]};
+  fa:{x:134.58,y:91.46,w:43.96,h:19.79},NX:140,NY:116,t:0,mot:false,fine:false,porteSuoni:[false,false],rab:mkImg('img/emb/nick_rabbia_r1.png'),fase:0,t2:0,tCU:0};
 const aiuSeg=(t,a,b)=>Math.max(0,Math.min(1,(t-a)/(b-a)));
 function aiuNickAtl(gg,nome,alpha){if(alpha<=0)return;const c=A.CHARS['protagonista-esterno'];if(!c||!c.ready||!c.img.naturalWidth)return;const fr=c.fr[nome];if(!fr)return;const sc=21/128;
   gg.save();gg.globalAlpha=alpha;gg.imageSmoothingEnabled=false;gg.drawImage(c.img,fr.x,fr.y,c.w,c.h,AIU.NX-c.ax*sc,AIU.NY-c.h*sc,c.w*sc,c.h*sc);gg.restore()}
+function aiuRabbia(gg,n,alpha){if(alpha<=0||!AIU.rab.complete)return;gg.save();gg.globalAlpha=alpha;gg.drawImage(AIU.rab,n*100,0,100,100,AIU.NX-12.5,AIU.NY-24.5,25,25);gg.restore()}
 function aiuNickCella(gg,n,alpha){if(alpha<=0||!AIU.nick.complete)return;gg.save();gg.globalAlpha=alpha;gg.drawImage(AIU.nick,n*100,0,100,100,AIU.NX-12.5,AIU.NY-24.5,25,25);gg.restore()}
 registraScena({
   id:'c2-aiuola',sfondo:'img/scene/ingresso-firenze-viale.png',
   attori:[{nome:'protagonista-esterno',etichetta:'NICK',x:-50,y:-50,dir:'S',visibile:false}],   // solo per caricare l'atlante di Nick: e' disegnato a mano in sopra()
   area:[[0,0],[2,0],[2,2],[0,2]],suggerimento:'',senzaEtichette:true,
   ambiente:{stanza:0,vento:.2,pioggia:0,fuoco:0},
-  entra(s){AIU.t=(location.search.match(/[?&]t=([0-9.]+)/)||[0,0])[1]*1;AIU.fine=false;AIU.porteSuoni=[false,false];A.say('');s.occupato=true;document.getElementById('bHint').style.display='none';fadeTo(0,AIU.t>0?50:.9);A.setEng&&A.setEng(.55,true);AIU.mot=true},
+  entra(s){AIU.t=(location.search.match(/[?&]t=([0-9.]+)/)||[0,0])[1]*1;AIU.fine=false;AIU.fase=0;AIU.t2=0;AIU.porteSuoni=[false,false];A.say('');s.occupato=true;document.getElementById('bHint').style.display='none';fadeTo(0,AIU.t>0?50:.9);A.setEng&&A.setEng(.55,true);AIU.mot=true},
   aggiorna(s,dt){const a=s.attori['protagonista-esterno'];if(a)a.visibile=false;AIU.t+=dt;const t=AIU.t;
     if(AIU.mot){if(t<1.6)A.engHz&&A.engHz(31+1.2*Math.sin(t*9));else{AIU.mot=false;A.setEng&&A.setEng(0,false)}}   // motore al minimo, poi spento
     if(t>2.4&&!AIU.porteSuoni[0]){AIU.porteSuoni[0]=true;A.sfx.plic()}
     if(t>3.0&&!AIU.porteSuoni[1]){AIU.porteSuoni[1]=true;A.sfx.thud()}
-    if(t>10.4&&!AIU.fine){AIU.fine=true;try{window.risolviCasello&&window.risolviCasello();window.leggiBiglietto&&window.leggiBiglietto();window.__dbg.openCU('biglietto')}catch(e){}A.setHint('CONTINUA…',true)}},   // primo piano del biglietto
+    if(t>10.4&&AIU.fase===0){AIU.fase=1;AIU.tCU=0;try{window.risolviCasello&&window.risolviCasello();window.leggiBiglietto&&window.leggiBiglietto();window.__dbg.openCU('biglietto')}catch(e){}}   // primo piano del biglietto
+    else if(AIU.fase===1){AIU.tCU+=dt;const D=window.__dbg;if(AIU.tCU>.8&&(!D||!D.CU||!D.CU.id)){AIU.fase=2;AIU.t2=0;try{window.FIATO&&FIATO.suona('protagonista-esterno','sforzo',1,.8)}catch(e){}}}   // chiuso il primo piano: Nick vede la macchia e si arrabbia
+    else if(AIU.fase===2){AIU.t2+=dt;if(AIU.t2>5.0&&!AIU.fine){AIU.fine=true;s.vaiScena('c2-tribunale')}}},   // si guarda intorno e va al tribunale
   sopra(gg,s){const t=AIU.t,f=AIU.fa;if(!(AIU.car.complete&&AIU.car.naturalWidth))return;
     const aperto=aiuSeg(t,3.0,3.3),socchiuso=aiuSeg(t,2.4,2.7),dx=f.x+f.w-178/4,dy=f.y+f.h-80/4;
     gg.save();gg.imageSmoothingEnabled=false;
@@ -643,7 +646,31 @@ registraScena({
     aiuNickAtl(gg,'back',aiuSeg(t,5.2,5.5)*(1-aiuSeg(t,6.0,6.3)));
     aiuNickAtl(gg,'front',aiuSeg(t,6.0,6.3)*(1-aiuSeg(t,7.0,7.3)));
     aiuNickCella(gg,1,aiuSeg(t,7.0,7.3)*(1-aiuSeg(t,8.4,8.7)));
-    aiuNickCella(gg,2,aiuSeg(t,8.4,8.7))}
+    const r=AIU.fase===2?AIU.t2:-1,rA=r>=0?aiuSeg(r,0,.25):0;
+    aiuNickCella(gg,2,aiuSeg(t,8.4,8.7)*(1-rA));
+    if(r>=0){aiuRabbia(gg,0,rA*(1-aiuSeg(r,1.8,2.05)));aiuRabbia(gg,1,aiuSeg(r,1.8,2.05)*(1-aiuSeg(r,3.0,3.25)));aiuRabbia(gg,2,aiuSeg(r,3.0,3.25)*(1-aiuSeg(r,4.1,4.35)));aiuNickAtl(gg,'front',aiuSeg(r,4.1,4.35))}}
+});
+
+/* ---------------- (25 nov) TRIBUNALE: Nick arriva dalla strada, sale sul marciapiede e incontra Michael Jackson che balla ----------------
+   Sfondo tribunale.png (orizzonte ~81: px per metro = (y-81)/1,6). MJ e' disegnato a mano con le pose di ballo (mj_danza_r1: moonwalk, cappello, giro, inclinazione, saluto, calcio),
+   specchiate quando guardano a destra perche' Nick arriva da sinistra. Nessun dialogo: decide l'utente. */
+const TRI={mj:mkImg('img/emb/mj_danza_r1.png'),t:0,x:156,y:110,ord:[0,1,2,3,4,5,4,1,5,3,2,0],flip:[1,0,1,1,0,1]};
+registraScena({
+  id:'c2-tribunale',inventario:true,sfondo:'img/scene/tribunale.png',
+  giocatore:'protagonista-esterno',nomeGiocatore:'NICK',
+  partenza:{x:18,y:116,dir:'E'},
+  attori:[{nome:'michael-jackson',etichetta:'MICHAEL JACKSON',x:-50,y:-50,dir:'S',visibile:false}],   // solo per caricare l'atlante: MJ e' disegnato a mano in sopra()
+  area:[[2,112],[78,106],[90,100],[238,100],[238,118],[2,118]],ostacoli:[],
+  rif:[112,1.04],audioPassi:false,
+  ambiente:{stanza:0,vento:.25,pioggia:0,fuoco:0},
+  suggerimento:'',senzaEtichette:true,
+  aggiorna(s,dt){const m=s.attori['michael-jackson'];if(m)m.visibile=false;TRI.t+=dt},
+  sopra(gg,s){const im=TRI.mj;if(!(im.complete&&im.naturalWidth))return;const t=TRI.t,n=TRI.ord.length,k=Math.floor(t/.55)%n,pz=TRI.ord[k],kk=1.75*(TRI.y-81)/1.6/25;
+    let x=TRI.x+(pz===0?Math.sin(t*3)*2.5:0),w=200/4*kk,h=110/4*kk,ox=100/4*kk,oy=108/4*kk;
+    gg.save();gg.imageSmoothingEnabled=false;gg.globalAlpha=.3;gg.fillStyle='#000';gg.beginPath();gg.ellipse(x,TRI.y+.5,7*kk,1.6,0,0,Math.PI*2);gg.fill();gg.globalAlpha=1;
+    gg.translate(x,TRI.y-oy);if(TRI.flip[pz]){gg.scale(-1,1)}gg.drawImage(im,pz*200,0,200,110,-ox,0,w,h);gg.restore()},
+  entra(s){TRI.t=0;const p=s.giocatore;fadeTo(0,.9);s.occupato=true;document.getElementById('bHint').style.display='none';if(p){p.x=18;p.y=116;p.dir='E';p.state='idle'}
+    s.sequenza(async()=>{await pausa(1.4);await p.vaiA(112,112,false,'E');p.dir='E';await pausa(1.0);A.setHint('CONTINUA…',true)})}
 });
 
 /* ---------------- (20 nov) PANNELLO: coperchio al buio (torcia dell'attrezzo) + enigma dei fili al buio ----------------
