@@ -1,0 +1,20 @@
+{
+ "funk_mj.mp3": {
+  "durata": 33.68,
+  "kb": 329,
+  "picco": 0.81,
+  "salto_loop": 0.1209
+ },
+ "trap_maranza.mp3": {
+  "durata": 27.43,
+  "kb": 268,
+  "picco": 0.81,
+  "salto_loop": 0.0452
+ },
+ "mistero_firenze.mp3": {
+  "durata": 53.33,
+  "kb": 417,
+  "picco": 0.81,
+  "salto_loop": 0.0607
+ }
+}

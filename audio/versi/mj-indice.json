@@ -1,0 +1,50 @@
+{
+ "mj_uh_r1.mp3": {
+  "durata": 0.32,
+  "kb": 2.9
+ },
+ "mj_uh_r2.mp3": {
+  "durata": 0.26,
+  "kb": 2.2
+ },
+ "mj_uh_r3.mp3": {
+  "durata": 0.42,
+  "kb": 3.7
+ },
+ "mj_ah_r1.mp3": {
+  "durata": 0.32,
+  "kb": 2.9
+ },
+ "mj_ah_r2.mp3": {
+  "durata": 0.26,
+  "kb": 2.2
+ },
+ "mj_ah_r3.mp3": {
+  "durata": 0.42,
+  "kb": 3.7
+ },
+ "mj_hi_r1.mp3": {
+  "durata": 0.32,
+  "kb": 2.9
+ },
+ "mj_hi_r2.mp3": {
+  "durata": 0.26,
+  "kb": 2.2
+ },
+ "mj_hi_r3.mp3": {
+  "durata": 0.42,
+  "kb": 3.7
+ },
+ "mj_eh_r1.mp3": {
+  "durata": 0.32,
+  "kb": 2.9
+ },
+ "mj_eh_r2.mp3": {
+  "durata": 0.26,
+  "kb": 2.2
+ },
+ "mj_eh_r3.mp3": {
+  "durata": 0.42,
+  "kb": 3.7
+ }
+}

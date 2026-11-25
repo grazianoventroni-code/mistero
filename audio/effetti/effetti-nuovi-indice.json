@@ -1,0 +1,72 @@
+{
+ "mazza_fendente_r1.mp3": {
+  "durata": 0.42,
+  "kb": 3.7,
+  "loop": false
+ },
+ "mazza_colpo_metallo_r1.mp3": {
+  "durata": 0.9,
+  "kb": 7.3,
+  "loop": false
+ },
+ "mazza_colpo_legno_r1.mp3": {
+  "durata": 0.35,
+  "kb": 3.1,
+  "loop": false
+ },
+ "mazza_colpo_sordo_r1.mp3": {
+  "durata": 0.4,
+  "kb": 3.5,
+  "loop": false
+ },
+ "motorino_passa_r1.mp3": {
+  "durata": 4.2,
+  "kb": 33.1,
+  "loop": false
+ },
+ "motorino_si_ferma_r1.mp3": {
+  "durata": 5.2,
+  "kb": 41.0,
+  "loop": false
+ },
+ "tram_campanello_r1.mp3": {
+  "durata": 1.6,
+  "kb": 12.9,
+  "loop": false
+ },
+ "tram_frenata_r1.mp3": {
+  "durata": 2.6,
+  "kb": 20.6,
+  "loop": false
+ },
+ "passi_marciapiede_r1.mp3": {
+  "durata": 4.6,
+  "kb": 36.3,
+  "loop": false
+ },
+ "sportello_apre_r1.mp3": {
+  "durata": 1.3,
+  "kb": 10.4,
+  "loop": false
+ },
+ "sportello_chiude_r1.mp3": {
+  "durata": 0.8,
+  "kb": 6.5,
+  "loop": false
+ },
+ "cintura_slaccia_r1.mp3": {
+  "durata": 1.4,
+  "kb": 11.2,
+  "loop": false
+ },
+ "freno_mano_r1.mp3": {
+  "durata": 0.9,
+  "kb": 7.3,
+  "loop": false
+ },
+ "viale_giorno_r1.mp3": {
+  "durata": 24.8,
+  "kb": 145.5,
+  "loop": true
+ }
+}
