@@ -476,7 +476,7 @@ registraScena({
    poi la strada E35 con FIRENZE sull'asfalto, la strada con il portale verde, il casello (stile retro), il piazzale e il casello al tramonto dove si ferma.
    Rombo del motore (Web Audio, segue velocita' e curve) e fischio delle gomme negli intervalli indicati. Poi scena c2-casello: Igor lavora nella cabina. */
 const VIAGGIO=[{"t0":0.0,"v":[8.0,12.7,17.5,25.8,35.3,43.6,50.7,57.8,62.3,65.7,69.1,72.5],"c":[0.09,3.0,3.0,3.0,3.0,0.22,0.0,0.0,0.0,0.0,0.0,0.0],"sq":[[0.15000000000000002,1.2000000000000002,0.9]]},{"t0":3.0,"v":[40.0,40.9,41.9,42.8,43.8,44.7,45.7,46.6,47.6,48.5,49.5,50.4],"c":[0.0,0.0,0.0,0.78,1.06,0.28,0.99,0.56,0.0,0.0,0.0,0.0],"sq":[[0.75,1.7249999999999999,0.55]]},{"t0":6.0,"v":[40.0,40.9,41.9,42.8,43.8,44.7,45.7,46.6,47.6,48.5,49.5,50.4],"c":[0.0,0.0,0.19,1.87,0.07,1.82,1.85,0.43,1.78,0.38,0.0,0.0],"sq":[[0.675,1.4249999999999998,0.5],[1.6500000000000001,2.4749999999999996,0.55]]},{"t0":9.0,"v":[26.7,26.0,25.4,24.8,24.1,22.8,21.3,19.8,18.3,16.7,15.2,13.7],"c":[0.28,2.3,2.03,0.85,2.16,1.44,0.16,0.0,0.0,0.0,0.0,0.0],"sq":[[0.22499999999999998,1.275,0.6],[2.0250000000000004,2.8499999999999996,0.6]]},{"t0":12.0,"v":[20.0,19.5,19.1,18.6,18.1,17.6,17.2,16.7,16.2,15.7,15.3,14.8],"c":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"sq":[[1.7999999999999998,2.7,0.45]]},{"t0":15.0,"v":[9.3,9.2,9.0,8.9,8.7,8.0,6.6,5.2,3.7,1.7,0.0,0.0],"c":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"sq":[[1.4249999999999998,2.55,0.8]]}]; // VIAGGIO-DATI (generato da _strumenti/aggiorna_viaggio.py)
-const VIAGGIO2=[{"t0":0.0,"v":[13.0,13.1,13.2,13.4,13.5,13.6,13.7,13.8,13.9,14.1,14.2,14.3,14.4,14.5,14.7,14.8,14.9],"c":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"sq":[]},{"t0":4.5,"v":[8.7,8.5,8.4,8.2,8.1,7.9,7.6,7.0,6.5,5.9,5.3,4.8,4.2,3.7,3.1,2.6,2.1,1.5,1.1,0.7,0.3],"c":[0.57,2.71,3.0,2.62,1.55,0.64,0.14,0.9,1.66,2.38,2.74,2.43,1.68,0.83,0.36,0.08,0.0,0.0,0.0,0.0,0.0],"sq":[[3.0,4.3,0.5]]}]; // VIAGGIO2-DATI (generato da _strumenti/aggiorna_viaggio2.py)
+const VIAGGIO2=[{"t0":0.0,"v":[22.0,22.6,23.3,23.9,24.6,25.2,25.8,26.5,27.1,27.8],"c":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"sq":[]},{"t0":2.5,"v":[8.7,8.5,8.4,8.2,8.1,7.9,7.6,7.0,6.5,5.9,5.3,4.8,4.2,3.7,3.1,2.6,2.1,1.5,1.1,0.7,0.3],"c":[0.57,2.71,3.0,2.62,1.55,0.64,0.14,0.9,1.66,2.38,2.74,2.43,1.68,0.83,0.36,0.08,0.0,0.0,0.0,0.0,0.0],"sq":[[3.0,4.3,0.5]]}]; // VIAGGIO2-DATI (generato da _strumenti/aggiorna_viaggio2.py)
 const VG={fin:false,partito:false,t0:0,sq:0};
 let VGS={src:'video/viaggio.mp4',dati:VIAGGIO,next:'c2-casello'};   // quale filmato, con quali dati, e quale scena segue
 function gommeSuono(dur,vol){const U=A.AU;if(!U||!U.ctx||U.muted||U.ctx.state!=='running')return;const c=U.ctx,t=c.currentTime+.01,f0=880+Math.random()*160;
@@ -654,15 +654,18 @@ registraScena({
 /* ---------------- (25 nov) TRIBUNALE: Nick arriva dalla strada, sale sul marciapiede e incontra Michael Jackson che balla ----------------
    Sfondo tribunale.png (orizzonte ~81: px per metro = (y-81)/1,6). MJ e' disegnato a mano con le pose di ballo (mj_danza_r1: moonwalk, cappello, giro, inclinazione, saluto, calcio),
    specchiate quando guardano a destra perche' Nick arriva da sinistra. Nessun dialogo: decide l'utente. */
-const TRI={mj:mkImg('img/emb/mj_danza_r1.png'),t:0,x:156,y:110,ord:[0,1,2,3,4,5,4,1,5,3,2,0],flip:[1,0,1,1,0,1],fase:0,k:-1,furia:0,voci:true,
+const TRI={mj:mkImg('img/emb/mj_danza_r1.png'),t:0,x:156,y:110,ord:[0,1,2,3,4,5,4,1,5,3,2,0],flip:[1,0,1,1,0,1],fase:0,k:-1,furia:0,voci:false,fineVoce:0,parla:false,musica:false,
+  DUR:{mj_uh_v1:.385,mj_ah_v1:.5,mj_eh_v3:.408,mj_hi_v1:.5},
   MJV:{uh:'mj_uh_v1',ah:'mj_ah_v1',eh:'mj_eh_v3',hi:'mj_hi_v1'},verso:['uh','hi','ah','eh','hi','uh']};   // pose -> versetto (voce vera dall'a cappella)
 /* loop musicale con Web Audio (la musica di Michael Jackson che balla: billie_jean_loop.mp3, 13 battute = 26,56 s) */
 const LOOPM={src:null,g:null};
 async function loopAvvia(url,vol){loopFerma();const U=A.AU;if(!U||!U.ctx)return false;let b=null;try{b=await A.motore.caricaClip(url)}catch(e){}if(!b)return false;if(U.ctx.state==='suspended')U.ctx.resume();
   const o=U.ctx.createBufferSource(),g=U.ctx.createGain();o.buffer=b;o.loop=true;g.gain.value=0;o.connect(g);g.connect(U.master);o.start();g.gain.linearRampToValueAtTime(vol,U.ctx.currentTime+1.2);LOOPM.src=o;LOOPM.g=g;return true}
 function loopFerma(){const U=A.AU;if(LOOPM.src&&U&&U.ctx){try{LOOPM.g.gain.cancelScheduledValues(U.ctx.currentTime);LOOPM.g.gain.setValueAtTime(LOOPM.g.gain.value,U.ctx.currentTime);LOOPM.g.gain.linearRampToValueAtTime(0,U.ctx.currentTime+1.0);LOOPM.src.stop(U.ctx.currentTime+1.05)}catch(e){}}LOOPM.src=null;LOOPM.g=null}
-function triVoce(v,n){try{A.motore.suonaClip('audio/versi/'+TRI.MJV[v]+(n>1?'_x'+n:'')+'.mp3',.9)}catch(e){}}
-async function triRaffica(v,n,furia){TRI.furia=furia;triVoce(v,n);await pausa(furia)}   // MJ interrompe: versetto ripetuto e ballo piu' scatenato
+/* UN SOLO verso alla volta: si registra quando finisce quello in corso (durata vera del file) e non ne parte un altro prima */
+function triVoce(v,n){if(TRI.t<TRI.fineVoce)return false;const nome=TRI.MJV[v],d=TRI.DUR[nome]*n+.07*(n-1);TRI.fineVoce=TRI.t+d+.2;
+  try{A.motore.suonaClip('audio/versi/'+nome+(n>1?'_x'+n:'')+'.mp3',.9)}catch(e){}return true}
+async function triRaffica(v,n,furia){while(TRI.t<TRI.fineVoce)await pausa(.05);TRI.furia=furia;triVoce(v,n);await pausa(furia)}   // MJ interrompe Nick: versetto (ripetuto) e ballo piu' scatenato
 registraScena({
   id:'c2-tribunale',inventario:true,sfondo:'img/scene/tribunale.png',
   giocatore:'protagonista-esterno',nomeGiocatore:'NICK',
@@ -673,23 +676,24 @@ registraScena({
   ambiente:{stanza:0,vento:.25,pioggia:0,fuoco:0},
   suggerimento:'',senzaEtichette:true,
   aggiorna(s,dt){const m=s.attori['michael-jackson'];if(m)m.visibile=false;TRI.t+=dt;
-    if(TRI.mu===0&&A.AU&&A.AU.ctx){TRI.mu=1;loopAvvia('audio/musica/billie_jean_loop.mp3',.5).then(ok=>{TRI.mu=ok?2:0})}   // la musica parte appena l'audio e' sbloccato dal primo tocco
+    if(TRI.mu===0&&TRI.musica&&A.AU&&A.AU.ctx){TRI.mu=1;loopAvvia('audio/musica/billie_jean_loop.mp3',.5).then(ok=>{TRI.mu=ok?2:0})}   // la musica parte appena l'audio e' sbloccato dal primo tocco
     if(TRI.furia>0)TRI.furia=Math.max(0,TRI.furia-dt);
     TRI.fase+=dt/(TRI.furia>0?.3:.55);const k=Math.floor(TRI.fase);
-    if(k!==TRI.k){TRI.k=k;if(TRI.voci&&TRI.furia<=0&&Math.random()<.55){const r=Math.random();triVoce(TRI.verso[TRI.ord[k%TRI.ord.length]],r<.7?1:r<.9?2:3)}}},   // un versetto a tempo con alcune pose del ballo
+    if(k!==TRI.k){TRI.k=k;if(TRI.voci&&!TRI.parla&&TRI.furia<=0&&TRI.t>=TRI.fineVoce&&Math.random()<.55){const r=Math.random();triVoce(r<.5?'uh':r<.67?'ah':r<.84?'eh':'hi',1)}}},   // versetti singoli, 'uh' la meta' delle volte   // un versetto a tempo con alcune pose del ballo
   sopra(gg,s){const im=TRI.mj;if(!(im.complete&&im.naturalWidth))return;const t=TRI.t,n=TRI.ord.length,k=Math.max(0,TRI.k)%n,pz=TRI.ord[k],kk=1.75*(TRI.y-81)/1.6/25;
     let x=TRI.x+(pz===0?Math.sin(t*3)*2.5:0),w=200/4*kk,h=110/4*kk,ox=100/4*kk,oy=108/4*kk;
     gg.save();gg.imageSmoothingEnabled=false;gg.globalAlpha=.3;gg.fillStyle='#000';gg.beginPath();gg.ellipse(x,TRI.y+.5,7*kk,1.6,0,0,Math.PI*2);gg.fill();gg.globalAlpha=1;
     gg.translate(x,TRI.y-oy);if(TRI.flip[pz]){gg.scale(-1,1)}gg.drawImage(im,pz*200,0,200,110,-ox,0,w,h);gg.restore()},
-  entra(s){TRI.t=0;TRI.fase=0;TRI.k=-1;TRI.furia=0;TRI.voci=true;const p=s.giocatore;fadeTo(0,.9);s.occupato=true;document.getElementById('bHint').style.display='none';if(p){p.x=18;p.y=116;p.dir='E';p.state='idle'}
+  entra(s){TRI.t=0;TRI.fase=0;TRI.k=-1;TRI.furia=0;TRI.voci=false;TRI.parla=false;TRI.musica=false;TRI.fineVoce=0;const p=s.giocatore;fadeTo(0,.9);s.occupato=true;document.getElementById('bHint').style.display='none';if(p){p.x=18;p.y=116;p.dir='E';p.state='idle'}
     for(const v of ['uh','ah','eh','hi'])for(const n of ['','_x2','_x3'])try{A.motore.caricaClip('audio/versi/'+TRI.MJV[v]+n+'.mp3')}catch(e){}
     TRI.mu=0;
-    s.sequenza(async()=>{await pausa(1.4);await p.vaiA(112,112,false,'E');p.dir='E';await pausa(1.0);const F={frontale:false};
-      await s.dici(p,'Scusi, mi sa dire…',F);await triRaffica('uh',3,2.2);                  // Nick prova a chiedere e MJ lo interrompe solo con i suoi versetti
-      await pausa(.5);await s.dici(p,'Dove si trova…',F);await triRaffica('hi',2,2.0);
-      await pausa(.5);await s.dici(p,'Da che parte…',F);await triRaffica('ah',3,2.4);
-      await pausa(.4);gagCappello(s,true);try{window.FIATO&&FIATO.suona('protagonista-esterno','dubbio',1,.9)}catch(e){}   // Nick e' interdetto
-      await pausa(3.2);A.setHint('CONTINUA…',true)})}
+    s.sequenza(async()=>{await pausa(1.4);TRI.musica=true;await p.vaiA(112,112,false,'E');p.dir='E';await pausa(1.0);const F={frontale:false};   // la musica parte quando Nick comincia ad attraversare
+      const dic=async t=>{TRI.parla=true;TRI.voci=true;await s.dici(p,t,F);TRI.parla=false};   // i versetti iniziano dopo che Nick ha parlato la prima volta, mai mentre parla
+      await dic('Scusi, mi sa dire…');await triRaffica('uh',3,2.2);                  // Nick prova a chiedere e MJ lo interrompe solo con i suoi versetti
+      await pausa(.5);await dic('Dove si trova…');await triRaffica('hi',2,2.0);
+      await pausa(.5);await dic('Da che parte…');await triRaffica('ah',3,2.4);
+      await pausa(.4);TRI.parla=true;gagCappello(s,true);try{window.FIATO&&FIATO.suona('protagonista-esterno','dubbio',1,.9)}catch(e){}   // Nick e' interdetto (MJ tace mentre Nick brontola)
+      await pausa(3.2);TRI.parla=false;A.setHint('CONTINUA…',true)})}
 });
 
 /* ---------------- (20 nov) PANNELLO: coperchio al buio (torcia dell'attrezzo) + enigma dei fili al buio ----------------
