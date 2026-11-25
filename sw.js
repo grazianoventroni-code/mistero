@@ -1,7 +1,7 @@
 // Service worker: il gioco funziona offline.
 // - i file del gioco (immagini, audio, icone) sono salvati alla prima apertura (sempre scaricati freschi: cache reload) e serviti dalla memoria del telefono;
 // - la pagina, gli script (.js), gli indici (.json) e questo file si chiedono prima alla rete (cosi' gli aggiornamenti arrivano subito) e, senza rete, si usa la copia salvata.
-const VERSION = "26 nov 15:00";
+const VERSION = "26 nov 16:30";
 const CACHE = "mistero-" + VERSION;
 const FILES = [
   "./",
@@ -506,7 +506,9 @@ const FILES = [
   "audio/gemelle/gemella-326f972f.mp3",
   "audio/gemelle/gemella-b82833b7.mp3",
   "audio/gemelle/gemella-cf3284cf.mp3",
+  "audio/gemelle/gemella-d353aa76.mp3",
   "audio/gemelle/gemella-de4e9982.mp3",
+  "audio/gemelle/gemella-f39a4e48.mp3",
   "audio/gemelle/indice.json",
   "audio/musica/billie_jean_loop.mp3",
   "audio/musica/funk_mj.mp3",
@@ -667,6 +669,7 @@ const FILES = [
   "img/emb/img_wheel_164.png",
   "img/emb/img_woman.png",
   "img/emb/lara_walk_r1.png",
+  "img/emb/leonardo_basket_r1.png",
   "img/emb/macchinario_flusso_hd_r1.png",
   "img/emb/macchinario_flusso_r2.png",
   "img/emb/macchinario_flusso_r3.png",
@@ -686,6 +689,7 @@ const FILES = [
   "img/emb/nick_scale_r1.png",
   "img/emb/nick_scale_r2.png",
   "img/emb/nick_spavento_r1.png",
+  "img/emb/pallone_r1.png",
   "img/emb/panda_fianco_dx.png",
   "img/emb/panda_fianco_dx_hd.png",
   "img/emb/panda_fianco_sx.png",

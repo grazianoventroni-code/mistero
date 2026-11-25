@@ -773,21 +773,65 @@ registraScena({
 function PARK_FA(){return {"x":154.38,"y":52.5,"w":47.08,"h":26.25}}   // PARKFA (dati scritti da aggiorna_viaggio3.py)
 
 /* ---------------- (26 nov) SCORCIO DI CASTELNUOVO: i Ramones appoggiati al muro della casetta dell'elettricita' ---------------- */
-const SCO={t:0,i:0,clips:null,prossimo:2.2,giri:0};
+const SCO={t:0,clips:null,prossimo:1.0,caos:true};
 fetch('audio/effetti/indice.json',{cache:'no-cache'}).then(r=>r.ok?r.json():null).then(j=>{SCO.clips=j}).catch(()=>{});
-const SCO_VERSI=[['ramone-1','Hey!'],['ramone-2','Ho!'],['ramone-3',"Let's go!"],['ramone-4','Hey!'],['ramone-2','Ho!'],['ramone-1',"Let's go!"]];
+const SCO_FRASI=['Hey!','Ho!',"Let's go!"];
 registraScena({
   id:'c2-scorcio',sfondo:'img/scene/firenze-castelnuovo-scorcio.png',
   giocatore:'protagonista-esterno',nomeGiocatore:'NICK',partenza:{x:236,y:97,dir:'W'},
   attori:[{nome:'ramone-1',etichetta:'RAMONE',x:127,y:79,dir:'S'},{nome:'ramone-2',etichetta:'RAMONE',x:137,y:79,dir:'S'},{nome:'ramone-3',etichetta:'RAMONE',x:147,y:79,dir:'S'},{nome:'ramone-4',etichetta:'RAMONE',x:157,y:79,dir:'S'}],
-  area:[[70,82],[236,82],[236,100],[70,100]],ostacoli:[],rif:[90,1.14],audioPassi:false,ambiente:{stanza:0,vento:.25,foglie:1,pioggia:0,fuoco:0},suggerimento:'',senzaEtichette:true,
-  entra(s){SCO.t=0;SCO.i=0;SCO.prossimo=2.6;const p=s.giocatore;fadeTo(0,.9);s.occupato=true;document.getElementById('bHint').style.display='none';if(p){p.x=236;p.y=97;p.dir='W';p.state='idle'}
-    s.sequenza(async()=>{await pausa(1.0);await p.vaiA(188,96,false,'W');p.dir='W'})},
+  area:[[70,70],[236,70],[236,100],[70,100]],ostacoli:[[[100,70],[166,70],[166,80],[100,80]]],rif:[90,1.14],audioPassi:false,ambiente:{stanza:0,vento:.25,foglie:1,pioggia:0,fuoco:0},suggerimento:'',senzaEtichette:true,
+  entra(s){SCO.t=0;SCO.prossimo=.8;SCO.caos=true;const p=s.giocatore;fadeTo(0,.9);s.occupato=true;document.getElementById('bHint').style.display='none';if(p){p.x=236;p.y=97;p.dir='W';p.state='idle'}
+    s.sequenza(async()=>{await pausa(1.6);await p.vaiA(188,96,false,'W');p.dir='W';await pausa(.8);const F={frontale:false};
+      await s.dici(p,'Scusate ragazzi, ho bisogno di aiuto.',F);await pausa(3.4);                       // loro continuano con i versi, caotici
+      await s.dici(p,"Ecco, ci risiamo. Va'. Proviamo a vedere se ho più fortuna dentro il parco.",F);await pausa(.4);
+      p.dir='E';await p.vaiA(210,71,false,'E');await pausa(.4);s.vaiScena('c2-basket')})},   // verso la tettoia: rimpicciolisce con la prospettiva
   aggiorna(s,dt){SCO.t+=dt;const R4=['ramone-1','ramone-2','ramone-3','ramone-4'];
-    for(const n of R4){const a=s.attori[n];if(a){a.talking=false;if(a.parlaFino&&SCO.t<a.parlaFino){a.talking=true;a.bocca=1+Math.floor(SCO.t*14)%4}}}
-    if(SCO.t>SCO.prossimo&&SCO.i<SCO_VERSI.length){const [n,tx]=SCO_VERSI[SCO.i++];const a=s.attori[n];if(a)a.parlaFino=SCO.t+.7;
-      const f=SCO.clips&&SCO.clips[n+'|'+tx];if(f){try{A.motore.suonaClip('audio/effetti/'+f,.9)}catch(e){}}     // un Ramone alla volta, mai due insieme
-      SCO.prossimo=SCO.t+1.5;if(SCO.i>=SCO_VERSI.length){setTimeout(()=>A.setHint('CONTINUA…',true),1400)}}}
+    for(const n of R4){const a=s.attori[n];if(a){a.talking=false;if(a.parlaFino&&SCO.t<a.parlaFino){a.talking=true;a.bocca=1+Math.floor(SCO.t*14+R4.indexOf(n)*3)%4}}}
+    if(SCO.caos&&SCO.t>SCO.prossimo){const n=R4[Math.floor(Math.random()*4)],tx=SCO_FRASI[Math.floor(Math.random()*3)],a=s.attori[n];   // versi sovrapposti e caotici (qui possono parlare insieme)
+      if(a)a.parlaFino=SCO.t+.6+Math.random()*.3;const f=SCO.clips&&SCO.clips[n+'|'+tx];if(f){try{A.motore.suonaClip('audio/effetti/'+f,.8)}catch(e){}}
+      SCO.prossimo=SCO.t+.3+Math.random()*.7}}
+});
+
+const BK={t:0,cic:0,stop:false,fine:false,LX:46,LY:89,IMG:mkImg('img/emb/leonardo_basket_r1.png'),PAL:mkImg('img/emb/pallone_r1.png')};
+const BK_CICLO=2.7;
+/* un ciclo di tiro: [da,a,fotogramma] ; la palla parte al rilascio (.62), entra nel canestro (1.32), cade e rimbalza fino alle mani (2.7) */
+const BK_FR=[[0,.35,0],[.35,.62,1],[.62,.85,2],[.85,1.2,3],[1.2,1.6,4],[1.6,BK_CICLO,0]];
+function bkFrame(t){for(const f of BK_FR)if(t>=f[0]&&t<f[1])return f[2];return 0}
+function bkPalla(t,lx,ly,flip){   // posizione (logica) della palla nel ciclo; Leonardo guarda a sinistra quando flip
+  const sg=flip?-1:1,mano=(dx,dy)=>[lx+sg*dx/4,ly-dy/4],R=[42,51];
+  if(t<.35)return mano(14,33);
+  if(t<.62){const k=(t-.35)/.27,a=mano(14,33),b=mano(9,58);return [a[0]+(b[0]-a[0])*k,a[1]+(b[1]-a[1])*k]}
+  if(t<1.32){const k=(t-.62)/.7,a=mano(22,64);return [a[0]+(R[0]-a[0])*k,a[1]+(R[1]-a[1])*k-Math.sin(k*Math.PI)*13]}
+  if(t<1.78){const k=(t-1.32)/.46;return [R[0]+Math.sin(k*5)*.4,R[1]+(ly-2-R[1])*k*k]}   // cade dalla retina
+  const k=(t-1.78)/(BK_CICLO-1.78),h=mano(14,33),x0=R[0];return [x0+(h[0]-x0)*k,(ly-2)+(h[1]-(ly-2))*k-Math.abs(Math.sin(k*Math.PI*1.5))*7*(1-k)]}   // rimbalza fino alle mani
+registraScena({
+  id:'c2-basket',sfondo:'img/scene/firenze-giardino-basket.png',
+  giocatore:'protagonista-esterno',nomeGiocatore:'NICK',partenza:{x:186,y:91,dir:'W'},
+  attori:[{nome:'gemella',id:'gemella',etichetta:'LE GEMELLE',x:262,y:98,dir:'W',visibile:false,vel:30},{nome:'gemella',id:'gemella2',etichetta:'LE GEMELLE',x:272,y:101,dir:'W',visibile:false,vel:30},{nome:'leonardo',etichetta:'LEONARDO',x:46,y:89,dir:'E',visibile:false}],
+  area:[[64,72],[236,72],[236,112],[64,112]],ostacoli:[],rif:[100,1.1],audioPassi:false,ambiente:{stanza:0,vento:.25,foglie:1,pioggia:0,fuoco:0},suggerimento:'',senzaEtichette:true,
+  entra(s){BK.t=0;BK.stop=false;BK.fine=false;BK.cic=0;const p=s.giocatore;fadeTo(0,.9);s.occupato=true;document.getElementById('bHint').style.display='none';
+    if(p){p.x=186;p.y=91;p.dir='W';p.state='idle'}
+    const g1=s.attori.gemella,g2=s.attori.gemella2,F={frontale:false};for(const g of [g1,g2]){g.visibile=false}
+    s.sequenza(async()=>{await pausa(1.8);
+      g1.x=262;g1.y=92;g2.x=272;g2.y=95;g1.dir=g2.dir='W';g1.visibile=g2.visibile=true;               // compaiono all'improvviso da destra
+      p.dir='E';try{window.FIATO&&FIATO.suona('protagonista-esterno','sorpresa',1,1)}catch(e){}
+      await Promise.all([vaiLibero(g1,206,92),vaiLibero(g2,216,95)]);g1.dir=g2.dir='W';await pausa(.5);
+      await s.dici(g1,'Vuoi giocare con noi?',F);await pausa(.4);                                            // all'unisono (voce inquietante registrata)
+      p.state='idle';await p.vaiA(p.x-5,p.y+1,false,'E');p.dir='E';await pausa(.3);
+      await s.dici(p,'Oh ehm no no, grazie, preferisco di no. Ciao belle bimbe.',F);await pausa(.5);
+      await s.dici(g1,'Peccato.',F);await pausa(.5);
+      g1.vel=g2.vel=9;g1.dir=g2.dir='E';const u1=vaiLibero(g1,236,92),u2=vaiLibero(g2,246,95);await pausa(1.7);     // se ne vanno lente...
+      g1.dir=g2.dir='W';g1.path=[];g2.path=[];g1.state=g2.state='idle';await pausa(1.3);                           // ...si fermano e si girano a guardarlo
+      g1.dir=g2.dir='E';g1.vel=g2.vel=14;await Promise.all([vaiLibero(g1,275,92),vaiLibero(g2,284,95)]);g1.visibile=g2.visibile=false;await pausa(.8);
+      p.dir='W';await p.vaiA(78,95,false,'W');BK.stop=true;                                                     // Nick va da Leonardo, che continua a tirare
+      while(!BK.fine)await pausa(.1);await pausa(1.2);A.setHint('CONTINUA…',true)})},
+  aggiorna(s,dt){BK.t+=dt;const L=s.attori.leonardo;if(L)L.visibile=false;const g=s.attori;
+    if(!BK.fine){const t0=BK.t%BK_CICLO,n=Math.floor(BK.t/BK_CICLO);if(n>BK.cic){BK.cic=n;if(BK.stop&&!BK.fine)BK.fine=true}}},
+  sopra(gg,s){if(!BK.IMG.complete||!BK.IMG.naturalWidth)return;const LX=BK.LX,LY=BK.LY,fine=BK.fine;gg.save();gg.imageSmoothingEnabled=false;
+    if(fine){gg.drawImage(BK.IMG,5*80,0,80,96,Math.round(LX-10),Math.round(LY-23.5),20,24);gg.restore();return}   // in piedi, palla sotto il braccio, davanti a Nick
+    const t=BK.t%BK_CICLO,f=bkFrame(t),W=20,H=24;gg.translate(Math.round(LX),0);gg.scale(-1,1);gg.drawImage(BK.IMG,f*80,0,80,96,-W/2,Math.round(LY-H+.5),W,H);gg.restore();   // di profilo, guarda il canestro (a sinistra)
+    const q=bkPalla(t,LX,LY,true);if(BK.PAL.complete&&BK.PAL.naturalWidth){gg.save();gg.imageSmoothingEnabled=false;gg.drawImage(BK.PAL,Math.round(q[0]-1.7),Math.round(q[1]-1.7),3.4,3.4);gg.restore()}}
 });
 
 /* ---------------- (20 nov) PANNELLO: coperchio al buio (torcia dell'attrezzo) + enigma dei fili al buio ----------------
