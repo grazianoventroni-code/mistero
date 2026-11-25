@@ -476,7 +476,7 @@ registraScena({
    poi la strada E35 con FIRENZE sull'asfalto, la strada con il portale verde, il casello (stile retro), il piazzale e il casello al tramonto dove si ferma.
    Rombo del motore (Web Audio, segue velocita' e curve) e fischio delle gomme negli intervalli indicati. Poi scena c2-casello: Igor lavora nella cabina. */
 const VIAGGIO=[{"t0":0.0,"v":[8.0,12.7,17.5,25.8,35.3,43.6,50.7,57.8,62.3,65.7,69.1,72.5],"c":[0.09,3.0,3.0,3.0,3.0,0.22,0.0,0.0,0.0,0.0,0.0,0.0],"sq":[[0.15000000000000002,1.2000000000000002,0.9]]},{"t0":3.0,"v":[40.0,40.9,41.9,42.8,43.8,44.7,45.7,46.6,47.6,48.5,49.5,50.4],"c":[0.0,0.0,0.0,0.78,1.06,0.28,0.99,0.56,0.0,0.0,0.0,0.0],"sq":[[0.75,1.7249999999999999,0.55]]},{"t0":6.0,"v":[40.0,40.9,41.9,42.8,43.8,44.7,45.7,46.6,47.6,48.5,49.5,50.4],"c":[0.0,0.0,0.19,1.87,0.07,1.82,1.85,0.43,1.78,0.38,0.0,0.0],"sq":[[0.675,1.4249999999999998,0.5],[1.6500000000000001,2.4749999999999996,0.55]]},{"t0":9.0,"v":[26.7,26.0,25.4,24.8,24.1,22.8,21.3,19.8,18.3,16.7,15.2,13.7],"c":[0.28,2.3,2.03,0.85,2.16,1.44,0.16,0.0,0.0,0.0,0.0,0.0],"sq":[[0.22499999999999998,1.275,0.6],[2.0250000000000004,2.8499999999999996,0.6]]},{"t0":12.0,"v":[20.0,19.5,19.1,18.6,18.1,17.6,17.2,16.7,16.2,15.7,15.3,14.8],"c":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"sq":[[1.7999999999999998,2.7,0.45]]},{"t0":15.0,"v":[9.3,9.2,9.0,8.9,8.7,8.0,6.6,5.2,3.7,1.7,0.0,0.0],"c":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"sq":[[1.4249999999999998,2.55,0.8]]}]; // VIAGGIO-DATI (generato da _strumenti/aggiorna_viaggio.py)
-const VIAGGIO2=[{"t0":0.0,"v":[13.0,13.1,13.2,13.4,13.5,13.6,13.7,13.8,13.9,14.1,14.2,14.3,14.4,14.5,14.7,14.8,14.9],"c":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"sq":[]},{"t0":4.5,"v":[8.7,8.5,8.4,8.2,8.1,7.9,7.6,7.0,6.5,5.9,5.3,4.8,4.2,3.7,3.1,2.6,2.1,1.5,1.1,0.7,0.3],"c":[0.73,3.0,3.0,1.74,0.71,0.03,0.52,1.05,1.59,2.11,2.37,2.08,1.43,0.71,0.3,0.08,0.0,0.0,0.0,0.0,0.0],"sq":[[3.0,4.3,0.5]]}]; // VIAGGIO2-DATI (generato da _strumenti/aggiorna_viaggio2.py)
+const VIAGGIO2=[{"t0":0.0,"v":[13.0,13.1,13.2,13.4,13.5,13.6,13.7,13.8,13.9,14.1,14.2,14.3,14.4,14.5,14.7,14.8,14.9],"c":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"sq":[]},{"t0":4.5,"v":[8.7,8.5,8.4,8.2,8.1,7.9,7.6,7.0,6.5,5.9,5.3,4.8,4.2,3.7,3.1,2.6,2.1,1.5,1.1,0.7,0.3],"c":[0.57,2.71,3.0,2.62,1.55,0.64,0.14,0.9,1.66,2.38,2.74,2.43,1.68,0.83,0.36,0.08,0.0,0.0,0.0,0.0,0.0],"sq":[[3.0,4.3,0.5]]}]; // VIAGGIO2-DATI (generato da _strumenti/aggiorna_viaggio2.py)
 const VG={fin:false,partito:false,t0:0,sq:0};
 let VGS={src:'video/viaggio.mp4',dati:VIAGGIO,next:'c2-casello'};   // quale filmato, con quali dati, e quale scena segue
 function gommeSuono(dur,vol){const U=A.AU;if(!U||!U.ctx||U.muted||U.ctx.state!=='running')return;const c=U.ctx,t=c.currentTime+.01,f0=880+Math.random()*160;
@@ -616,7 +616,7 @@ registraScena({
    si volta verso di noi, prende dalla tasca interna il biglietto con l'indirizzo e lo guarda: primo piano del biglietto, macchiato di ketchup. Nessun dialogo (decide l'utente).
    Sprite: auto ferma (auto_aiuola_r1, dal film) + sportello socchiuso/aperto (auto_aiuola_porta_r1, ChatGPT), Nick che scende / mano alla tasca / biglietto (nick_aiuola_r1) + fotogrammi dell'atlante. */
 const AIU={car:mkImg('img/emb/auto_aiuola_r1.png'),porta:mkImg('img/emb/auto_aiuola_porta_r1.png'),nick:mkImg('img/emb/nick_aiuola_r1.png'),
-  fa:{x:87.71,y:78.33,w:72.92,h:35.21},cw:308,ch:144,NH:38.48,NC:160,NX:94.71,NY:117.54,palo:mkImg('img/emb/viale_palo_r1.png'),t:0,mot:false,fine:false,porteSuoni:[false,false],rab:mkImg('img/emb/nick_rabbia_r1.png'),fase:0,t2:0,tCU:0};
+  fa:{x:104.17,y:78.33,w:75.63,h:36.46},cw:320,ch:150,NH:46.23,NC:192,NX:111.17,NY:118.79,t:0,mot:false,fine:false,porteSuoni:[false,false],rab:mkImg('img/emb/nick_rabbia_r1.png'),fase:0,t2:0,tCU:0};
 const aiuSeg=(t,a,b)=>Math.max(0,Math.min(1,(t-a)/(b-a)));
 function aiuNickAtl(gg,nome,alpha){if(alpha<=0)return;const c=A.CHARS['protagonista-esterno'];if(!c||!c.ready||!c.img.naturalWidth)return;const fr=c.fr[nome];if(!fr)return;const sc=AIU.NH/128;
   gg.save();gg.globalAlpha=alpha;gg.imageSmoothingEnabled=false;gg.drawImage(c.img,fr.x,fr.y,c.w,c.h,AIU.NX-c.ax*sc,AIU.NY-c.h*sc,c.w*sc,c.h*sc);gg.restore()}
@@ -648,8 +648,7 @@ registraScena({
     aiuNickCella(gg,1,aiuSeg(t,7.0,7.3)*(1-aiuSeg(t,8.4,8.7)));
     const r=AIU.fase===2?AIU.t2:-1,rA=r>=0?aiuSeg(r,0,.25):0;
     aiuNickCella(gg,2,aiuSeg(t,8.4,8.7)*(1-rA));
-    if(r>=0){aiuRabbia(gg,0,rA*(1-aiuSeg(r,1.8,2.05)));aiuRabbia(gg,1,aiuSeg(r,1.8,2.05)*(1-aiuSeg(r,3.0,3.25)));aiuRabbia(gg,2,aiuSeg(r,3.0,3.25)*(1-aiuSeg(r,4.1,4.35)));aiuNickAtl(gg,'front',aiuSeg(r,4.1,4.35))}
-    if(AIU.palo.complete&&AIU.palo.naturalWidth)gg.drawImage(AIU.palo,126,81,11,37)}   // il palo del cartello sta davanti all'auto
+    if(r>=0){aiuRabbia(gg,0,rA*(1-aiuSeg(r,1.8,2.05)));aiuRabbia(gg,1,aiuSeg(r,1.8,2.05)*(1-aiuSeg(r,3.0,3.25)));aiuRabbia(gg,2,aiuSeg(r,3.0,3.25)*(1-aiuSeg(r,4.1,4.35)));aiuNickAtl(gg,'front',aiuSeg(r,4.1,4.35))}}
 });
 
 /* ---------------- (25 nov) TRIBUNALE: Nick arriva dalla strada, sale sul marciapiede e incontra Michael Jackson che balla ----------------
