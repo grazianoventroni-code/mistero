@@ -6,6 +6,7 @@ const CACHE = "mistero-" + VERSION;
 const FILES = [
   "./",
   "apple-touch-icon-vortex.png",
+  "ascolta.html",
   "audio/CREDITI-NUOVI.md",
   "audio/effetti/cintura_slaccia_r1.mp3",
   "audio/effetti/effetti-nuovi-indice.json",
