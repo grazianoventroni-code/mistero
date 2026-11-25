@@ -631,7 +631,7 @@ registraScena({
     if(AIU.mot){if(t<1.6)A.engHz&&A.engHz(31+1.2*Math.sin(t*9));else{AIU.mot=false;A.setEng&&A.setEng(0,false)}}   // motore al minimo, poi spento
     if(t>2.4&&!AIU.porteSuoni[0]){AIU.porteSuoni[0]=true;A.sfx.plic()}
     if(t>3.0&&!AIU.porteSuoni[1]){AIU.porteSuoni[1]=true;A.sfx.thud()}
-    if(t>10.4&&!AIU.fine){AIU.fine=true;try{window.risolviCasello&&window.risolviCasello();window.leggiBiglietto&&window.leggiBiglietto();openCU('biglietto')}catch(e){}A.setHint('CONTINUA…',true)}},   // primo piano del biglietto
+    if(t>10.4&&!AIU.fine){AIU.fine=true;try{window.risolviCasello&&window.risolviCasello();window.leggiBiglietto&&window.leggiBiglietto();window.__dbg.openCU('biglietto')}catch(e){}A.setHint('CONTINUA…',true)}},   // primo piano del biglietto
   sopra(gg,s){const t=AIU.t,f=AIU.fa;if(!(AIU.car.complete&&AIU.car.naturalWidth))return;
     const aperto=aiuSeg(t,3.0,3.3),socchiuso=aiuSeg(t,2.4,2.7),dx=f.x+f.w-178/4,dy=f.y+f.h-80/4;
     gg.save();gg.imageSmoothingEnabled=false;
