@@ -16,6 +16,10 @@ const CUI={};const cuImg=n=>CUI[n]||(CUI[n]=mkImg('img/emb/'+n+'.png'));   // (2
 const cuNick=(a,t)=>'cu_nick_profsx';   // Nick di profilo (guarda a sinistra), dal foglio pose originale   // Nick originale (foglio espressioni): fermo / bocca che si muove
 let CUAX={};fetch('img/emb/cu_ax.json?v='+Date.now()).then(r=>r.ok?r.json():{}).then(j=>{CUAX=j}).catch(()=>{});
 const cuQ=(nome,x,y,h,flip)=>({img:cuImg(nome),x,y,h,flip:!!flip,ax:CUAX[nome]===undefined?.5:CUAX[nome],dy:0});   // un personaggio ORIGINALE hi-res per l'inquadratura con zoom
+const cuHash=x=>{const v=Math.sin(x*127.1)*43758.5453;return v-Math.floor(v)};
+/* (27 nov) fotogramma 'parla' (0 ascolta,1 bocca a meta',2 mano che spiega,3 mani aperte,4 indice,5 mano al petto,6 braccio teso,7 assenso): chi parla alterna bocca e gesti, chi ascolta sta fermo e ogni tanto annuisce */
+function parlaF(att,t,seed){if(!att||!att.talking)return ((t+seed*7)%4.6<.4)?7:0;
+  const ph=Math.floor(t/1.15+seed*5),r=cuHash(ph+seed),g=r<.62?[2,3,4,6][Math.floor(cuHash(ph*3.1+seed)*4)]:5,sy=Math.floor(t/.17+seed*13);return cuHash(sy*1.7+seed)<.66?g:1}
 const pausa=s=>new Promise(r=>{let t=s*1000/(window.__VEL||1),l=performance.now();const iv=setInterval(()=>{const n=performance.now();if(!window.__PAUSA)t-=n-l;l=n;if(t<=0){clearInterval(iv);r()}},30)});   // (27 nov) si ferma col tasto PAUSA
 /* (13 nov) i testi di Nick stanno in basso, nello stesso riquadro del capitolo 1, con la sua voce (clip Kokoro, indice voci-r2) */
 function dn(s,p,testo,opz={}){return A.sayP(testo,true)}   // (16 nov) i testi avanzano da soli, in fretta
@@ -682,7 +686,8 @@ registraScena({
   ambiente:{stanza:0,vento:.25,pioggia:0,fuoco:0},
   suggerimento:'',senzaEtichette:true,
   aggiorna(s,dt){const m=s.attori['michael-jackson'];if(m)m.visibile=false;TRI.t+=dt;
-    window.CUP=[];if(window.__ZC&&window.__ZC.k>1.02){const gz=s.attori.graziano,pl=s.giocatore;for(const [a,im] of [[gz,gz&&gz.dir==='S'?'cu_graziano':'cu_graziano_profdx'],[pl,'cu_nick']]){if(!a)continue;a.visibile=false;window.CUP.push({img:cuImg(im==='cu_nick'?cuNick(a,TRI.t):im),x:a.x,y:a.y,h:a.altezza()*.97,dy:0})}}   // zoom: Graziano e Nick originali in alta risoluzione
+    window.CUP=[];if(window.__ZC&&window.__ZC.k>1.02){const gz=s.attori.graziano,pl=s.giocatore;if(gz&&pl){gz.visibile=false;pl.visibile=false;
+      window.CUP.push(gz.dir==='S'?cuQ('cu_graziano',gz.x,gz.y,gz.altezza()*.97):cuQ('cu_graziano_t'+parlaF(gz,TRI.t,.3),gz.x,gz.y,gz.altezza()*.97),cuQ('cu_nick_t'+parlaF(pl,TRI.t,.7),pl.x,pl.y,pl.altezza()*.97))}}   // zoom: Graziano e Nick originali, animati mentre parlano
 
     if(TRI.mu===0&&TRI.musica&&A.AU&&A.AU.ctx){TRI.mu=1;loopAvvia('audio/musica/billie_jean_loop.mp3',.5).then(ok=>{TRI.mu=ok?2:0})}   // la musica parte appena l'audio e' sbloccato dal primo tocco
     if(TRI.furia>0)TRI.furia=Math.max(0,TRI.furia-dt);
@@ -794,7 +799,7 @@ registraScena({
       SCO.prossimo=SCO.t+.3+Math.random()*.7}}
 });
 
-const BK={t:0,cic:0,stop:false,fine:false,pensa:false,LX:72,LY:92,IMG:mkImg('img/emb/leonardo_basket_r1.png'),PAL:mkImg('img/emb/pallone_r1.png')};
+const BK={t:0,cic:0,stop:false,fine:false,pensa:false,parlato:false,LX:72,LY:92,IMG:mkImg('img/emb/leonardo_basket_r1.png'),PAL:mkImg('img/emb/pallone_r1.png')};
 const BK_CIC=3.2;   // un tiro completo: 0-.45 palla in mano, .45-.75 sale, .75 la palla parte, arco fino al canestro (1.55), retina, cade, rimbalza e torna in mano (3.1)
 function bkFrame(t){return t<.45?0:t<.75?1:t<.95?2:t<1.3?3:t<3.1?4:0}
 function bkPalla(t,lx,ly){   // posizione logica della palla (Leonardo guarda a sinistra); null quando e' quella dello sprite (in mano)
@@ -815,7 +820,7 @@ registraScena({
   giocatore:'protagonista-esterno',nomeGiocatore:'NICK',partenza:{x:186,y:91,dir:'W'},
   attori:[{nome:'gemella',id:'gemella',etichetta:'LE GEMELLE',x:262,y:92,dir:'W',visibile:false,vel:24},{nome:'gemella',id:'gemella2',etichetta:'LE GEMELLE',x:271,y:92,dir:'W',visibile:false,vel:24},{nome:'leonardo',etichetta:'LEONARDO',x:72,y:92,dir:'E',visibile:false}],
   area:[[64,72],[236,72],[236,112],[64,112]],ostacoli:[],rif:[100,1.1],audioPassi:false,ambiente:{stanza:0,vento:.25,foglie:1,pioggia:0,fuoco:0},suggerimento:'',senzaEtichette:true,
-  entra(s){window.__SC=s;window.__BK=BK;BK.t=0;BK.stop=false;BK.fine=false;BK.cic=0;const p=s.giocatore;fadeTo(0,.9);s.occupato=true;document.getElementById('bHint').style.display='none';
+  entra(s){window.__SC=s;window.__BK=BK;BK.parlato=false;BK.t=0;BK.stop=false;BK.fine=false;BK.cic=0;const p=s.giocatore;fadeTo(0,.9);s.occupato=true;document.getElementById('bHint').style.display='none';
     if(p){p.x=186;p.y=91;p.dir='W';p.state='idle'}
     const g1=s.attori.gemella,g2=s.attori.gemella2,F={frontale:false},Y=92,D=6.5;for(const g of [g1,g2]){g.visibile=false;g.vel=24}
     const coppia=async(x,ms)=>{g1.vel=g2.vel=ms||24;await Promise.all([vaiLibero(g1,x,Y),vaiLibero(g2,x+D,Y)])};   // le gemelle vanno SEMPRE affiancate (stessa y, stessa velocita')
@@ -833,15 +838,15 @@ registraScena({
       p.dir='W';await p.vaiA(BK.LX+14,BK.LY+3,false,'W');BK.stop=true;                                               // Nick va da Leonardo, che continua a tirare
       while(!BK.fine)await pausa(.1);zoomCam(3.2,(BK.LX+BK.LX+14)/2,80,1.4);await pausa(2.2);   // zoom a figura intera: parte il dialogo
       const L=s.attori.leonardo;p.dir='W';BK.pensa=false;
-      await s.dici(L,'Ehi, ciao!',F);await pausa(.3);
+      await s.dici(L,'Ehi, ciao!',F);BK.parlato=true;await pausa(.3);
       await s.dici(p,'Ciao! Senti, mi sembri l\'unico a posto da queste parti! Ho bisogno di aiuto! Mi si è fusa la macchina! Conosci un meccanico in zona?',F);await pausa(.4);
       BK.pensa=true;await pausa(1.6);                                                                               // Leonardo si mette in posa pensierosa
       await s.dici(L,'Sì, posso aiutarti! Ma solo a un patto: devi riuscire a fare 10 canestri di fila!',F);await pausa(.8);
       s.vaiScena('c2-basket-gioco')})},
   aggiorna(s,dt){BK.t+=dt;const L=s.attori.leonardo;if(L)L.visibile=false;
-    window.CUP=[];BK.zoom=!!(window.__ZC&&window.__ZC.k>1.02&&BK.fine);if(BK.zoom){const pl=s.giocatore;if(pl){pl.visibile=false;const tk=BK.t,hn=pl.altezza()*.97,gN=pl.talking&&(tk%2.5)<.95,gL=L&&L.talking;   // gesti: chi parla ogni tanto tende il braccio
-      let ln;if(BK.pensa)ln=cuQ('cu_leonardo_pensa'+(gL?(Math.floor(tk*7)%2):0),BK.LX,BK.LY,15.8);else ln=cuQ('cu_leonardo_palla',BK.LX,BK.LY,15.8);
-      window.CUP.push(ln,cuQ(gN?'cu_nick_point':'cu_nick_profsx',pl.x,pl.y,hn,gN))}}
+    window.CUP=[];BK.zoom=!!(window.__ZC&&window.__ZC.k>1.02&&BK.fine);if(BK.zoom){const pl=s.giocatore;if(pl){pl.visibile=false;const tk=BK.t,gL=L&&L.talking;
+      let ln;if(BK.pensa)ln=cuQ('cu_leonardo_pensa'+(gL?(Math.floor(tk*7)%2):0),BK.LX,BK.LY,15.8);else if(BK.parlato)ln=cuQ('cu_leonardo_t'+parlaF(L,tk,.5),BK.LX,BK.LY,15.8);else ln=cuQ('cu_leonardo_palla',BK.LX,BK.LY,15.8);
+      window.CUP.push(ln,cuQ('cu_nick_t'+parlaF(pl,tk,.9),pl.x,pl.y,pl.altezza()*.97))}}
 
     if(!BK.fine){const n=Math.floor(BK.t/BK_CIC);if(n>BK.cic){BK.cic=n;if(BK.stop)BK.fine=true}}},
   sopra(gg,s){if(!BK.IMG.complete||!BK.IMG.naturalWidth)return;const LX=BK.LX,LY=BK.LY,W=20,H=24;gg.save();gg.imageSmoothingEnabled=false;
@@ -853,49 +858,60 @@ registraScena({
 
 /* ---------------- (27 nov) MINIGIOCO DEL BASKET: Nick di schiena, canestro frontale, 10 canestri di fila ---------------- */
 const MG={bg:mkImg('img/scene/firenze-basket-frontale.png'),pal:mkImg('img/emb/pallone_r1.png'),sp:[0,1,2,3].map(i=>mkImg('img/emb/nick_sp'+i+'.png')),
-  RC:[120,30.7],t:0,mode:'mira',d:null,streak:0,best:0,tiro:null,rete:-9,vinto:false,msg:'',ta:0};
-window.__MG=MG;const MG_NH=54;   // altezza logica di Nick (mezzo busto, bordo basso sotto lo schermo)
-function mgPos(k,T){   // posizione e dimensione della palla; k in [0,1] = volo verso il canestro
-  const S=[120,60],x=S[0]+(T[0]-S[0])*k,y=S[1]+(T[1]-S[1])*k-4*15*k*(1-k);return [x,y,4.6-2.7*k]}
-function mgTira(T){
-  const e=Math.hypot(T[0]-MG.RC[0],T[1]-MG.RC[1]);let es='fuori';
-  if(e<=5.6)es='dentro';else if(e<=11)es='ferro';else if(T[0]>103&&T[0]<137&&T[1]>12&&T[1]<34)es='tabellone';
-  MG.tiro={T,es,t:0,dir:T[0]<MG.RC[0]?-1:1,fatto:false};MG.mode='tiro'}
+  RC:[120,30.7],t:0,mode:'mira',d:null,streak:0,best:0,tiro:null,rete:-9,vinto:false,msg:'',ta:0,n:0,ultimo:null,tu:-9};
+window.__MG=MG;
+const txtW=(t,sc)=>t.length*4*sc-sc;const MG_NH=54;      // altezza logica di Nick (mezzo busto, bordo basso sotto lo schermo)
+const MG_COMP=.4;    // compressione della mira: il punto d'arrivo = centro anello + 0,4 x (dito - centro anello)
+const MG_P0=15,MG_P1=7;   // diametro della palla (px logici): vicino a Nick 15, al canestro 7 (anello 13,4 px = 0,45 m, palla 0,24 m)
+function mgBersaglio(x,y){const T=[Math.max(50,Math.min(190,x)),Math.max(4,Math.min(95,y))];return [MG.RC[0]+(T[0]-MG.RC[0])*MG_COMP,MG.RC[1]+(T[1]-MG.RC[1])*MG_COMP]}
+function mgPos(k,L){   // palla in volo verso il punto d'arrivo L (k 0..1): arco con la discesa dall'alto, dimensione in prospettiva
+  const S=[120,50],x=S[0]+(L[0]-S[0])*k,y=S[1]+(L[1]-S[1])*k-4*18*k*(1-k);return [x,y,MG_P0+(MG_P1-MG_P0)*k]}
+function mgTira(L){
+  const dx=L[0]-MG.RC[0],dy=L[1]-MG.RC[1],e=Math.hypot(dx,dy);let es='fuori';
+  if(e<=3.2)es='dentro';else if(e<=5.4)es='rullo';else if(e<=9.5)es='ferro';else if(L[0]>103&&L[0]<137&&L[1]>12&&L[1]<34)es='tabellone';
+  MG.tiro={L,es,t:0,dir:dx<0?-1:1,fatto:false};MG.mode='tiro';MG.n++}
 function mgFine(ok){
   if(ok){MG.streak++;if(MG.streak>MG.best)MG.best=MG.streak}else MG.streak=0;
   if(MG.streak>=10){MG.vinto=true;MG.mode='fine';MG.msg='10 CANESTRI DI FILA!';try{A.sting('scoperta',.6)}catch(e){}setTimeout(()=>{try{A.setHint('CONTINUA…',true)}catch(e){}},900);return}
   MG.mode='attesa';MG.ta=0}
 registraScena({
   id:'c2-basket-gioco',sfondo:'img/scene/firenze-basket-frontale.png',area:[[0,0],[2,0],[2,2],[0,2]],suggerimento:'',senzaEtichette:true,ambiente:{stanza:0,vento:.2,foglie:1,pioggia:0,fuoco:0},
-  entra(s){MG.t=0;MG.mode='mira';MG.d=null;MG.streak=0;MG.tiro=null;MG.rete=-9;MG.vinto=false;MG.msg='';fadeTo(0,.9);document.getElementById('bHint').style.display='none';A.setHint('')},
+  entra(s){MG.t=0;MG.mode='mira';MG.d=null;MG.streak=0;MG.n=0;MG.tiro=null;MG.rete=-9;MG.vinto=false;MG.msg='';MG.ultimo=null;fadeTo(0,.9);document.getElementById('bHint').style.display='none';A.setHint('')},
   aggiorna(s,dt){MG.t+=dt;
-    if(MG.mode==='tiro'){const q=MG.tiro;q.t+=dt;
-      if(!q.fatto&&q.t>=.95){q.fatto=true;if(q.es==='dentro'){MG.rete=MG.t;A.sfx.plic()}else if(q.es==='fuori')A.sfx.no();else A.sfx.thud()}
-      const dur=q.es==='dentro'?1.9:q.es==='fuori'?1.8:2.2;if(q.t>=dur){MG.tiro=null;mgFine(q.es==='dentro')}}
+    if(MG.mode==='tiro'){const q=MG.tiro;q.t+=dt;const tf=q.es==='rullo'?1.45:.95;
+      if(!q.fatto&&q.t>=tf){q.fatto=true;MG.ultimo=q.L;MG.tu=MG.t;if(q.es==='dentro'||q.es==='rullo'){MG.rete=MG.t;A.sfx.plic()}else if(q.es==='fuori')A.sfx.no();else A.sfx.thud()}
+      if(!q.rimb&&q.es==='rullo'&&q.t>=.95){q.rimb=true;A.sfx.thud()}
+      const dur=q.es==='dentro'?1.9:q.es==='rullo'?2.4:q.es==='fuori'?1.8:2.2;if(q.t>=dur){MG.tiro=null;mgFine(q.es==='dentro'||q.es==='rullo')}}
     else if(MG.mode==='attesa'){MG.ta+=dt;if(MG.ta>.5)MG.mode='mira'}},
   giu(s,x,y){if(MG.mode!=='mira'||MG.vinto)return;if(y<46)return;MG.d={x0:x,y0:y,x,y}},   // si parte da Nick (parte bassa dello schermo)
   muovi(s,x,y){if(MG.d){MG.d.x=x;MG.d.y=y}},
-  su(s,x,y){const d=MG.d;MG.d=null;if(!d||MG.mode!=='mira')return;if(d.y0-y<12)return;   // serve un vero trascinamento verso l'alto, verso il canestro
-    mgTira([Math.max(95,Math.min(145,x)),Math.max(10,Math.min(60,y))])},
+  su(s,x,y){const d=MG.d;MG.d=null;if(!d||MG.mode!=='mira')return;if(d.y0-y<10)return;   // serve un vero trascinamento verso l'alto, verso il canestro
+    mgTira(mgBersaglio(x,y))},
   disegnaSfondo(gg,s){R(0,0,W,H,'#0a0c12');gg.save();gg.imageSmoothingEnabled=true;gg.imageSmoothingQuality='high';if(MG.bg.complete&&MG.bg.naturalWidth)gg.drawImage(MG.bg,0,0,W,H);gg.restore();
     // rete che oscilla dopo il canestro (porzione dello sfondo ridisegnata riga per riga con sbandamento)
     const tr=MG.t-MG.rete;if(tr>=0&&tr<1.6&&MG.bg.complete){const a=1.4*Math.exp(-tr*2.2)*Math.sin(tr*21),bul=tr<.45?Math.sin(tr/.45*Math.PI)*1.2:0;gg.save();gg.imageSmoothingEnabled=false;gg.fillStyle='rgba(46,64,40,.9)';gg.fillRect(113.5,31,13,9.2);
       for(let r=0;r<35;r++){const f=(r+1)/35,off=a*f*f,w=11.5+bul*f;gg.drawImage(MG.bg,457,125+r,46,1,114.2-(w-11.5)/2+off,31.2+r*.25,w,.25)}gg.restore()}
+    // segno dell'ultimo tiro sul piano del canestro (dove e' arrivata la palla)
+    if(MG.ultimo&&MG.t-MG.tu<2.4){gg.save();gg.globalAlpha=Math.max(0,1-(MG.t-MG.tu)/2.4)*.9;gg.strokeStyle='#ff5a3c';gg.lineWidth=.8;const u=MG.ultimo;gg.beginPath();gg.moveTo(u[0]-2.2,u[1]-2.2);gg.lineTo(u[0]+2.2,u[1]+2.2);gg.moveTo(u[0]+2.2,u[1]-2.2);gg.lineTo(u[0]-2.2,u[1]+2.2);gg.stroke();gg.restore()}
     // Nick di schiena (mezzo busto)
     const q=MG.tiro;let pz=0;if(q){pz=q.t<.18?1:q.t<.55?2:3}const im=MG.sp[pz];
     if(im&&im.complete&&im.naturalWidth){const h=MG_NH,w=h*im.naturalWidth/im.naturalHeight;gg.save();gg.imageSmoothingEnabled=true;gg.imageSmoothingQuality='high';gg.drawImage(im,120-w/2,H-h+2,w,h);gg.restore()}
-    // palla in volo
-    if(q&&q.t>=.18){const k=Math.min(1,(q.t-.18)/.77);let b;
-      if(q.t<.95)b=mgPos(k,q.T);else{const u=q.t-.95;
-        if(q.es==='dentro'){b=u<.5?[q.T[0],q.T[1]+u*18,1.9-.4*u]:[q.T[0],q.T[1]+9+(u-.5)*30,1.5-.3*(u-.5)]}
-        else if(q.es==='fuori'){b=[q.T[0]+q.dir*u*14,q.T[1]-u*8+u*u*40,1.9-.9*u]}
-        else{const v=Math.min(1,u/1.2),bx=q.T[0]+q.dir*(8+v*26),by=q.T[1]+(104-q.T[1])*v*v-Math.abs(Math.sin(v*Math.PI*2.5))*12*(1-v);b=[bx,by,1.9+3.2*v]}}
-      if(b){gg.save();gg.imageSmoothingEnabled=false;if(q.t>1.5&&q.es==='dentro')gg.globalAlpha=Math.max(0,1-(q.t-1.5)/.4);if(MG.pal.complete)gg.drawImage(MG.pal,b[0]-b[2]/2,b[1]-b[2]/2,b[2],b[2]);gg.restore()}}
-    // mira: linea tratteggiata da Nick al punto del dito e cerchio
-    if(MG.d&&MG.mode==='mira'){const T=[Math.max(95,Math.min(145,MG.d.x)),Math.max(10,Math.min(60,MG.d.y))];gg.save();gg.strokeStyle='rgba(255,240,170,.85)';gg.fillStyle='rgba(255,240,170,.9)';gg.lineWidth=.7;gg.setLineDash([2,2.5]);gg.beginPath();gg.moveTo(120,62);gg.quadraticCurveTo((120+T[0])/2,Math.min(62,T[1])-12,T[0],T[1]);gg.stroke();gg.setLineDash([]);gg.beginPath();gg.arc(T[0],T[1],3.2,0,Math.PI*2);gg.stroke();gg.beginPath();gg.arc(T[0],T[1],.8,0,Math.PI*2);gg.fill();gg.restore()}
-    // contatore e messaggio
-    {const t='CANESTRI DI FILA '+MG.streak+'/10';R(3,3,txtW(t,1)+6,9,'#000');txt(t,6,5,'#ffe9a0',1)}
-    if(MG.msg){const sc=2,w=txtW(MG.msg,sc);R(120-w/2-6,52,w+12,18,'#000');txt(MG.msg,120-w/2,57,'#ffe9a0',sc)}}
+    // palla in volo (in scala)
+    if(q&&q.t>=.18){const k=Math.min(1,(q.t-.18)/.77),L=q.L;let b;
+      if(q.t<.95)b=mgPos(k,L);
+      else{const u=q.t-.95;
+        if(q.es==='rullo'&&u<.5){const f=1-u/.5;b=[MG.RC[0]+(L[0]-MG.RC[0])*f+Math.sin(u*30)*2.4*f,MG.RC[1]+Math.sin(u*30+1)*.9*f+(L[1]-MG.RC[1])*f,MG_P1]}
+        else{const v=q.es==='rullo'?u-.5:u,p0=q.es==='rullo'?[MG.RC[0],MG.RC[1]]:L;
+          if(q.es==='dentro'||q.es==='rullo'){b=v<.5?[p0[0],p0[1]+v*20,MG_P1-.8*v]:[p0[0],p0[1]+10+(v-.5)*34,MG_P1-.4-(v-.5)*1.6]}
+          else if(q.es==='fuori'){b=[L[0]+q.dir*v*16,L[1]-v*10+v*v*46,MG_P1-1.5*v]}
+          else{const w2=Math.min(1,v/1.3),bx=L[0]+q.dir*(8+w2*26),by=L[1]+(100-L[1])*w2*w2-Math.abs(Math.sin(w2*Math.PI*2.5))*12*(1-w2);b=[bx,by,MG_P1+(MG_P0-MG_P1)*w2]}}}   // ferro/tabellone: rimbalza verso di noi e cresce
+      if(b){gg.save();gg.imageSmoothingEnabled=false;if(q.t>1.5&&(q.es==='dentro'||q.es==='rullo'))gg.globalAlpha=Math.max(0,1-(q.t-1.5)/.4);if(MG.pal.complete)gg.drawImage(MG.pal,b[0]-b[2]/2,b[1]-b[2]/2,b[2],b[2]);gg.restore()}}
+    // mira: curva tratteggiata da Nick al punto d'arrivo (reticolo grande come la palla al canestro) + segno del dito
+    if(MG.d&&MG.mode==='mira'){const L=mgBersaglio(MG.d.x,MG.d.y);gg.save();gg.strokeStyle='rgba(255,240,170,.9)';gg.fillStyle='rgba(255,240,170,.9)';gg.lineWidth=.7;gg.setLineDash([2,2.5]);gg.beginPath();gg.moveTo(120,50);gg.quadraticCurveTo((120+L[0])/2,Math.min(50,L[1])-24,L[0],L[1]);gg.stroke();gg.setLineDash([]);gg.beginPath();gg.arc(L[0],L[1],MG_P1/2,0,Math.PI*2);gg.stroke();gg.beginPath();gg.arc(L[0],L[1],.7,0,Math.PI*2);gg.fill();gg.restore()}
+    // istruzioni (finche' non si e' tirato) e contatore
+    if(MG.n===0&&MG.mode==='mira'&&!MG.d){const t='TRASCINA IL DITO DA NICK VERSO IL CANESTRO E RILASCIA',w=txtW(t,1);R(120-w/2-4,106,w+8,9,'#000');A.txt(t,120-w/2,108,'#ffe9a0',1)}
+    {const t='CANESTRI DI FILA '+MG.streak+'/10';R(3,3,txtW(t,1)+6,9,'#000');A.txt(t,6,5,'#ffe9a0',1)}
+    if(MG.msg){const sc=2,w=txtW(MG.msg,sc);R(120-w/2-6,52,w+12,18,'#000');A.txt(MG.msg,120-w/2,57,'#ffe9a0',sc)}}
 });
 
 /* ---------------- (20 nov) PANNELLO: coperchio al buio (torcia dell'attrezzo) + enigma dei fili al buio ----------------

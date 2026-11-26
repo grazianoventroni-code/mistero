@@ -1,7 +1,7 @@
 // Service worker: il gioco funziona offline.
 // - i file del gioco (immagini, audio, icone) sono salvati alla prima apertura (sempre scaricati freschi: cache reload) e serviti dalla memoria del telefono;
 // - la pagina, gli script (.js), gli indici (.json) e questo file si chiedono prima alla rete (cosi' gli aggiornamenti arrivano subito) e, senza rete, si usa la copia salvata.
-const VERSION = "27 nov 18:00";
+const VERSION = "27 nov 21:00";
 const CACHE = "mistero-" + VERSION;
 const FILES = [
   "./",
@@ -639,6 +639,14 @@ const FILES = [
   "img/emb/cu_graziano_point.png",
   "img/emb/cu_graziano_profdx.png",
   "img/emb/cu_graziano_profsx.png",
+  "img/emb/cu_graziano_t0.png",
+  "img/emb/cu_graziano_t1.png",
+  "img/emb/cu_graziano_t2.png",
+  "img/emb/cu_graziano_t3.png",
+  "img/emb/cu_graziano_t4.png",
+  "img/emb/cu_graziano_t5.png",
+  "img/emb/cu_graziano_t6.png",
+  "img/emb/cu_graziano_t7.png",
   "img/emb/cu_leonardo.png",
   "img/emb/cu_leonardo_palla.png",
   "img/emb/cu_leonardo_pensa0.png",
@@ -646,10 +654,26 @@ const FILES = [
   "img/emb/cu_leonardo_pensa2.png",
   "img/emb/cu_leonardo_point.png",
   "img/emb/cu_leonardo_prof.png",
+  "img/emb/cu_leonardo_t0.png",
+  "img/emb/cu_leonardo_t1.png",
+  "img/emb/cu_leonardo_t2.png",
+  "img/emb/cu_leonardo_t3.png",
+  "img/emb/cu_leonardo_t4.png",
+  "img/emb/cu_leonardo_t5.png",
+  "img/emb/cu_leonardo_t6.png",
+  "img/emb/cu_leonardo_t7.png",
   "img/emb/cu_nick_front.png",
   "img/emb/cu_nick_point.png",
   "img/emb/cu_nick_profdx.png",
   "img/emb/cu_nick_profsx.png",
+  "img/emb/cu_nick_t0.png",
+  "img/emb/cu_nick_t1.png",
+  "img/emb/cu_nick_t2.png",
+  "img/emb/cu_nick_t3.png",
+  "img/emb/cu_nick_t4.png",
+  "img/emb/cu_nick_t5.png",
+  "img/emb/cu_nick_t6.png",
+  "img/emb/cu_nick_t7.png",
   "img/emb/dan_biglietto_r2.png",
   "img/emb/doc_attrezzo_r1.png",
   "img/emb/doc_fusibile_r1.png",
