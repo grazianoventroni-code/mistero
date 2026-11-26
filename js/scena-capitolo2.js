@@ -870,10 +870,20 @@ const MG_FISICA={g:170,YH:43,Y0:79,HR:48.3,TARCO:.95};   // gravita' (px/s^2 al 
 function mgBersaglio(x,y){const T=[Math.max(50,Math.min(190,x)),Math.max(4,Math.min(95,y))];return [MG.RC[0]+(T[0]-MG.RC[0])*MG_COMP,MG.RC[1]+(T[1]-MG.RC[1])*MG_COMP]}
 function mgPos(k,L){   // volo: arco con la discesa dall'alto, dimensione in prospettiva
   const S=[120,50],x=S[0]+(L[0]-S[0])*k,y=S[1]+(L[1]-S[1])*k-4*18*k*(1-k);return [x,y,MG_P0+(MG_P1-MG_P0)*k]}
+/* (28 nov) SUONI DEL MINIGIOCO (sintetizzati col Web Audio, niente file): lancio, rimbalzo del pallone, cerchio di ferro (metallo che vibra), rete (fruscio), tabellone */
+const BKS={
+  lancio(){A.nburst(1700,1,.16,.16,'bandpass');A.tone(210,.06,'triangle',.07,130)},                                  // la palla lascia la mano
+  rimbalzo(v){const k=Math.min(1,Math.max(.18,Math.abs(v)/90));A.tone(125,.16,'sine',.30*k,58);A.nburst(420,1,.07,.30*k,'lowpass')},   // pallone a terra: piu' forte se rimbalza forte
+  ferro(k=1){[[1180,.55],[1930,.38],[2760,.26],[3980,.15]].forEach(([f,d],i)=>A.tone(f,d,'sine',.10*k/(1+i*.55),f*.985));A.nburst(4200,2,.025,.16*k,'highpass')},   // cerchio: toc metallico che risuona
+  rete(){A.nburst(2800,.8,.5,.14,'highpass');setTimeout(()=>A.nburst(5200,.8,.3,.07,'highpass'),55);A.tone(300,.3,'sine',.03,180)},     // swish: la palla scivola nella rete
+  tabellone(){A.tone(230,.14,'triangle',.20,120);A.nburst(650,1,.09,.34,'lowpass');A.nburst(2200,1.5,.04,.1,'bandpass')}           // colpo sordo di plexiglas/legno
+};
+window.__BKS=BKS;
+window.__MGT=L=>mgTira(L);   // solo per le prove: tiro verso il punto L (coordinate dell'anello)
 function mgTira(L){
   const dx=L[0]-MG.RC[0],dy=L[1]-MG.RC[1],e=Math.hypot(dx,dy);let es='fuori';
   if(e<=3.2)es='dentro';else if(e<=5.4)es='rullo';else if(e<=9.5)es='ferro';else if(L[0]>103&&L[0]<137&&L[1]>12&&L[1]<34)es='tabellone';
-  MG.tiro={L,es,t:0,dir:dx<0?-1:1,fatto:false,ph:null,sp:0,fine:0};MG.mode='tiro';MG.n++}
+  MG.tiro={L,es,t:0,dir:dx<0?-1:1,fatto:false,ph:null,sp:0,fine:0};MG.mode='tiro';MG.n++;try{BKS.lancio()}catch(e){}}
 /* all'impatto nasce lo stato fisico: X (lato, px al piano del canestro), h (altezza da terra), Z (verso la camera, 0 = piano del canestro); vx,vh,vz velocita' */
 function mgImpatto(q){const F=MG_FISICA,L=q.L,X=L[0]-120,rnd=cuHash(MG.n*3.7);let P;
   if(q.es==='dentro'||q.es==='rullo'){const x0=q.es==='rullo'?0:(L[0]-MG.RC[0])*.6;P={X:x0,h:F.HR+1,Z:0,vx:-x0*2,vh:-72,vz:0,net:true,sp:0,w:2}}
@@ -885,7 +895,7 @@ function mgFis(q,dt){const F=MG_FISICA,P=q.ph;if(!P)return;
   P.vh-=F.g*dt;P.h+=P.vh*dt;P.X+=P.vx*dt;P.Z+=P.vz*dt;P.sp+=P.w*dt;
   if(P.net){if(P.h<F.HR&&P.h>F.HR-9.5){P.X+=(0-P.X)*Math.min(1,dt*7);P.vx*=Math.max(0,1-dt*7);P.vh*=Math.max(.45,1-dt*3.2)}   // la rete guida e frena la palla
     else if(P.h<=F.HR-9.5){P.net=false;P.vz=.1+.08*cuHash(MG.n*1.3)}}
-  if(P.h<=0){P.h=0;if(Math.abs(P.vh)>26){P.vh=-P.vh*.6;P.vx*=.8;P.vz*=.8;P.w*=.8;if(P.rimb<3){P.rimb=(P.rimb||0)+1;try{A.sfx.thud()}catch(e){}}}else{P.vh=0;P.vx*=.97;P.vz*=.97}}
+  if(P.h<=0){P.h=0;if(Math.abs(P.vh)>26){P.vh=-P.vh*.6;P.vx*=.8;P.vz*=.8;P.w*=.8;if((P.rimb||0)<3){P.rimb=(P.rimb||0)+1;   /* (28 nov) prima 'P.rimb<3' era falso con rimb non definito: il rimbalzo non suonava mai */ try{BKS.rimbalzo(P.vh)}catch(e){}}}else{P.vh=0;P.vx*=.97;P.vz*=.97}}
   if(P.Z>.7)P.Z=.7;if(P.Z<-.6)P.Z=-.6;if(P.h===0&&Math.abs(P.vx)<6&&Math.abs(P.vz)<.04)P.quiet=(P.quiet||0)+dt}
 function mgProietta(P){const F=MG_FISICA,sc=1/(1-P.Z);return [120+P.X*sc,F.YH+(F.Y0-P.h-F.YH)*sc,MG_P1*sc]}
 function mgFine(ok){
@@ -898,8 +908,8 @@ registraScena({
   aggiorna(s,dt){MG.t+=dt;
     if(MG.mode==='tiro'){const q=MG.tiro;q.t+=dt;const tf=q.es==='rullo'?1.45:MG_FISICA.TARCO;
       if(!q.fatto&&q.t>=tf){q.fatto=true;mgImpatto(q);MG.ultimo=q.L;MG.tu=MG.t;
-        if(q.es==='dentro'||q.es==='rullo'){MG.rete=MG.t;MG.reteA=1;A.sfx.plic()}else if(q.es==='fuori')A.sfx.no();else{A.sfx.thud();MG.rete=MG.t;MG.reteA=.3}}
-      if(!q.rimb&&q.es==='rullo'&&q.t>=.95){q.rimb=true;A.sfx.thud()}
+        if(q.es==='dentro'||q.es==='rullo'){MG.rete=MG.t;MG.reteA=1;BKS.rete()}else if(q.es==='fuori')A.sfx.no();else{if(q.es==='tabellone')BKS.tabellone();else BKS.ferro(1);MG.rete=MG.t;MG.reteA=.3}}
+      if(!q.rimb&&q.es==='rullo'&&q.t>=.95){q.rimb=true;BKS.ferro(.85)}
       if(q.fatto){let n=Math.max(1,Math.ceil(dt/.008)),h=dt/n;for(let i=0;i<n;i++)mgFis(q,h);const b=mgProietta(q.ph);
         const fuori=b[1]>126||b[0]<-10||b[0]>250||b[2]>MG_P1*2.6||q.ph.quiet>.5;if(fuori||q.t>tf+3.4)q.fine+=dt;if(q.fine>.35||q.t>tf+3.8){MG.tiro=null;mgFine(q.es==='dentro'||q.es==='rullo')}}}
     else if(MG.mode==='attesa'){MG.ta+=dt;if(MG.ta>.5)MG.mode='mira'}},
