@@ -680,7 +680,7 @@ registraScena({
   ambiente:{stanza:0,vento:.25,pioggia:0,fuoco:0},
   suggerimento:'',senzaEtichette:true,
   aggiorna(s,dt){const m=s.attori['michael-jackson'];if(m)m.visibile=false;TRI.t+=dt;
-    window.CUP=[];if(window.__ZC&&window.__ZC.k>1.02){const gz=s.attori.graziano,pl=s.giocatore;for(const [a,im] of [[gz,gz&&gz.dir==='S'?'cu_graziano_front':'cu_graziano_profdx'],[pl,'cu_nick']]){if(!a)continue;a.visibile=false;window.CUP.push({img:cuImg(im==='cu_nick'?cuNick(a,TRI.t):im),x:a.x,y:a.y,h:a.altezza()*.97,dy:a.talking?Math.sin(TRI.t*16)*.2:0})}}   // zoom: Graziano e Nick originali in alta risoluzione
+    window.CUP=[];if(window.__ZC&&window.__ZC.k>1.02){const gz=s.attori.graziano,pl=s.giocatore;for(const [a,im] of [[gz,gz&&gz.dir==='S'?'cu_graziano':'cu_graziano_profdx'],[pl,'cu_nick']]){if(!a)continue;a.visibile=false;window.CUP.push({img:cuImg(im==='cu_nick'?cuNick(a,TRI.t):im),x:a.x,y:a.y,h:a.altezza()*.97,dy:0})}}   // zoom: Graziano e Nick originali in alta risoluzione
 
     if(TRI.mu===0&&TRI.musica&&A.AU&&A.AU.ctx){TRI.mu=1;loopAvvia('audio/musica/billie_jean_loop.mp3',.5).then(ok=>{TRI.mu=ok?2:0})}   // la musica parte appena l'audio e' sbloccato dal primo tocco
     if(TRI.furia>0)TRI.furia=Math.max(0,TRI.furia-dt);
@@ -705,7 +705,7 @@ registraScena({
       loopFerma(2.6);await pausa(3.0);                   // ...e dopo anche la musica
       const gz=s.attori.graziano;gz.x=-14;gz.y=111;gz.dir='E';gz.vel=22;gz.visibile=true;                            // Graziano entra da sinistra e cammina sulle strisce pedonali
       await vaiLibero(gz,84,111);p.dir='W';await vaiLibero(gz,97,111);gz.dir='E';await pausa(.4);
-      zoomCam(3,105,91,1.6);await pausa(1.8);                                                                    // zoom sullo stesso fondale: mezzo busto dei due
+      zoomCam(3.8,105,86,1.6);await pausa(1.8);                                                                    // zoom sullo stesso fondale: mezzo busto dei due
       await s.dici(p,'Scusi gran bell\'uomo, mi sa dire dove si trova Novoli?',F);
       await s.dici(gz,'Siamo a Novoli! È questo quartiere!',F);
       await s.dici(p,'Ah ottimo, finalmente! Ci voleva un gran bell\'uomo per avere una buona notizia! E mi sa anche dire dov\'è il ristorante da Settimo?',F);
@@ -829,9 +829,9 @@ registraScena({
       g1.path=[];g2.path=[];g1.state=g2.state='idle';g1.dir=g2.dir='W';await pausa(1.4);                          // ...si fermano insieme e si girano a guardarlo
       g1.dir=g2.dir='E';await coppia(275,14);g1.visibile=g2.visibile=false;await pausa(.8);
       p.dir='W';await p.vaiA(BK.LX+14,BK.LY+3,false,'W');BK.stop=true;                                               // Nick va da Leonardo, che continua a tirare
-      while(!BK.fine)await pausa(.1);zoomCam(3.2,(BK.LX+BK.LX+14)/2,BK.LY-13,1.4);await pausa(2.6);A.setHint('CONTINUA…',true)})},
+      while(!BK.fine)await pausa(.1);zoomCam(3.8,(BK.LX+BK.LX+14)/2,74,1.4);await pausa(2.6);A.setHint('CONTINUA…',true)})},
   aggiorna(s,dt){BK.t+=dt;const L=s.attori.leonardo;if(L)L.visibile=false;
-    window.CUP=[];BK.zoom=!!(window.__ZC&&window.__ZC.k>1.02&&BK.fine);if(BK.zoom){const pl=s.giocatore;if(pl){pl.visibile=false;window.CUP.push({img:cuImg('cu_leonardo_palla'),x:BK.LX,y:BK.LY,h:15.8},{img:cuImg(cuNick(pl,BK.t)),x:pl.x,y:pl.y,h:pl.altezza()*.97,dy:pl.talking?Math.sin(BK.t*16)*.2:0})}}
+    window.CUP=[];BK.zoom=!!(window.__ZC&&window.__ZC.k>1.02&&BK.fine);if(BK.zoom){const pl=s.giocatore;if(pl){pl.visibile=false;window.CUP.push({img:cuImg('cu_leonardo_palla'),x:BK.LX,y:BK.LY,h:15.8},{img:cuImg(cuNick(pl,BK.t)),x:pl.x,y:pl.y,h:pl.altezza()*.97,dy:0})}}
 
     if(!BK.fine){const n=Math.floor(BK.t/BK_CIC);if(n>BK.cic){BK.cic=n;if(BK.stop)BK.fine=true}}},
   sopra(gg,s){if(!BK.IMG.complete||!BK.IMG.naturalWidth)return;const LX=BK.LX,LY=BK.LY,W=20,H=24;gg.save();gg.imageSmoothingEnabled=false;
