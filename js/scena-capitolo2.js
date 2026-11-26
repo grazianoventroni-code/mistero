@@ -14,6 +14,8 @@ window.__C2=null;const C2={ritorno:false,ponteDetto:false,ponteVisto:false,svegl
 window.__C2=C2;const sm=x=>{x=clamp(x,0,1);return x*x*(3-2*x)};
 const CUI={};const cuImg=n=>CUI[n]||(CUI[n]=mkImg('img/emb/'+n+'.png'));   // (27 nov) originali ad alta risoluzione per le inquadrature con zoom (window.CUP, vedi present() in index.html)
 const cuNick=(a,t)=>'cu_nick_profsx';   // Nick di profilo (guarda a sinistra), dal foglio pose originale   // Nick originale (foglio espressioni): fermo / bocca che si muove
+for(const n of ['nick','graziano','leonardo'])for(let i=0;i<8;i++)cuImg('cu_'+n+'_t'+i);   // precarica TUTTE le pose: se un'immagine non e' ancora pronta il personaggio sparirebbe per un istante
+for(const n of ['cu_graziano','cu_leonardo_palla','cu_leonardo_pensa0','cu_leonardo_pensa1','cu_leonardo_pensa2'])cuImg(n);
 let CUAX={};fetch('img/emb/cu_ax.json?v='+Date.now()).then(r=>r.ok?r.json():{}).then(j=>{CUAX=j}).catch(()=>{});
 const cuQ=(nome,x,y,h,flip)=>({img:cuImg(nome),x,y,h,flip:!!flip,ax:CUAX[nome]===undefined?.5:CUAX[nome],dy:0});   // un personaggio ORIGINALE hi-res per l'inquadratura con zoom
 const cuHash=x=>{const v=Math.sin(x*127.1)*43758.5453;return v-Math.floor(v)};
@@ -785,7 +787,7 @@ const SCO_FRASI=['Hey!','Ho!',"Let's go!"];
 registraScena({
   id:'c2-scorcio',sfondo:'img/scene/firenze-castelnuovo-scorcio.png',
   giocatore:'protagonista-esterno',nomeGiocatore:'NICK',partenza:{x:236,y:97,dir:'W'},
-  attori:[{nome:'ramone-1',etichetta:'RAMONE',x:127,y:79,dir:'S'},{nome:'ramone-2',etichetta:'RAMONE',x:137,y:79,dir:'S'},{nome:'ramone-3',etichetta:'RAMONE',x:147,y:79,dir:'S'},{nome:'ramone-4',etichetta:'RAMONE',x:157,y:79,dir:'S'}],
+  attori:[{nome:'ramone-1',etichetta:'RAMONE',x:127,y:79,dir:'S',k:1.28},{nome:'ramone-2',etichetta:'RAMONE',x:137,y:79,dir:'S',k:1.28},{nome:'ramone-3',etichetta:'RAMONE',x:147,y:79,dir:'S',k:1.28},{nome:'ramone-4',etichetta:'RAMONE',x:157,y:79,dir:'S',k:1.28}],
   area:[[70,70],[236,70],[236,100],[70,100]],ostacoli:[[[100,70],[166,70],[166,80],[100,80]]],rif:[90,1.14],audioPassi:false,ambiente:{stanza:0,vento:.25,foglie:1,pioggia:0,fuoco:0},suggerimento:'',senzaEtichette:true,
   entra(s){SCO.t=0;SCO.prossimo=.8;SCO.caos=true;const p=s.giocatore;fadeTo(0,.9);s.occupato=true;document.getElementById('bHint').style.display='none';if(p){p.x=236;p.y=97;p.dir='W';p.state='idle'}
     s.sequenza(async()=>{await pausa(1.6);await p.vaiA(188,96,false,'W');p.dir='W';await pausa(.8);const F={frontale:false};
@@ -799,7 +801,7 @@ registraScena({
       SCO.prossimo=SCO.t+.3+Math.random()*.7}}
 });
 
-const BK={t:0,cic:0,stop:false,fine:false,pensa:false,parlato:false,LX:72,LY:92,IMG:mkImg('img/emb/leonardo_basket_r1.png'),PAL:mkImg('img/emb/pallone_r1.png')};
+const BK={t:0,cic:0,stop:false,fine:false,pensa:false,parlato:false,LX:72,LY:92,IMG:mkImg('img/emb/leonardo_basket_r1.png'),PAL:mkImg('img/emb/pallone_r2.png')};
 const BK_CIC=3.2;   // un tiro completo: 0-.45 palla in mano, .45-.75 sale, .75 la palla parte, arco fino al canestro (1.55), retina, cade, rimbalza e torna in mano (3.1)
 function bkFrame(t){return t<.45?0:t<.75?1:t<.95?2:t<1.3?3:t<3.1?4:0}
 function bkPalla(t,lx,ly){   // posizione logica della palla (Leonardo guarda a sinistra); null quando e' quella dello sprite (in mano)
@@ -857,19 +859,35 @@ registraScena({
 });
 
 /* ---------------- (27 nov) MINIGIOCO DEL BASKET: Nick di schiena, canestro frontale, 10 canestri di fila ---------------- */
-const MG={bg:mkImg('img/scene/firenze-basket-frontale.png'),pal:mkImg('img/emb/pallone_r1.png'),sp:[0,1,2,3].map(i=>mkImg('img/emb/nick_sp'+i+'.png')),
-  RC:[120,30.7],t:0,mode:'mira',d:null,streak:0,best:0,tiro:null,rete:-9,vinto:false,msg:'',ta:0,n:0,ultimo:null,tu:-9};
+const MG={bg:mkImg('img/scene/firenze-basket-frontale.png'),pal:mkImg('img/emb/pallone_r2.png'),sp:[0,1,2,3].map(i=>mkImg('img/emb/nick_sp'+i+'.png')),ovF:mkImg('img/emb/canestro_fronte.png'),ovR:mkImg('img/emb/canestro_rete.png'),
+  RC:[120,30.7],t:0,mode:'mira',d:null,streak:0,best:0,tiro:null,rete:-9,reteA:1,vinto:false,msg:'',ta:0,n:0,ultimo:null,tu:-9};
 window.__MG=MG;
-const txtW=(t,sc)=>t.length*4*sc-sc;const MG_NH=54;      // altezza logica di Nick (mezzo busto, bordo basso sotto lo schermo)
+const txtW=(t,sc)=>t.length*4*sc-sc;
+const MG_NH=54;      // altezza logica di Nick (mezzo busto, bordo basso sotto lo schermo)
 const MG_COMP=.4;    // compressione della mira: il punto d'arrivo = centro anello + 0,4 x (dito - centro anello)
 const MG_P0=15,MG_P1=7;   // diametro della palla (px logici): vicino a Nick 15, al canestro 7 (anello 13,4 px = 0,45 m, palla 0,24 m)
+const MG_FISICA={g:170,YH:43,Y0:79,HR:48.3,TARCO:.95};   // gravita' (px/s^2 al piano del canestro), orizzonte, terra e altezza dell'anello (px) nel piano del canestro
 function mgBersaglio(x,y){const T=[Math.max(50,Math.min(190,x)),Math.max(4,Math.min(95,y))];return [MG.RC[0]+(T[0]-MG.RC[0])*MG_COMP,MG.RC[1]+(T[1]-MG.RC[1])*MG_COMP]}
-function mgPos(k,L){   // palla in volo verso il punto d'arrivo L (k 0..1): arco con la discesa dall'alto, dimensione in prospettiva
+function mgPos(k,L){   // volo: arco con la discesa dall'alto, dimensione in prospettiva
   const S=[120,50],x=S[0]+(L[0]-S[0])*k,y=S[1]+(L[1]-S[1])*k-4*18*k*(1-k);return [x,y,MG_P0+(MG_P1-MG_P0)*k]}
 function mgTira(L){
   const dx=L[0]-MG.RC[0],dy=L[1]-MG.RC[1],e=Math.hypot(dx,dy);let es='fuori';
   if(e<=3.2)es='dentro';else if(e<=5.4)es='rullo';else if(e<=9.5)es='ferro';else if(L[0]>103&&L[0]<137&&L[1]>12&&L[1]<34)es='tabellone';
-  MG.tiro={L,es,t:0,dir:dx<0?-1:1,fatto:false};MG.mode='tiro';MG.n++}
+  MG.tiro={L,es,t:0,dir:dx<0?-1:1,fatto:false,ph:null,sp:0,fine:0};MG.mode='tiro';MG.n++}
+/* all'impatto nasce lo stato fisico: X (lato, px al piano del canestro), h (altezza da terra), Z (verso la camera, 0 = piano del canestro); vx,vh,vz velocita' */
+function mgImpatto(q){const F=MG_FISICA,L=q.L,X=L[0]-120,rnd=cuHash(MG.n*3.7);let P;
+  if(q.es==='dentro'||q.es==='rullo'){const x0=q.es==='rullo'?0:(L[0]-MG.RC[0])*.6;P={X:x0,h:F.HR+1,Z:0,vx:-x0*2,vh:-72,vz:0,net:true,sp:0,w:2}}
+  else if(q.es==='ferro'){const d=X>=0?1:-1;P={X,h:F.Y0-L[1],Z:0,vx:d*(24+rnd*22),vh:62+rnd*34,vz:.2+rnd*.16,net:false,sp:0,w:d*7}}    // batte sul ferro: rimbalza in alto, di lato e verso di noi
+  else if(q.es==='tabellone'){P={X,h:F.Y0-L[1],Z:0,vx:-X*.7+(rnd-.5)*20,vh:22+rnd*22,vz:.3+rnd*.14,net:false,sp:0,w:-X*.1}}                 // batte sul tabellone: torna indietro
+  else{P={X,h:F.Y0-L[1],Z:0,vx:(X>=0?1:-1)*(12+rnd*14),vh:-60,vz:-.34,net:false,sp:0,w:3}}                                                      // aria: continua e cade oltre il canestro
+  q.ph=P}
+function mgFis(q,dt){const F=MG_FISICA,P=q.ph;if(!P)return;
+  P.vh-=F.g*dt;P.h+=P.vh*dt;P.X+=P.vx*dt;P.Z+=P.vz*dt;P.sp+=P.w*dt;
+  if(P.net){if(P.h<F.HR&&P.h>F.HR-9.5){P.X+=(0-P.X)*Math.min(1,dt*7);P.vx*=Math.max(0,1-dt*7);P.vh*=Math.max(.45,1-dt*3.2)}   // la rete guida e frena la palla
+    else if(P.h<=F.HR-9.5){P.net=false;P.vz=.1+.08*cuHash(MG.n*1.3)}}
+  if(P.h<=0){P.h=0;if(Math.abs(P.vh)>26){P.vh=-P.vh*.6;P.vx*=.8;P.vz*=.8;P.w*=.8;if(P.rimb<3){P.rimb=(P.rimb||0)+1;try{A.sfx.thud()}catch(e){}}}else{P.vh=0;P.vx*=.97;P.vz*=.97}}
+  if(P.Z>.7)P.Z=.7;if(P.Z<-.6)P.Z=-.6;if(P.h===0&&Math.abs(P.vx)<6&&Math.abs(P.vz)<.04)P.quiet=(P.quiet||0)+dt}
+function mgProietta(P){const F=MG_FISICA,sc=1/(1-P.Z);return [120+P.X*sc,F.YH+(F.Y0-P.h-F.YH)*sc,MG_P1*sc]}
 function mgFine(ok){
   if(ok){MG.streak++;if(MG.streak>MG.best)MG.best=MG.streak}else MG.streak=0;
   if(MG.streak>=10){MG.vinto=true;MG.mode='fine';MG.msg='10 CANESTRI DI FILA!';try{A.sting('scoperta',.6)}catch(e){}setTimeout(()=>{try{A.setHint('CONTINUA…',true)}catch(e){}},900);return}
@@ -878,35 +896,40 @@ registraScena({
   id:'c2-basket-gioco',sfondo:'img/scene/firenze-basket-frontale.png',area:[[0,0],[2,0],[2,2],[0,2]],suggerimento:'',senzaEtichette:true,ambiente:{stanza:0,vento:.2,foglie:1,pioggia:0,fuoco:0},
   entra(s){MG.t=0;MG.mode='mira';MG.d=null;MG.streak=0;MG.n=0;MG.tiro=null;MG.rete=-9;MG.vinto=false;MG.msg='';MG.ultimo=null;fadeTo(0,.9);document.getElementById('bHint').style.display='none';A.setHint('')},
   aggiorna(s,dt){MG.t+=dt;
-    if(MG.mode==='tiro'){const q=MG.tiro;q.t+=dt;const tf=q.es==='rullo'?1.45:.95;
-      if(!q.fatto&&q.t>=tf){q.fatto=true;MG.ultimo=q.L;MG.tu=MG.t;if(q.es==='dentro'||q.es==='rullo'){MG.rete=MG.t;A.sfx.plic()}else if(q.es==='fuori')A.sfx.no();else A.sfx.thud()}
+    if(MG.mode==='tiro'){const q=MG.tiro;q.t+=dt;const tf=q.es==='rullo'?1.45:MG_FISICA.TARCO;
+      if(!q.fatto&&q.t>=tf){q.fatto=true;mgImpatto(q);MG.ultimo=q.L;MG.tu=MG.t;
+        if(q.es==='dentro'||q.es==='rullo'){MG.rete=MG.t;MG.reteA=1;A.sfx.plic()}else if(q.es==='fuori')A.sfx.no();else{A.sfx.thud();MG.rete=MG.t;MG.reteA=.3}}
       if(!q.rimb&&q.es==='rullo'&&q.t>=.95){q.rimb=true;A.sfx.thud()}
-      const dur=q.es==='dentro'?1.9:q.es==='rullo'?2.4:q.es==='fuori'?1.8:2.2;if(q.t>=dur){MG.tiro=null;mgFine(q.es==='dentro'||q.es==='rullo')}}
+      if(q.fatto){let n=Math.max(1,Math.ceil(dt/.008)),h=dt/n;for(let i=0;i<n;i++)mgFis(q,h);const b=mgProietta(q.ph);
+        const fuori=b[1]>126||b[0]<-10||b[0]>250||b[2]>MG_P1*2.6||q.ph.quiet>.5;if(fuori||q.t>tf+3.4)q.fine+=dt;if(q.fine>.35||q.t>tf+3.8){MG.tiro=null;mgFine(q.es==='dentro'||q.es==='rullo')}}}
     else if(MG.mode==='attesa'){MG.ta+=dt;if(MG.ta>.5)MG.mode='mira'}},
   giu(s,x,y){if(MG.mode!=='mira'||MG.vinto)return;if(y<46)return;MG.d={x0:x,y0:y,x,y}},   // si parte da Nick (parte bassa dello schermo)
   muovi(s,x,y){if(MG.d){MG.d.x=x;MG.d.y=y}},
   su(s,x,y){const d=MG.d;MG.d=null;if(!d||MG.mode!=='mira')return;if(d.y0-y<10)return;   // serve un vero trascinamento verso l'alto, verso il canestro
     mgTira(mgBersaglio(x,y))},
   disegnaSfondo(gg,s){R(0,0,W,H,'#0a0c12');gg.save();gg.imageSmoothingEnabled=true;gg.imageSmoothingQuality='high';if(MG.bg.complete&&MG.bg.naturalWidth)gg.drawImage(MG.bg,0,0,W,H);gg.restore();
-    // rete che oscilla dopo il canestro (porzione dello sfondo ridisegnata riga per riga con sbandamento)
-    const tr=MG.t-MG.rete;if(tr>=0&&tr<1.6&&MG.bg.complete){const a=1.4*Math.exp(-tr*2.2)*Math.sin(tr*21),bul=tr<.45?Math.sin(tr/.45*Math.PI)*1.2:0;gg.save();gg.imageSmoothingEnabled=false;gg.fillStyle='rgba(46,64,40,.9)';gg.fillRect(113.5,31,13,9.2);
-      for(let r=0;r<35;r++){const f=(r+1)/35,off=a*f*f,w=11.5+bul*f;gg.drawImage(MG.bg,457,125+r,46,1,114.2-(w-11.5)/2+off,31.2+r*.25,w,.25)}gg.restore()}
+    const tr=MG.t-MG.rete,sway=tr>=0&&tr<1.6;
+    // se la rete oscilla si copre quella dello sfondo con il fondo scuro (le maglie vere sono sopra la palla, ridisegnate piu' sotto)
+    if(sway&&MG.bg.complete){gg.save();gg.fillStyle='rgba(44,62,42,.96)';gg.fillRect(113.8,32.5,13,7.5);gg.restore()}
+    // palla
+    const q=MG.tiro;let b=null,dietro=true;
+    if(q&&q.t>=.18){
+      if(!q.fatto){const k=Math.min(1,(q.t-.18)/(MG_FISICA.TARCO-.18));b=mgPos(k,q.L);b.push(k*3)}
+      else if(q.es==='rullo'&&q.t<1.45){const u=q.t-.95,f=Math.max(0,1-u/.5),L=q.L;b=[MG.RC[0]+(L[0]-MG.RC[0])*f+Math.sin(u*30)*2.4*f,MG.RC[1]+Math.sin(u*30+1)*.9*f+(L[1]-MG.RC[1])*f,MG_P1,u*9]}
+      else if(q.ph){const p=mgProietta(q.ph);b=[p[0],p[1],p[2],q.ph.sp];dietro=(q.es==='dentro'||q.es==='rullo')&&q.ph.Z<.12}}
+    const pal=()=>{if(b&&MG.pal.complete&&MG.pal.naturalWidth){gg.save();gg.imageSmoothingEnabled=true;gg.imageSmoothingQuality='high';gg.translate(b[0],b[1]);gg.rotate(b[3]||0);gg.drawImage(MG.pal,-b[2]/2,-b[2]/2,b[2],b[2]);gg.restore()}};
+    if(dietro)pal();
+    // meta' anteriore del cerchio + rete (sopra la palla: la palla entra dentro); la parte bassa della rete oscilla
+    if(MG.ovF.complete&&MG.ovR.complete){const ox=111.5,oy=28;gg.save();gg.imageSmoothingEnabled=false;gg.drawImage(MG.ovF,ox,oy,16.5,12.5);
+      const a=sway?1.5*MG.reteA*Math.exp(-tr*2.2)*Math.sin(tr*21):0,bul=sway&&tr<.45?Math.sin(tr/.45*Math.PI)*1.1*MG.reteA:0,n=50;
+      for(let r=0;r<n;r++){const f=Math.max(0,(r-18)/(n-18)),off=a*f*f,w=16.5+bul*f;gg.drawImage(MG.ovR,0,r,66,1,ox-(w-16.5)/2+off,oy+r*.25,w,.25)}gg.restore()}
+    if(!dietro)pal();
     // segno dell'ultimo tiro sul piano del canestro (dove e' arrivata la palla)
     if(MG.ultimo&&MG.t-MG.tu<2.4){gg.save();gg.globalAlpha=Math.max(0,1-(MG.t-MG.tu)/2.4)*.9;gg.strokeStyle='#ff5a3c';gg.lineWidth=.8;const u=MG.ultimo;gg.beginPath();gg.moveTo(u[0]-2.2,u[1]-2.2);gg.lineTo(u[0]+2.2,u[1]+2.2);gg.moveTo(u[0]+2.2,u[1]-2.2);gg.lineTo(u[0]-2.2,u[1]+2.2);gg.stroke();gg.restore()}
     // Nick di schiena (mezzo busto)
-    const q=MG.tiro;let pz=0;if(q){pz=q.t<.18?1:q.t<.55?2:3}const im=MG.sp[pz];
+    let pz=0;if(q){pz=q.t<.18?1:q.t<.55?2:3}const im=MG.sp[pz];
     if(im&&im.complete&&im.naturalWidth){const h=MG_NH,w=h*im.naturalWidth/im.naturalHeight;gg.save();gg.imageSmoothingEnabled=true;gg.imageSmoothingQuality='high';gg.drawImage(im,120-w/2,H-h+2,w,h);gg.restore()}
-    // palla in volo (in scala)
-    if(q&&q.t>=.18){const k=Math.min(1,(q.t-.18)/.77),L=q.L;let b;
-      if(q.t<.95)b=mgPos(k,L);
-      else{const u=q.t-.95;
-        if(q.es==='rullo'&&u<.5){const f=1-u/.5;b=[MG.RC[0]+(L[0]-MG.RC[0])*f+Math.sin(u*30)*2.4*f,MG.RC[1]+Math.sin(u*30+1)*.9*f+(L[1]-MG.RC[1])*f,MG_P1]}
-        else{const v=q.es==='rullo'?u-.5:u,p0=q.es==='rullo'?[MG.RC[0],MG.RC[1]]:L;
-          if(q.es==='dentro'||q.es==='rullo'){b=v<.5?[p0[0],p0[1]+v*20,MG_P1-.8*v]:[p0[0],p0[1]+10+(v-.5)*34,MG_P1-.4-(v-.5)*1.6]}
-          else if(q.es==='fuori'){b=[L[0]+q.dir*v*16,L[1]-v*10+v*v*46,MG_P1-1.5*v]}
-          else{const w2=Math.min(1,v/1.3),bx=L[0]+q.dir*(8+w2*26),by=L[1]+(100-L[1])*w2*w2-Math.abs(Math.sin(w2*Math.PI*2.5))*12*(1-w2);b=[bx,by,MG_P1+(MG_P0-MG_P1)*w2]}}}   // ferro/tabellone: rimbalza verso di noi e cresce
-      if(b){gg.save();gg.imageSmoothingEnabled=false;if(q.t>1.5&&(q.es==='dentro'||q.es==='rullo'))gg.globalAlpha=Math.max(0,1-(q.t-1.5)/.4);if(MG.pal.complete)gg.drawImage(MG.pal,b[0]-b[2]/2,b[1]-b[2]/2,b[2],b[2]);gg.restore()}}
-    // mira: curva tratteggiata da Nick al punto d'arrivo (reticolo grande come la palla al canestro) + segno del dito
+    // mira: curva tratteggiata da Nick al punto d'arrivo (reticolo grande come la palla al canestro)
     if(MG.d&&MG.mode==='mira'){const L=mgBersaglio(MG.d.x,MG.d.y);gg.save();gg.strokeStyle='rgba(255,240,170,.9)';gg.fillStyle='rgba(255,240,170,.9)';gg.lineWidth=.7;gg.setLineDash([2,2.5]);gg.beginPath();gg.moveTo(120,50);gg.quadraticCurveTo((120+L[0])/2,Math.min(50,L[1])-24,L[0],L[1]);gg.stroke();gg.setLineDash([]);gg.beginPath();gg.arc(L[0],L[1],MG_P1/2,0,Math.PI*2);gg.stroke();gg.beginPath();gg.arc(L[0],L[1],.7,0,Math.PI*2);gg.fill();gg.restore()}
     // istruzioni (finche' non si e' tirato) e contatore
     if(MG.n===0&&MG.mode==='mira'&&!MG.d){const t='TRASCINA IL DITO DA NICK VERSO IL CANESTRO E RILASCIA',w=txtW(t,1);R(120-w/2-4,106,w+8,9,'#000');A.txt(t,120-w/2,108,'#ffe9a0',1)}
