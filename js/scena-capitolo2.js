@@ -18,6 +18,13 @@ for(const n of ['nick','graziano','leonardo'])for(let i=0;i<8;i++)cuImg('cu_'+n+
 for(const n of ['cu_graziano','cu_leonardo_palla','cu_leonardo_pensa0','cu_leonardo_pensa1','cu_leonardo_pensa2','cu_nickc_profsx','cu_nickc_point','cu_nickc_front'])cuImg(n);
 let CUAX={};fetch('img/emb/cu_ax.json?v='+Date.now()).then(r=>r.ok?r.json():{}).then(j=>{CUAX=j}).catch(()=>{});
 const cuQ=(nome,x,y,h,flip)=>({img:cuImg(nome),x,y,h,flip:!!flip,ax:CUAX[nome]===undefined?.5:CUAX[nome],dy:0});   // un personaggio ORIGINALE hi-res per l'inquadratura con zoom
+/* (28 nov) sorriso di Graziano (inquadratura frontale con zoom): denti + scintilla; bocca a (140,82) su sprite 241x760, ancora .5166 */
+const triSorriso=(c,OX,ox,oy,k,gz,t)=>{const h=gz.altezza()*.97*k,X=OX+(gz.x-ox)*k,Y=(gz.y-oy)*k,mx=X+(127-.5166*241)/760*h,my=Y-h+81/760*h,w=.026*h,a=Math.min(1,t/.35);
+  c.save();c.globalAlpha=a;c.fillStyle='#3a1a14';c.beginPath();c.moveTo(mx-w,my-.002*h);c.quadraticCurveTo(mx,my+.022*h,mx+w,my-.002*h);c.quadraticCurveTo(mx,my+.003*h,mx-w,my-.002*h);c.fill();
+  c.fillStyle='#fff8e8';c.beginPath();c.moveTo(mx-w*.85,my);c.quadraticCurveTo(mx,my+.016*h,mx+w*.85,my);c.quadraticCurveTo(mx,my+.002*h,mx-w*.85,my);c.fill();c.restore();
+  const u=(t-.9)/.8;if(u>0&&u<1){const sx=mx+w*.4,sy=my+.008*h,r=(1-Math.abs(u*2-1))*.03*h;c.save();c.globalCompositeOperation='lighter';c.fillStyle='#fff';c.beginPath();
+   c.moveTo(sx,sy-r);c.lineTo(sx+r*.18,sy-r*.18);c.lineTo(sx+r,sy);c.lineTo(sx+r*.18,sy+r*.18);c.lineTo(sx,sy+r);c.lineTo(sx-r*.18,sy+r*.18);c.lineTo(sx-r,sy);c.lineTo(sx-r*.18,sy-r*.18);c.closePath();c.fill();
+   c.globalAlpha=.5;c.beginPath();c.arc(sx,sy,r*.35,0,7);c.fill();c.restore()}};
 const cuHash=x=>{const v=Math.sin(x*127.1)*43758.5453;return v-Math.floor(v)};
 /* (27 nov) fotogramma 'parla' (0 ascolta,1 bocca a meta',2 mano che spiega,3 mani aperte,4 indice,5 mano al petto,6 braccio teso,7 assenso): chi parla alterna bocca e gesti, chi ascolta sta fermo e ogni tanto annuisce */
 function parlaF(att,t,seed){if(!att||!att.talking)return ((t+seed*7)%4.6<.4)?7:0;
@@ -689,7 +696,7 @@ registraScena({
   suggerimento:'',senzaEtichette:true,
   aggiorna(s,dt){const m=s.attori['michael-jackson'];if(m)m.visibile=false;TRI.t+=dt;
     window.CUP=[];if(window.__ZC&&window.__ZC.k>1.02){const gz=s.attori.graziano,pl=s.giocatore;if(gz&&pl){gz.visibile=false;pl.visibile=false;
-      window.CUP.push(gz.dir==='S'?cuQ('cu_graziano',gz.x,gz.y,gz.altezza()*.97):cuQ('cu_graziano_t'+parlaF(gz,TRI.t,.3),gz.x,gz.y,gz.altezza()*.97),cuQ('cu_nick_t'+parlaF(pl,TRI.t,.7),pl.x,pl.y,pl.altezza()*.97))}}   // zoom: Graziano e Nick originali, animati mentre parlano
+      window.CUP.push(gz.dir==='S'?cuQ('cu_graziano',gz.x,gz.y,gz.altezza()*.97):cuQ('cu_graziano_t'+parlaF(gz,TRI.t,.3),gz.x,gz.y,gz.altezza()*.97),cuQ('cu_nick_t'+parlaF(pl,TRI.t,.7),pl.x,pl.y,pl.altezza()*.97));if(gz.dir==='S'&&TRI.sorr>=0)window.CUP.push({fn:(c,OX,ox,oy,k)=>triSorriso(c,OX,ox,oy,k,gz,TRI.t-TRI.sorr)})}}   // zoom: Graziano e Nick originali, animati mentre parlano
 
     if(TRI.mu===0&&TRI.musica&&A.AU&&A.AU.ctx){TRI.mu=1;loopAvvia('audio/musica/billie_jean_loop.mp3',.5).then(ok=>{TRI.mu=ok?2:0})}   // la musica parte appena l'audio e' sbloccato dal primo tocco
     if(TRI.furia>0)TRI.furia=Math.max(0,TRI.furia-dt);
@@ -700,7 +707,7 @@ registraScena({
     const w=200/4*kk,h=110/4*kk,ox=100/4*kk,oy=108/4*kk;
     gg.save();gg.imageSmoothingEnabled=false;gg.globalAlpha=.3;gg.fillStyle='#000';gg.beginPath();gg.ellipse(x,TRI.y+.5,7*kk,1.6,0,0,Math.PI*2);gg.fill();gg.globalAlpha=1;
     gg.translate(x,TRI.y-oy);if(TRI.flip[pz]){gg.scale(-1,1)}gg.drawImage(im,pz*200,0,200,110,-ox,0,w,h);gg.restore()},
-  entra(s){TRI.t=0;TRI.fase=0;TRI.k=-1;TRI.furia=0;TRI.voci=false;TRI.parla=false;TRI.musica=false;TRI.fineVoce=0;TRI.esce=-1;const p=s.giocatore;{const gz0=s.attori.graziano;if(gz0){gz0.visibile=false;gz0.x=-50;gz0.y=-50}}fadeTo(0,.9);s.occupato=true;document.getElementById('bHint').style.display='none';if(p){p.x=18;p.y=116;p.dir='E';p.state='idle'}
+  entra(s){TRI.t=0;TRI.sorr=-1;TRI.fase=0;TRI.k=-1;TRI.furia=0;TRI.voci=false;TRI.parla=false;TRI.musica=false;TRI.fineVoce=0;TRI.esce=-1;const p=s.giocatore;{const gz0=s.attori.graziano;if(gz0){gz0.visibile=false;gz0.x=-50;gz0.y=-50}}fadeTo(0,.9);s.occupato=true;document.getElementById('bHint').style.display='none';if(p){p.x=18;p.y=116;p.dir='E';p.state='idle'}
     for(const v of ['uh','ah','eh','hi'])for(const n of ['','_x2','_x3'])try{A.motore.caricaClip('audio/versi/'+TRI.MJV[v]+n+'.mp3')}catch(e){}
     TRI.mu=0;
     s.sequenza(async()=>{await pausa(1.4);TRI.musica=true;await p.vaiA(112,112,false,'E');p.dir='E';await pausa(1.0);const F={frontale:false};   // la musica parte quando Nick comincia ad attraversare
@@ -720,7 +727,7 @@ registraScena({
       await s.dici(p,'Ah ottimo, finalmente! Ci voleva un gran bell\'uomo per avere una buona notizia! E mi sa anche dire dov\'è il ristorante da Settimo?',F);
       await s.dici(gz,'Certo! Allora deve andare a sinistra, poi a destra, poi dritto, poi di nuovo a destra, a sinistra, dritto e di nuovo a sinistra!',F);
       await s.dici(p,'Perfetto! Grazie!',F);
-      gz.dir='S';await pausa(2.4);                                                                                 // Graziano si gira frontalmente e sorride
+      gz.dir='S';TRI.sorr=TRI.t;await pausa(.9);try{A.tone(2400,.5,'sine',.05,2000);A.tone(3600,.35,'sine',.03,3200)}catch(e){}await pausa(1.5);                                                                                 // Graziano si gira frontalmente e sorride
       s.vaiScena('c2-viaggio3')})}
 });
 

@@ -10,7 +10,7 @@
 <meta name="theme-color" content="#000000">
 <script>/* (12 nov) pulizia: a ogni versione nuova si tolgono service worker e memoria vecchi e si ricarica una volta.
    Un service worker rimasto da versioni precedenti serviva script e indice delle voci superati (le voci non si sentivano). BUILD0 lo aggiorna pubblica.py. */
-(function(){var BUILD0='28 nov 05:00';try{if(!('serviceWorker' in navigator)||localStorage.getItem('mistero-build')===BUILD0)return;localStorage.setItem('mistero-build',BUILD0);window.__pulizia=1;
+(function(){var BUILD0='28 nov 06:00';try{if(!('serviceWorker' in navigator)||localStorage.getItem('mistero-build')===BUILD0)return;localStorage.setItem('mistero-build',BUILD0);window.__pulizia=1;
  var t=setTimeout(function(){location.reload()},4000);
  Promise.all([navigator.serviceWorker.getRegistrations().then(function(rs){return Promise.all(rs.map(function(r){return r.unregister()}))}),
    window.caches?caches.keys().then(function(ks){return Promise.all(ks.map(function(k){return caches.delete(k)}))}):0]).then(function(){clearTimeout(t);location.reload()},function(){clearTimeout(t);location.reload()})}catch(e){}})();</script>
@@ -81,11 +81,11 @@ button:active{background:#1a2438;transform:translate(1px,1px)}
 <div id="probe" style="position:fixed;visibility:hidden;pointer-events:none;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)"></div>
 <div id="rot"><i></i><div>RUOTA IL TELEFONO<br>IN ORIZZONTALE</div></div>
 
-<script src="js/motore.js?v=28nov0500"></script>
-<script src="js/scena-demo.js?v=28nov0500"></script>
-<script src="js/scena-tutti.js?v=28nov0500"></script>
-<script src="js/scena-ramones.js?v=28nov0500"></script>
-<script src="js/scena-capitolo2.js?v=28nov0500"></script>
+<script src="js/motore.js?v=28nov0600"></script>
+<script src="js/scena-demo.js?v=28nov0600"></script>
+<script src="js/scena-tutti.js?v=28nov0600"></script>
+<script src="js/scena-ramones.js?v=28nov0600"></script>
+<script src="js/scena-capitolo2.js?v=28nov0600"></script>
 <script>
 (()=>{
 "use strict";
@@ -116,7 +116,7 @@ function present(){
     dctx.fillStyle=gr;dctx.fillRect(DW-OX,0,OX,H)}
   if(ZC.k>1.001){const sw=W*RS/ZC.k,sh=H*RS/ZC.k,sx=Math.max(0,Math.min(W*RS-sw,ZC.x*RS-sw/2)),sy=Math.max(0,Math.min(H*RS-sh,ZC.y*RS-sh/2));dctx.imageSmoothingEnabled=true;dctx.imageSmoothingQuality='high';dctx.drawImage(scn,sx,sy,sw,sh,OX,0,W,H);
     /* (27 nov) personaggi ORIGINALI ad alta risoluzione sopra lo zoom: window.CUP=[{img,x,y,h,flip,dy}] (piedi x,y e altezza h in unita' logiche della scena) */
-    for(const q of (window.CUP||[])){if(!(q.img&&q.img.complete&&q.img.naturalWidth))continue;const hh=q.h*ZC.k,ww=hh*q.img.naturalWidth/q.img.naturalHeight,X=OX+(q.x-sx/RS)*ZC.k,Y=(q.y+(q.dy||0)-sy/RS)*ZC.k;
+    for(const q of (window.CUP||[])){if(q.fn){q.fn(dctx,OX,sx/RS,sy/RS,ZC.k);continue}if(!(q.img&&q.img.complete&&q.img.naturalWidth))continue;const hh=q.h*ZC.k,ww=hh*q.img.naturalWidth/q.img.naturalHeight,X=OX+(q.x-sx/RS)*ZC.k,Y=(q.y+(q.dy||0)-sy/RS)*ZC.k;
       const ax=q.ax===undefined?.5:q.ax;dctx.save();if(q.flip){dctx.translate(X,0);dctx.scale(-1,1);dctx.drawImage(q.img,-ww*ax,Y-hh,ww,hh)}else dctx.drawImage(q.img,X-ww*ax,Y-hh,ww,hh);dctx.restore()}
     dctx.imageSmoothingEnabled=false}   // zoom: interpolazione morbida (i pixel ingranditi restano riconoscibili)
   else dctx.drawImage(scn,0,0,W*RS,H*RS,OX,0,W,H)}
@@ -2184,7 +2184,7 @@ document.addEventListener('wheel',e=>{if(e.ctrlKey)e.preventDefault()},{passive:
 document.addEventListener('visibilitychange',()=>{if(document.hidden){if(SILENT_EL)SILENT_EL.pause()}else if(AU.ctx)unmuteSilentSwitch();if(AU.ctx){if(document.hidden)AU.ctx.suspend();else AU.ctx.resume()}});
 
 /* aggiornamento automatico: se sul server c'e' una versione piu' nuova di questa, ricarica una volta (cancella anche le copie salvate) */
-const BUILD='28 nov 05:00';
+const BUILD='28 nov 06:00';
 {const ve=document.getElementById('ver');if(ve)ve.textContent='v. '+BUILD;
  if(location.protocol.startsWith('http')){
   fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{
