@@ -787,7 +787,7 @@ const SCO_FRASI=['Hey!','Ho!',"Let's go!"];
 registraScena({
   id:'c2-scorcio',sfondo:'img/scene/firenze-castelnuovo-scorcio.png',
   giocatore:'protagonista-esterno',nomeGiocatore:'NICK',partenza:{x:236,y:97,dir:'W'},
-  attori:[{nome:'ramone-1',etichetta:'RAMONE',x:127,y:79,dir:'S',k:1.28},{nome:'ramone-2',etichetta:'RAMONE',x:137,y:79,dir:'S',k:1.28},{nome:'ramone-3',etichetta:'RAMONE',x:147,y:79,dir:'S',k:1.28},{nome:'ramone-4',etichetta:'RAMONE',x:157,y:79,dir:'S',k:1.28}],
+  attori:[{nome:'ramone-1',etichetta:'RAMONE',x:127,y:79,dir:'S',k:1.152},{nome:'ramone-2',etichetta:'RAMONE',x:137,y:79,dir:'S',k:1.152},{nome:'ramone-3',etichetta:'RAMONE',x:147,y:79,dir:'S',k:1.152},{nome:'ramone-4',etichetta:'RAMONE',x:157,y:79,dir:'S',k:1.152}],
   area:[[70,70],[236,70],[236,100],[70,100]],ostacoli:[[[100,70],[166,70],[166,80],[100,80]]],rif:[90,1.14],audioPassi:false,ambiente:{stanza:0,vento:.25,foglie:1,pioggia:0,fuoco:0},suggerimento:'',senzaEtichette:true,
   entra(s){SCO.t=0;SCO.prossimo=.8;SCO.caos=true;const p=s.giocatore;fadeTo(0,.9);s.occupato=true;document.getElementById('bHint').style.display='none';if(p){p.x=236;p.y=97;p.dir='W';p.state='idle'}
     s.sequenza(async()=>{await pausa(1.6);await p.vaiA(188,96,false,'W');p.dir='W';await pausa(.8);const F={frontale:false};
@@ -826,24 +826,23 @@ registraScena({
     if(p){p.x=186;p.y=91;p.dir='W';p.state='idle'}
     const g1=s.attori.gemella,g2=s.attori.gemella2,F={frontale:false},Y=92,D=6.5;for(const g of [g1,g2]){g.visibile=false;g.vel=24}
     const coppia=async(x,ms)=>{g1.vel=g2.vel=ms||24;await Promise.all([vaiLibero(g1,x,Y),vaiLibero(g2,x+D,Y)])};   // le gemelle vanno SEMPRE affiancate (stessa y, stessa velocita')
-    s.sequenza(async()=>{await pausa(1.8);
+    s.sequenza(async()=>{await pausa(1.0);
       g1.x=262;g2.x=262+D;g1.y=g2.y=Y;g1.dir=g2.dir='W';g1.visibile=g2.visibile=true;                              // compaiono all'improvviso da destra e si avvicinano camminando affiancate
       p.dir='E';try{window.FIATO&&FIATO.suona('protagonista-esterno','sorpresa',1,1)}catch(e){}
-      await coppia(206);g1.dir=g2.dir='S';await pausa(.5);                                                           // parlano frontali, una accanto all'altra
-      await s.dici(g1,'Vuoi giocare con noi?',F);await pausa(.4);
-      p.state='idle';await p.vaiA(p.x-5,p.y+1,false,'E');p.dir='E';await pausa(.3);
-      await s.dici(p,'Oh ehm no no, grazie, preferisco di no. Ciao belle bimbe.',F);await pausa(.5);
-      await s.dici(g1,'Peccato.',F);await pausa(.5);
-      g1.dir=g2.dir='E';coppia(238,9);await pausa(2.0);                                                            // se ne vanno lente...
-      g1.path=[];g2.path=[];g1.state=g2.state='idle';g1.dir=g2.dir='W';await pausa(1.4);                          // ...si fermano insieme e si girano a guardarlo
-      g1.dir=g2.dir='E';await coppia(275,14);g1.visibile=g2.visibile=false;await pausa(.8);
-      p.dir='W';await p.vaiA(BK.LX+14,BK.LY+3,false,'W');BK.stop=true;                                               // Nick va da Leonardo, che continua a tirare
-      while(!BK.fine)await pausa(.1);zoomCam(3.2,(BK.LX+BK.LX+14)/2,80,1.4);await pausa(2.2);   // zoom a figura intera: parte il dialogo
+      await coppia(206,40);g1.dir=g2.dir='S';await pausa(.3);                                                           // parlano frontali, una accanto all'altra
+      await s.dici(g1,'Vuoi giocare con noi?',{frontale:false,attesa:.8});await pausa(.1);
+      p.state='idle';await p.vaiA(p.x-5,p.y+1,false,'E');p.dir='E';await pausa(.1);
+      await s.dici(p,'Oh ehm no no, grazie, preferisco di no. Ciao belle bimbe.',{frontale:false,attesa:1.6});
+      const dpec=s.dici(g1,'Peccato.',{frontale:false,attesa:.3});await pausa(.5);   // (28 nov) appena «Peccato.» e' scritto le gemelle partono, senza aspettare che il testo si chiuda
+      // (28 nov) subito dopo «Peccato.» le gemelle camminano affiancate fuori scena (a destra) e, nello stesso momento, Nick va da Leonardo
+      g1.dir=g2.dir='E';const usc=coppia(290,56).then(()=>{g1.visibile=g2.visibile=false});
+      p.dir='W';const v0=p.vel;p.vel=v0*1.7;const nick=p.vaiA(BK.LX+14,BK.LY+3,false,'W');await Promise.all([usc,nick,dpec]);p.vel=v0;BK.stop=true;                                               // Nick va da Leonardo, che continua a tirare
+      while(!BK.fine)await pausa(.1);zoomCam(3.2,(BK.LX+BK.LX+14)/2,80,1.4);await pausa(1.7);   // zoom a figura intera: parte il dialogo
       const L=s.attori.leonardo;p.dir='W';BK.pensa=false;
       await s.dici(L,'Ehi, ciao!',F);BK.parlato=true;await pausa(.3);
       await s.dici(p,'Ciao! Senti, mi sembri l\'unico a posto da queste parti! Ho bisogno di aiuto! Mi si è fusa la macchina! Conosci un meccanico in zona?',F);await pausa(.4);
       BK.pensa=true;await pausa(1.6);                                                                               // Leonardo si mette in posa pensierosa
-      await s.dici(L,'Sì, posso aiutarti! Ma solo a un patto: devi riuscire a fare 10 canestri di fila!',F);await pausa(.8);
+      await s.dici(L,'Sì, posso aiutarti! Ma solo a un patto: devi riuscire a fare dieci canestri in un minuto!',F);await pausa(.8);
       s.vaiScena('c2-basket-gioco')})},
   aggiorna(s,dt){BK.t+=dt;const L=s.attori.leonardo;if(L)L.visibile=false;
     window.CUP=[];BK.zoom=!!(window.__ZC&&window.__ZC.k>1.02&&BK.fine);if(BK.zoom){const pl=s.giocatore;if(pl){pl.visibile=false;const tk=BK.t,gL=L&&L.talking;
@@ -860,7 +859,7 @@ registraScena({
 
 /* ---------------- (27 nov) MINIGIOCO DEL BASKET: Nick di schiena, canestro frontale, 10 canestri di fila ---------------- */
 const MG={bg:mkImg('img/scene/firenze-basket-frontale.png'),pal:mkImg('img/emb/pallone_r2.png'),sp:[0,1,2,3].map(i=>mkImg('img/emb/nick_sp'+i+'.png')),ovF:mkImg('img/emb/canestro_fronte.png'),ovR:mkImg('img/emb/canestro_rete.png'),
-  RC:[120,30.7],t:0,mode:'mira',d:null,streak:0,best:0,tiro:null,rete:-9,reteA:1,vinto:false,msg:'',ta:0,n:0,ultimo:null,tu:-9};
+  RC:[120,30.7],t:0,mode:'mira',d:null,canestri:0,tempo:60,avviato:false,scaduto:false,spunta:-9,finale:false,tiro:null,rete:-9,reteA:1,vinto:false,msg:'',ta:0,n:0,ultimo:null,tu:-9};
 window.__MG=MG;
 const txtW=(t,sc)=>t.length*4*sc-sc;
 const MG_NH=54;      // altezza logica di Nick (mezzo busto, bordo basso sotto lo schermo)
@@ -876,6 +875,7 @@ const BKS={
   rimbalzo(v){const k=Math.min(1,Math.max(.18,Math.abs(v)/90));A.tone(125,.16,'sine',.30*k,58);A.nburst(420,1,.07,.30*k,'lowpass')},   // pallone a terra: piu' forte se rimbalza forte
   ferro(k=1){[[1180,.55],[1930,.38],[2760,.26],[3980,.15]].forEach(([f,d],i)=>A.tone(f,d,'sine',.10*k/(1+i*.55),f*.985));A.nburst(4200,2,.025,.16*k,'highpass')},   // cerchio: toc metallico che risuona
   rete(){A.nburst(2800,.8,.5,.14,'highpass');setTimeout(()=>A.nburst(5200,.8,.3,.07,'highpass'),55);A.tone(300,.3,'sine',.03,180)},     // swish: la palla scivola nella rete
+  campana(){const nota=(f,v,d)=>{A.tone(f,d,'sine',v,f*.99);A.tone(f*2.76,d*.5,'sine',v*.35,f*2.74);A.tone(f*5.4,d*.28,'sine',v*.14)};nota(1568,.15,.9);setTimeout(()=>nota(2093,.15,1.1),120)},   // campanellina: canestro entrato
   tabellone(){A.tone(230,.14,'triangle',.20,120);A.nburst(650,1,.09,.34,'lowpass');A.nburst(2200,1.5,.04,.1,'bandpass')}           // colpo sordo di plexiglas/legno
 };
 window.__BKS=BKS;
@@ -883,7 +883,7 @@ window.__MGT=L=>mgTira(L);   // solo per le prove: tiro verso il punto L (coordi
 function mgTira(L){
   const dx=L[0]-MG.RC[0],dy=L[1]-MG.RC[1],e=Math.hypot(dx,dy);let es='fuori';
   if(e<=3.2)es='dentro';else if(e<=5.4)es='rullo';else if(e<=9.5)es='ferro';else if(L[0]>103&&L[0]<137&&L[1]>12&&L[1]<34)es='tabellone';
-  MG.tiro={L,es,t:0,dir:dx<0?-1:1,fatto:false,ph:null,sp:0,fine:0};MG.mode='tiro';MG.n++;try{BKS.lancio()}catch(e){}}
+  MG.tiro={L,es,t:0,dir:dx<0?-1:1,fatto:false,ph:null,sp:0,fine:0};MG.mode='tiro';MG.n++;MG.avviato=true;try{BKS.lancio()}catch(e){}}
 /* all'impatto nasce lo stato fisico: X (lato, px al piano del canestro), h (altezza da terra), Z (verso la camera, 0 = piano del canestro); vx,vh,vz velocita' */
 function mgImpatto(q){const F=MG_FISICA,L=q.L,X=L[0]-120,rnd=cuHash(MG.n*3.7);let P;
   if(q.es==='dentro'||q.es==='rullo'){const x0=q.es==='rullo'?0:(L[0]-MG.RC[0])*.6;P={X:x0,h:F.HR+1,Z:0,vx:-x0*2,vh:-72,vz:0,net:true,sp:0,w:2}}
@@ -898,22 +898,37 @@ function mgFis(q,dt){const F=MG_FISICA,P=q.ph;if(!P)return;
   if(P.h<=0){P.h=0;if(Math.abs(P.vh)>26){P.vh=-P.vh*.6;P.vx*=.8;P.vz*=.8;P.w*=.8;if((P.rimb||0)<3){P.rimb=(P.rimb||0)+1;   /* (28 nov) prima 'P.rimb<3' era falso con rimb non definito: il rimbalzo non suonava mai */ try{BKS.rimbalzo(P.vh)}catch(e){}}}else{P.vh=0;P.vx*=.97;P.vz*=.97}}
   if(P.Z>.7)P.Z=.7;if(P.Z<-.6)P.Z=-.6;if(P.h===0&&Math.abs(P.vx)<6&&Math.abs(P.vz)<.04)P.quiet=(P.quiet||0)+dt}
 function mgProietta(P){const F=MG_FISICA,sc=1/(1-P.Z);return [120+P.X*sc,F.YH+(F.Y0-P.h-F.YH)*sc,MG_P1*sc]}
-function mgFine(ok){
-  if(ok){MG.streak++;if(MG.streak>MG.best)MG.best=MG.streak}else MG.streak=0;
-  if(MG.streak>=10){MG.vinto=true;MG.mode='fine';MG.msg='10 CANESTRI DI FILA!';try{A.sting('scoperta',.6)}catch(e){}setTimeout(()=>{try{A.setHint('CONTINUA…',true)}catch(e){}},900);return}
-  MG.mode='attesa';MG.ta=0}
+/* (28 nov) REGOLE: 10 canestri in 60 secondi; gli errori NON azzerano. Il tempo parte al primo tiro. Se scade si perde, dialogo e si ricomincia da capo;
+   se si fanno 10 canestri si vince, dialogo e «CONTINUA…» (la scena successiva non e' stata ancora decisa). */
+function mgReset(){MG.canestri=0;MG.tempo=60;MG.avviato=false;MG.scaduto=false;MG.vinto=false;MG.tiro=null;MG.d=null;MG.msg='';MG.ultimo=null;MG.rete=-9;MG.spunta=-9;MG.n=0;MG.mode='mira';MG.ta=0}
+const MG_NICK={nome:'protagonista-esterno',etichetta:'NICK',talking:false,bocca:1,state:'idle'},MG_LEO={nome:'leonardo',etichetta:'LEONARDO',talking:false,bocca:1,state:'idle'};
+async function mgFinale(s,esito){
+  if(MG.finale)return;MG.finale=true;MG.mode='fine';MG.d=null;const F={frontale:false};
+  try{await s.sequenza(async()=>{
+    if(esito==='vittoria'){MG.msg='10 CANESTRI!';try{A.sting('scoperta',.6)}catch(e){}await pausa(1.6);MG.msg='';
+      await s.dici(MG_NICK,"Ce l'ho fatta!",F);await pausa(.3);
+      await s.dici(MG_LEO,'È vero! Bravo! Ti aiuterò! Seguimi, vieni con me!',F);await pausa(.6);
+      try{A.setHint('CONTINUA…',true)}catch(e){}}                     // la scena successiva non c'e' ancora
+    else{MG.msg='TEMPO SCADUTO';try{A.sfx.no()}catch(e){}await pausa(1.6);MG.msg='';
+      await s.dici(MG_NICK,'Fammi riprovare.',F);await pausa(.3);
+      await s.dici(MG_LEO,'Vaaaaabene!',F);await pausa(.5);mgReset()}})}finally{MG.finale=false}}
+function mgFine(s){   // la palla ha finito il suo giro: si vede se la partita e' vinta, persa, o si continua
+  MG.tiro=null;
+  if(MG.vinto)mgFinale(s,'vittoria');else if(MG.scaduto||MG.tempo<=0)mgFinale(s,'sconfitta');else{MG.mode='attesa';MG.ta=0}}
 registraScena({
   id:'c2-basket-gioco',sfondo:'img/scene/firenze-basket-frontale.png',area:[[0,0],[2,0],[2,2],[0,2]],suggerimento:'',senzaEtichette:true,ambiente:{stanza:0,vento:.2,foglie:1,pioggia:0,fuoco:0},
-  entra(s){MG.t=0;MG.mode='mira';MG.d=null;MG.streak=0;MG.n=0;MG.tiro=null;MG.rete=-9;MG.vinto=false;MG.msg='';MG.ultimo=null;fadeTo(0,.9);document.getElementById('bHint').style.display='none';A.setHint('')},
+  entra(s){MG.t=0;mgReset();MG.finale=false;fadeTo(0,.9);document.getElementById('bHint').style.display='none';A.setHint('')},
   aggiorna(s,dt){MG.t+=dt;
-    if(MG.mode==='tiro'){const q=MG.tiro;q.t+=dt;const tf=q.es==='rullo'?1.45:MG_FISICA.TARCO;
+    if(MG.avviato&&!MG.vinto&&MG.mode!=='fine'&&MG.tempo>0){MG.tempo-=dt;if(MG.tempo<=0){MG.tempo=0;MG.scaduto=true;if(MG.mode!=='tiro')mgFine(s)}}   // il tempo corre anche mentre la palla vola
+    if(MG.mode==='tiro'){const q=MG.tiro;q.t+=dt;const tf=q.es==='rullo'?1.45:MG_FISICA.TARCO;q.tf=tf;
       if(!q.fatto&&q.t>=tf){q.fatto=true;mgImpatto(q);MG.ultimo=q.L;MG.tu=MG.t;
-        if(q.es==='dentro'||q.es==='rullo'){MG.rete=MG.t;MG.reteA=1;BKS.rete()}else if(q.es==='fuori')A.sfx.no();else{if(q.es==='tabellone')BKS.tabellone();else BKS.ferro(1);MG.rete=MG.t;MG.reteA=.3}}
+        if(q.es==='dentro'||q.es==='rullo'){MG.rete=MG.t;MG.reteA=1;BKS.rete();MG.canestri++;MG.spunta=MG.t;BKS.campana();if(MG.canestri>=10)MG.vinto=true}   // canestro: rete, campanellina e spunta verde
+        else if(q.es==='fuori')A.sfx.no();else{if(q.es==='tabellone')BKS.tabellone();else BKS.ferro(1);MG.rete=MG.t;MG.reteA=.3}}
       if(!q.rimb&&q.es==='rullo'&&q.t>=.95){q.rimb=true;BKS.ferro(.85)}
-      if(q.fatto){let n=Math.max(1,Math.ceil(dt/.008)),h=dt/n;for(let i=0;i<n;i++)mgFis(q,h);const b=mgProietta(q.ph);
-        const fuori=b[1]>126||b[0]<-10||b[0]>250||b[2]>MG_P1*2.6||q.ph.quiet>.5;if(fuori||q.t>tf+3.4)q.fine+=dt;if(q.fine>.35||q.t>tf+3.8){MG.tiro=null;mgFine(q.es==='dentro'||q.es==='rullo')}}}
-    else if(MG.mode==='attesa'){MG.ta+=dt;if(MG.ta>.5)MG.mode='mira'}},
-  giu(s,x,y){if(MG.mode!=='mira'||MG.vinto)return;if(y<46)return;MG.d={x0:x,y0:y,x,y}},   // si parte da Nick (parte bassa dello schermo)
+      if(q.fatto){let n=Math.max(1,Math.ceil(dt/.008)),h=dt/n;for(let i=0;i<n;i++)mgFis(q,h);
+        if(q.t>=tf+.7)mgFine(s)}}   // la palla sparisce dopo 0,7 s dall'impatto: Nick e' di nuovo pronto con la palla nuova
+    else if(MG.mode==='attesa'){MG.ta+=dt;if(MG.ta>.35)MG.mode='mira'}},
+  giu(s,x,y){if(MG.mode!=='mira'||MG.vinto||MG.tempo<=0)return;if(y<46)return;MG.d={x0:x,y0:y,x,y}},   // si parte da Nick (parte bassa dello schermo)
   muovi(s,x,y){if(MG.d){MG.d.x=x;MG.d.y=y}},
   su(s,x,y){const d=MG.d;MG.d=null;if(!d||MG.mode!=='mira')return;if(d.y0-y<10)return;   // serve un vero trascinamento verso l'alto, verso il canestro
     mgTira(mgBersaglio(x,y))},
@@ -927,7 +942,7 @@ registraScena({
       if(!q.fatto){const k=Math.min(1,(q.t-.18)/(MG_FISICA.TARCO-.18));b=mgPos(k,q.L);b.push(k*3)}
       else if(q.es==='rullo'&&q.t<1.45){const u=q.t-.95,f=Math.max(0,1-u/.5),L=q.L;b=[MG.RC[0]+(L[0]-MG.RC[0])*f+Math.sin(u*30)*2.4*f,MG.RC[1]+Math.sin(u*30+1)*.9*f+(L[1]-MG.RC[1])*f,MG_P1,u*9]}
       else if(q.ph){const p=mgProietta(q.ph);b=[p[0],p[1],p[2],q.ph.sp];dietro=(q.es==='dentro'||q.es==='rullo')&&q.ph.Z<.12}}
-    const pal=()=>{if(b&&MG.pal.complete&&MG.pal.naturalWidth){gg.save();gg.imageSmoothingEnabled=true;gg.imageSmoothingQuality='high';gg.translate(b[0],b[1]);gg.rotate(b[3]||0);gg.drawImage(MG.pal,-b[2]/2,-b[2]/2,b[2],b[2]);gg.restore()}};
+    const pal=()=>{if(b&&MG.pal.complete&&MG.pal.naturalWidth){gg.save();if(q&&q.fatto&&q.tf)gg.globalAlpha=Math.max(0,Math.min(1,(q.tf+.7-q.t)/.18));gg.imageSmoothingEnabled=true;gg.imageSmoothingQuality='high';gg.translate(b[0],b[1]);gg.rotate(b[3]||0);gg.drawImage(MG.pal,-b[2]/2,-b[2]/2,b[2],b[2]);gg.restore()}};
     if(dietro)pal();
     // meta' anteriore del cerchio + rete (sopra la palla: la palla entra dentro); la parte bassa della rete oscilla
     if(MG.ovF.complete&&MG.ovR.complete){const ox=111.5,oy=28;gg.save();gg.imageSmoothingEnabled=false;gg.drawImage(MG.ovF,ox,oy,16.5,12.5);
@@ -937,13 +952,18 @@ registraScena({
     // segno dell'ultimo tiro sul piano del canestro (dove e' arrivata la palla)
     if(MG.ultimo&&MG.t-MG.tu<2.4){gg.save();gg.globalAlpha=Math.max(0,1-(MG.t-MG.tu)/2.4)*.9;gg.strokeStyle='#ff5a3c';gg.lineWidth=.8;const u=MG.ultimo;gg.beginPath();gg.moveTo(u[0]-2.2,u[1]-2.2);gg.lineTo(u[0]+2.2,u[1]+2.2);gg.moveTo(u[0]+2.2,u[1]-2.2);gg.lineTo(u[0]-2.2,u[1]+2.2);gg.stroke();gg.restore()}
     // Nick di schiena (mezzo busto)
-    let pz=0;if(q){pz=q.t<.18?1:q.t<.55?2:3}const im=MG.sp[pz];
+    let pz;if(q)pz=q.t<.18?1:2;else if(MG.mode==='attesa'||MG.mode==='fine')pz=0;else pz=3;const im=MG.sp[pz];   // (28 nov) col pallone in volo: braccia in alto (mai la palla sotto il braccio); la palla nuova solo quando e' pronto a tirare
     if(im&&im.complete&&im.naturalWidth){const h=MG_NH,w=h*im.naturalWidth/im.naturalHeight;gg.save();gg.imageSmoothingEnabled=true;gg.imageSmoothingQuality='high';gg.drawImage(im,120-w/2,H-h+2,w,h);gg.restore()}
     // mira: curva tratteggiata da Nick al punto d'arrivo (reticolo grande come la palla al canestro)
     if(MG.d&&MG.mode==='mira'){const L=mgBersaglio(MG.d.x,MG.d.y);gg.save();gg.strokeStyle='rgba(255,240,170,.9)';gg.fillStyle='rgba(255,240,170,.9)';gg.lineWidth=.7;gg.setLineDash([2,2.5]);gg.beginPath();gg.moveTo(120,50);gg.quadraticCurveTo((120+L[0])/2,Math.min(50,L[1])-24,L[0],L[1]);gg.stroke();gg.setLineDash([]);gg.beginPath();gg.arc(L[0],L[1],MG_P1/2,0,Math.PI*2);gg.stroke();gg.beginPath();gg.arc(L[0],L[1],.7,0,Math.PI*2);gg.fill();gg.restore()}
     // istruzioni (finche' non si e' tirato) e contatore
-    if(MG.n===0&&MG.mode==='mira'&&!MG.d){const t='TRASCINA IL DITO DA NICK VERSO IL CANESTRO E RILASCIA',w=txtW(t,1);R(120-w/2-4,106,w+8,9,'#000');A.txt(t,120-w/2,108,'#ffe9a0',1)}
-    {const t='CANESTRI DI FILA '+MG.streak+'/10';R(3,3,txtW(t,1)+6,9,'#000');A.txt(t,6,5,'#ffe9a0',1)}
+    if(MG.n===0&&MG.mode==='mira'&&!MG.d){const t='TRASCINA IL DITO DA NICK VERSO IL CANESTRO E RILASCIA',w=txtW(t,1);R(120-w/2-4,96,w+8,9,'#000');A.txt(t,120-w/2,98,'#ffe9a0',1);
+      const t2='10 CANESTRI IN UN MINUTO (IL TEMPO PARTE AL PRIMO TIRO)',w2=txtW(t2,1);R(120-w2/2-4,107,w2+8,9,'#000');A.txt(t2,120-w2/2,109,'#ffe9a0',1)}
+    {const t='CANESTRI '+MG.canestri+'/10';R(3,3,txtW(t,1)+6,9,'#000');A.txt(t,6,5,'#ffe9a0',1)}
+    {const c=Math.ceil(Math.max(0,MG.tempo)),t='TEMPO '+Math.floor(c/60)+':'+String(c%60).padStart(2,'0'),w=txtW(t,1),urg=MG.avviato&&MG.tempo<10&&MG.tempo>0&&Math.floor(MG.t*3)%2===0;R(W-w-9,3,w+6,9,'#000');A.txt(t,W-w-6,5,urg?'#ff6a50':'#ffe9a0',1)}
+    {const ts=MG.t-MG.spunta;if(ts>=0&&ts<1.3){const a=ts<.9?1:1-(ts-.9)/.4,sc=ts<.18?.4+ts/.18*.85:ts<.3?1.25-(ts-.18)/.12*.25:1;gg.save();gg.globalAlpha=a;gg.translate(150,25);gg.scale(sc,sc);gg.lineJoin='round';gg.lineCap='round';
+      gg.strokeStyle='#0c2a14';gg.lineWidth=6.2;gg.beginPath();gg.moveTo(-7.5,0);gg.lineTo(-2.5,6);gg.lineTo(8,-8.5);gg.stroke();
+      gg.strokeStyle='#3df06a';gg.lineWidth=3.8;gg.beginPath();gg.moveTo(-7.5,0);gg.lineTo(-2.5,6);gg.lineTo(8,-8.5);gg.stroke();gg.restore()}}   // segno di spunta verde: canestro entrato
     if(MG.msg){const sc=2,w=txtW(MG.msg,sc);R(120-w/2-6,52,w+12,18,'#000');A.txt(MG.msg,120-w/2,57,'#ffe9a0',sc)}}
 });
 
