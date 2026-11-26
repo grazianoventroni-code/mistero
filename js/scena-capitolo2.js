@@ -701,7 +701,7 @@ registraScena({
       loopFerma(2.6);await pausa(3.0);                   // ...e dopo anche la musica
       const gz=s.attori.graziano;gz.x=-14;gz.y=111;gz.dir='E';gz.vel=22;gz.visibile=true;                            // Graziano entra da sinistra e cammina sulle strisce pedonali
       await vaiLibero(gz,84,111);p.dir='W';await vaiLibero(gz,97,111);gz.dir='E';await pausa(.4);
-      zoomCam(4.2,105,92,1.6);await pausa(1.8);                                                                    // zoom sullo stesso fondale: mezzo busto dei due
+      zoomCam(3,105,91,1.6);await pausa(1.8);                                                                    // zoom sullo stesso fondale: mezzo busto dei due
       await s.dici(p,'Scusi gran bell\'uomo, mi sa dire dove si trova Novoli?',F);
       await s.dici(gz,'Siamo a Novoli! È questo quartiere!',F);
       await s.dici(p,'Ah ottimo, finalmente! Ci voleva un gran bell\'uomo per avere una buona notizia! E mi sa anche dire dov\'è il ristorante da Settimo?',F);
@@ -806,7 +806,7 @@ registraScena({
   area:[[64,72],[236,72],[236,112],[64,112]],ostacoli:[],rif:[100,1.1],audioPassi:false,ambiente:{stanza:0,vento:.25,foglie:1,pioggia:0,fuoco:0},suggerimento:'',senzaEtichette:true,
   entra(s){BK.t=0;BK.stop=false;BK.fine=false;BK.cic=0;const p=s.giocatore;fadeTo(0,.9);s.occupato=true;document.getElementById('bHint').style.display='none';
     if(p){p.x=186;p.y=91;p.dir='W';p.state='idle'}
-    const g1=s.attori.gemella,g2=s.attori.gemella2,F={frontale:false},Y=92,D=9;for(const g of [g1,g2]){g.visibile=false;g.vel=24}
+    const g1=s.attori.gemella,g2=s.attori.gemella2,F={frontale:false},Y=92,D=6.5;for(const g of [g1,g2]){g.visibile=false;g.vel=24}
     const coppia=async(x,ms)=>{g1.vel=g2.vel=ms||24;await Promise.all([vaiLibero(g1,x,Y),vaiLibero(g2,x+D,Y)])};   // le gemelle vanno SEMPRE affiancate (stessa y, stessa velocita')
     s.sequenza(async()=>{await pausa(1.8);
       g1.x=262;g2.x=262+D;g1.y=g2.y=Y;g1.dir=g2.dir='W';g1.visibile=g2.visibile=true;                              // compaiono all'improvviso da destra e si avvicinano camminando affiancate
@@ -820,7 +820,7 @@ registraScena({
       g1.path=[];g2.path=[];g1.state=g2.state='idle';g1.dir=g2.dir='W';await pausa(1.4);                          // ...si fermano insieme e si girano a guardarlo
       g1.dir=g2.dir='E';await coppia(275,14);g1.visibile=g2.visibile=false;await pausa(.8);
       p.dir='W';await p.vaiA(BK.LX+14,BK.LY+3,false,'W');BK.stop=true;                                               // Nick va da Leonardo, che continua a tirare
-      while(!BK.fine)await pausa(.1);zoomCam(4,(BK.LX+BK.LX+14)/2,BK.LY-14,1.4);await pausa(2.6);A.setHint('CONTINUA…',true)})},
+      while(!BK.fine)await pausa(.1);zoomCam(3.2,(BK.LX+BK.LX+14)/2,BK.LY-13,1.4);await pausa(2.6);A.setHint('CONTINUA…',true)})},
   aggiorna(s,dt){BK.t+=dt;const L=s.attori.leonardo;if(L)L.visibile=false;
     if(!BK.fine){const n=Math.floor(BK.t/BK_CIC);if(n>BK.cic){BK.cic=n;if(BK.stop)BK.fine=true}}},
   sopra(gg,s){if(!BK.IMG.complete||!BK.IMG.naturalWidth)return;const LX=BK.LX,LY=BK.LY,W=20,H=24;gg.save();gg.imageSmoothingEnabled=false;
