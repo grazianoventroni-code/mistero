@@ -13,6 +13,7 @@ const {registraScena,sfx}=M,{g,W,H,RS,R,ell,clamp,lerp,hash,mkImg,CHARS,setHint,
 window.__C2=null;const C2={ritorno:false,ponteDetto:false,ponteVisto:false,sveglio:false,specchio:false,pensato:false,visto:false,ascia:0,scavo:0,chiavi:false,tw:0};   // stato del capitolo 2
 window.__C2=C2;const sm=x=>{x=clamp(x,0,1);return x*x*(3-2*x)};
 const CUI={};const cuImg=n=>CUI[n]||(CUI[n]=mkImg('img/emb/'+n+'.png'));   // (27 nov) originali ad alta risoluzione per le inquadrature con zoom (window.CUP, vedi present() in index.html)
+const cuNick=(a,t)=>a&&a.talking?(Math.floor(t*7)%2?'cu_nick_t1':'cu_nick_t2'):'cu_nick_idle';   // Nick originale (foglio espressioni): fermo / bocca che si muove
 const pausa=s=>new Promise(r=>{let t=s*1000,l=performance.now();const iv=setInterval(()=>{const n=performance.now();if(!window.__PAUSA)t-=n-l;l=n;if(t<=0){clearInterval(iv);r()}},30)});   // (27 nov) si ferma col tasto PAUSA
 /* (13 nov) i testi di Nick stanno in basso, nello stesso riquadro del capitolo 1, con la sua voce (clip Kokoro, indice voci-r2) */
 function dn(s,p,testo,opz={}){return A.sayP(testo,true)}   // (16 nov) i testi avanzano da soli, in fretta
@@ -679,7 +680,7 @@ registraScena({
   ambiente:{stanza:0,vento:.25,pioggia:0,fuoco:0},
   suggerimento:'',senzaEtichette:true,
   aggiorna(s,dt){const m=s.attori['michael-jackson'];if(m)m.visibile=false;TRI.t+=dt;
-    window.CUP=[];if(window.__ZC&&window.__ZC.k>1.02){const gz=s.attori.graziano,pl=s.giocatore;for(const [a,im] of [[gz,'cu_graziano'],[pl,'cu_nick']]){if(!a)continue;a.visibile=false;window.CUP.push({img:cuImg(im),x:a.x,y:a.y,h:a.altezza()*.97,dy:a.talking?Math.sin(TRI.t*16)*.2:0})}}   // zoom: Graziano e Nick originali in alta risoluzione
+    window.CUP=[];if(window.__ZC&&window.__ZC.k>1.02){const gz=s.attori.graziano,pl=s.giocatore;for(const [a,im] of [[gz,'cu_graziano'],[pl,'cu_nick']]){if(!a)continue;a.visibile=false;window.CUP.push({img:cuImg(im==='cu_nick'?cuNick(a,TRI.t):im),x:a.x,y:a.y,h:a.altezza()*.97,dy:a.talking?Math.sin(TRI.t*16)*.2:0})}}   // zoom: Graziano e Nick originali in alta risoluzione
 
     if(TRI.mu===0&&TRI.musica&&A.AU&&A.AU.ctx){TRI.mu=1;loopAvvia('audio/musica/billie_jean_loop.mp3',.5).then(ok=>{TRI.mu=ok?2:0})}   // la musica parte appena l'audio e' sbloccato dal primo tocco
     if(TRI.furia>0)TRI.furia=Math.max(0,TRI.furia-dt);
@@ -801,7 +802,7 @@ function bkPalla(t,lx,ly){   // posizione logica della palla (Leonardo guarda a 
   if(t<1.75){const k=(t-1.45)/.3;return [R[0]+Math.sin(k*9)*.35,R[1]+k*8]}                                       // attraversa la retina
   if(t<2.05){const k=(t-1.75)/.3;return [R[0],R[1]+8+(86-R[1]-8)*k*k]}                                           // cade a terra
   const u=(t-2.05)/1.05,x=43+(lx-3.5-43)*u,fl=86+(ly-86)*u,w=Math.abs(Math.sin(u*Math.PI*3))*15*(1-u);          // rimbalza due volte verso di lui
-  const h=mano(14,33),m=Math.max(0,(u-.85)/.15);return [x,(fl-w)*(1-m)+h[1]*m]}
+  const h=mano(11,33),m=Math.max(0,(u-.85)/.15);return [x,(fl-w)*(1-m)+h[1]*m]}
 const BK_BG=mkImg('img/scene/firenze-giardino-basket.png');
 function bkRete(gg,t){   // la rete (13x14 px dello sfondo = 6,5x7 logici in (40,48)) oscilla dopo il passaggio della palla
   if(t<1.5||t>2.9||!(BK_BG.complete&&BK_BG.naturalWidth))return;const a=(t-1.5),amp=(1.3*Math.exp(-a*2.2))*Math.sin(a*21),bul=(t<1.8?Math.sin((t-1.5)/.3*Math.PI)*.9:0);
@@ -830,7 +831,7 @@ registraScena({
       p.dir='W';await p.vaiA(BK.LX+14,BK.LY+3,false,'W');BK.stop=true;                                               // Nick va da Leonardo, che continua a tirare
       while(!BK.fine)await pausa(.1);zoomCam(3.2,(BK.LX+BK.LX+14)/2,BK.LY-13,1.4);await pausa(2.6);A.setHint('CONTINUA…',true)})},
   aggiorna(s,dt){BK.t+=dt;const L=s.attori.leonardo;if(L)L.visibile=false;
-    window.CUP=[];BK.zoom=!!(window.__ZC&&window.__ZC.k>1.02&&BK.fine);if(BK.zoom){const pl=s.giocatore;if(pl){pl.visibile=false;window.CUP.push({img:cuImg('cu_leonardo_palla'),x:BK.LX,y:BK.LY,h:15.8},{img:cuImg('cu_nick'),x:pl.x,y:pl.y,h:pl.altezza()*.97,dy:pl.talking?Math.sin(BK.t*16)*.2:0})}}
+    window.CUP=[];BK.zoom=!!(window.__ZC&&window.__ZC.k>1.02&&BK.fine);if(BK.zoom){const pl=s.giocatore;if(pl){pl.visibile=false;window.CUP.push({img:cuImg('cu_leonardo_palla'),x:BK.LX,y:BK.LY,h:15.8},{img:cuImg(cuNick(pl,BK.t)),x:pl.x,y:pl.y,h:pl.altezza()*.97,dy:pl.talking?Math.sin(BK.t*16)*.2:0})}}
 
     if(!BK.fine){const n=Math.floor(BK.t/BK_CIC);if(n>BK.cic){BK.cic=n;if(BK.stop)BK.fine=true}}},
   sopra(gg,s){if(!BK.IMG.complete||!BK.IMG.naturalWidth)return;const LX=BK.LX,LY=BK.LY,W=20,H=24;gg.save();gg.imageSmoothingEnabled=false;
