@@ -15,7 +15,7 @@ window.__C2=C2;const sm=x=>{x=clamp(x,0,1);return x*x*(3-2*x)};
 const CUI={};const cuImg=n=>CUI[n]||(CUI[n]=mkImg('img/emb/'+n+'.png'));   // (27 nov) originali ad alta risoluzione per le inquadrature con zoom (window.CUP, vedi present() in index.html)
 const cuNick=(a,t)=>'cu_nick_profsx';   // Nick di profilo (guarda a sinistra), dal foglio pose originale   // Nick originale (foglio espressioni): fermo / bocca che si muove
 for(const n of ['nick','graziano','leonardo'])for(let i=0;i<8;i++)cuImg('cu_'+n+'_t'+i);   // precarica TUTTE le pose: se un'immagine non e' ancora pronta il personaggio sparirebbe per un istante
-for(const n of ['cu_graziano','cu_leonardo_palla','cu_leonardo_pensa0','cu_leonardo_pensa1','cu_leonardo_pensa2'])cuImg(n);
+for(const n of ['cu_graziano','cu_leonardo_palla','cu_leonardo_pensa0','cu_leonardo_pensa1','cu_leonardo_pensa2','cu_nickc_profsx','cu_nickc_point','cu_nickc_front'])cuImg(n);
 let CUAX={};fetch('img/emb/cu_ax.json?v='+Date.now()).then(r=>r.ok?r.json():{}).then(j=>{CUAX=j}).catch(()=>{});
 const cuQ=(nome,x,y,h,flip)=>({img:cuImg(nome),x,y,h,flip:!!flip,ax:CUAX[nome]===undefined?.5:CUAX[nome],dy:0});   // un personaggio ORIGINALE hi-res per l'inquadratura con zoom
 const cuHash=x=>{const v=Math.sin(x*127.1)*43758.5453;return v-Math.floor(v)};
@@ -802,6 +802,8 @@ registraScena({
 });
 
 const BK={t:0,cic:0,stop:false,fine:false,pensa:false,parlato:false,LX:72,LY:92,IMG:mkImg('img/emb/leonardo_basket_r1.png'),PAL:mkImg('img/emb/pallone_r2.png')};
+/* (28 nov) Nick IN CAMICIA (senza cappotto e cappello) per lo zoom dopo il minigioco: profilo che ascolta; mentre parla ogni tanto indica (posa specchiata) e ha un piccolo sussulto */
+const nickCamicia=(pl,tk)=>{const g=pl.talking&&Math.floor(tk/1.15)%3===1,h=pl.altezza()*.97,q=g?cuQ('cu_nickc_point',pl.x,pl.y,h,true):cuQ('cu_nickc_profsx',pl.x,pl.y,h);q.dy=pl.talking?-Math.abs(Math.sin(tk*11))*.3:0;return q};
 const BK_CIC=3.2;   // un tiro completo: 0-.45 palla in mano, .45-.75 sale, .75 la palla parte, arco fino al canestro (1.55), retina, cade, rimbalza e torna in mano (3.1)
 function bkFrame(t){return t<.45?0:t<.75?1:t<.95?2:t<1.3?3:t<3.1?4:0}
 function bkPalla(t,lx,ly){   // posizione logica della palla (Leonardo guarda a sinistra); null quando e' quella dello sprite (in mano)
@@ -823,6 +825,16 @@ registraScena({
   attori:[{nome:'gemella',id:'gemella',etichetta:'LE GEMELLE',x:262,y:92,dir:'W',visibile:false,vel:24},{nome:'gemella',id:'gemella2',etichetta:'LE GEMELLE',x:271,y:92,dir:'W',visibile:false,vel:24},{nome:'leonardo',etichetta:'LEONARDO',x:72,y:92,dir:'E',visibile:false}],
   area:[[64,72],[236,72],[236,112],[64,112]],ostacoli:[],rif:[100,1.1],audioPassi:false,ambiente:{stanza:0,vento:.25,foglie:1,pioggia:0,fuoco:0},suggerimento:'',senzaEtichette:true,
   entra(s){window.__SC=s;window.__BK=BK;BK.parlato=false;BK.t=0;BK.stop=false;BK.fine=false;BK.cic=0;const p=s.giocatore;fadeTo(0,.9);s.occupato=true;document.getElementById('bHint').style.display='none';
+    if(BK.dopo){   // (28 nov) di ritorno dal minigioco: zoom su Nick (in camicia: ha tolto cappotto e cappello per giocare) e Leonardo, tutti e due visibili
+      const esito=BK.dopo;BK.dopo=null;BK.camicia=true;BK.fine=true;BK.parlato=true;BK.pensa=false;const L=s.attori.leonardo,F={frontale:false};
+      p.x=BK.LX+14;p.y=BK.LY+3;p.dir='W';p.state='idle';zoomCam(3.2,(BK.LX+BK.LX+14)/2,80,2.2,true);
+      s.sequenza(async()=>{await pausa(1.0);
+        if(esito==='vittoria'){await s.dici(p,"Ce l'ho fatta!",F);await pausa(.3);
+          await s.dici(L,'È vero! Bravo! Ti aiuterò! Seguimi, vieni con me!',F);await pausa(.6);
+          try{A.setHint('CONTINUA…',true)}catch(e){}}                       // la scena successiva non c'e' ancora
+        else{await s.dici(p,'Fammi riprovare.',F);await pausa(.3);await s.dici(L,'Vaaaaabene!',F);await pausa(.5);s.vaiScena('c2-basket-gioco')}});
+      return}
+    BK.camicia=false;
     if(p){p.x=186;p.y=91;p.dir='W';p.state='idle'}
     const g1=s.attori.gemella,g2=s.attori.gemella2,F={frontale:false},Y=92,D=6.5;for(const g of [g1,g2]){g.visibile=false;g.vel=24}
     const coppia=async(x,ms)=>{g1.vel=g2.vel=ms||24;await Promise.all([vaiLibero(g1,x,Y),vaiLibero(g2,x+D,Y)])};   // le gemelle vanno SEMPRE affiancate (stessa y, stessa velocita')
@@ -842,12 +854,12 @@ registraScena({
       await s.dici(L,'Ehi, ciao!',F);BK.parlato=true;await pausa(.3);
       await s.dici(p,'Ciao! Senti, mi sembri l\'unico a posto da queste parti! Ho bisogno di aiuto! Mi si è fusa la macchina! Conosci un meccanico in zona?',F);await pausa(.4);
       BK.pensa=true;await pausa(1.6);                                                                               // Leonardo si mette in posa pensierosa
-      await s.dici(L,'Sì, posso aiutarti! Ma solo a un patto: devi riuscire a fare dieci canestri in un minuto!',F);await pausa(.8);
+      await s.dici(L,'Sì, posso aiutarti! Ma solo a un patto: devi riuscire a fare dieci canestri in trenta secondi!',F);await pausa(.8);
       s.vaiScena('c2-basket-gioco')})},
   aggiorna(s,dt){BK.t+=dt;const L=s.attori.leonardo;if(L)L.visibile=false;
     window.CUP=[];BK.zoom=!!(window.__ZC&&window.__ZC.k>1.02&&BK.fine);if(BK.zoom){const pl=s.giocatore;if(pl){pl.visibile=false;const tk=BK.t,gL=L&&L.talking;
       let ln;if(BK.pensa)ln=cuQ('cu_leonardo_pensa'+(gL?(Math.floor(tk*7)%2):0),BK.LX,BK.LY,15.8);else if(BK.parlato)ln=cuQ('cu_leonardo_t'+parlaF(L,tk,.5),BK.LX,BK.LY,15.8);else ln=cuQ('cu_leonardo_palla',BK.LX,BK.LY,15.8);
-      window.CUP.push(ln,cuQ('cu_nick_t'+parlaF(pl,tk,.9),pl.x,pl.y,pl.altezza()*.97))}}
+      window.CUP.push(ln,BK.camicia?nickCamicia(pl,tk):cuQ('cu_nick_t'+parlaF(pl,tk,.9),pl.x,pl.y,pl.altezza()*.97))}}
 
     if(!BK.fine){const n=Math.floor(BK.t/BK_CIC);if(n>BK.cic){BK.cic=n;if(BK.stop)BK.fine=true}}},
   sopra(gg,s){if(!BK.IMG.complete||!BK.IMG.naturalWidth)return;const LX=BK.LX,LY=BK.LY,W=20,H=24;gg.save();gg.imageSmoothingEnabled=false;
@@ -858,8 +870,9 @@ registraScena({
 });
 
 /* ---------------- (27 nov) MINIGIOCO DEL BASKET: Nick di schiena, canestro frontale, 10 canestri di fila ---------------- */
+const MG_TEMPO=30;   // (28 nov) secondi per fare i 10 canestri
 const MG={bg:mkImg('img/scene/firenze-basket-frontale.png'),pal:mkImg('img/emb/pallone_r2.png'),sp:[0,1,2,3].map(i=>mkImg('img/emb/nick_sp'+i+'.png')),ovF:mkImg('img/emb/canestro_fronte.png'),ovR:mkImg('img/emb/canestro_rete.png'),
-  RC:[120,30.7],t:0,mode:'mira',d:null,canestri:0,tempo:60,avviato:false,scaduto:false,spunta:-9,finale:false,tiro:null,rete:-9,reteA:1,vinto:false,msg:'',ta:0,n:0,ultimo:null,tu:-9};
+  RC:[120,30.7],t:0,mode:'mira',d:null,canestri:0,tempo:30,avviato:false,scaduto:false,spunta:-9,finale:false,tiro:null,rete:-9,reteA:1,vinto:false,msg:'',ta:0,n:0,ultimo:null,tu:-9};
 window.__MG=MG;
 const txtW=(t,sc)=>t.length*4*sc-sc;
 const MG_NH=54;      // altezza logica di Nick (mezzo busto, bordo basso sotto lo schermo)
@@ -898,20 +911,14 @@ function mgFis(q,dt){const F=MG_FISICA,P=q.ph;if(!P)return;
   if(P.h<=0){P.h=0;if(Math.abs(P.vh)>26){P.vh=-P.vh*.6;P.vx*=.8;P.vz*=.8;P.w*=.8;if((P.rimb||0)<3){P.rimb=(P.rimb||0)+1;   /* (28 nov) prima 'P.rimb<3' era falso con rimb non definito: il rimbalzo non suonava mai */ try{BKS.rimbalzo(P.vh)}catch(e){}}}else{P.vh=0;P.vx*=.97;P.vz*=.97}}
   if(P.Z>.7)P.Z=.7;if(P.Z<-.6)P.Z=-.6;if(P.h===0&&Math.abs(P.vx)<6&&Math.abs(P.vz)<.04)P.quiet=(P.quiet||0)+dt}
 function mgProietta(P){const F=MG_FISICA,sc=1/(1-P.Z);return [120+P.X*sc,F.YH+(F.Y0-P.h-F.YH)*sc,MG_P1*sc]}
-/* (28 nov) REGOLE: 10 canestri in 60 secondi; gli errori NON azzerano. Il tempo parte al primo tiro. Se scade si perde, dialogo e si ricomincia da capo;
+/* (28 nov) REGOLE: 10 canestri in 30 secondi; gli errori NON azzerano. Il tempo parte al primo tiro. Se scade si perde, dialogo e si ricomincia da capo;
    se si fanno 10 canestri si vince, dialogo e «CONTINUA…» (la scena successiva non e' stata ancora decisa). */
-function mgReset(){MG.canestri=0;MG.tempo=60;MG.avviato=false;MG.scaduto=false;MG.vinto=false;MG.tiro=null;MG.d=null;MG.msg='';MG.ultimo=null;MG.rete=-9;MG.spunta=-9;MG.n=0;MG.mode='mira';MG.ta=0}
+function mgReset(){MG.canestri=0;MG.tempo=MG_TEMPO;MG.avviato=false;MG.scaduto=false;MG.vinto=false;MG.tiro=null;MG.d=null;MG.msg='';MG.ultimo=null;MG.rete=-9;MG.spunta=-9;MG.n=0;MG.mode='mira';MG.ta=0}
 const MG_NICK={nome:'protagonista-esterno',etichetta:'NICK',talking:false,bocca:1,state:'idle'},MG_LEO={nome:'leonardo',etichetta:'LEONARDO',talking:false,bocca:1,state:'idle'};
-async function mgFinale(s,esito){
-  if(MG.finale)return;MG.finale=true;MG.mode='fine';MG.d=null;const F={frontale:false};
-  try{await s.sequenza(async()=>{
-    if(esito==='vittoria'){MG.msg='10 CANESTRI!';try{A.sting('scoperta',.6)}catch(e){}await pausa(1.6);MG.msg='';
-      await s.dici(MG_NICK,"Ce l'ho fatta!",F);await pausa(.3);
-      await s.dici(MG_LEO,'È vero! Bravo! Ti aiuterò! Seguimi, vieni con me!',F);await pausa(.6);
-      try{A.setHint('CONTINUA…',true)}catch(e){}}                     // la scena successiva non c'e' ancora
-    else{MG.msg='TEMPO SCADUTO';try{A.sfx.no()}catch(e){}await pausa(1.6);MG.msg='';
-      await s.dici(MG_NICK,'Fammi riprovare.',F);await pausa(.3);
-      await s.dici(MG_LEO,'Vaaaaabene!',F);await pausa(.5);mgReset()}})}finally{MG.finale=false}}
+async function mgFinale(s,esito){   // il dialogo dopo la partita si svolge nella scena del campo, con Nick e Leonardo VISIBILI (Nick ancora in camicia)
+  if(MG.finale)return;MG.finale=true;MG.mode='fine';MG.d=null;
+  MG.msg=esito==='vittoria'?'10 CANESTRI!':'TEMPO SCADUTO';try{if(esito==='vittoria')A.sting('scoperta',.6);else A.sfx.no()}catch(e){}
+  await pausa(1.6);MG.msg='';MG.finale=false;BK.dopo=esito;s.vaiScena('c2-basket')}
 function mgFine(s){   // la palla ha finito il suo giro: si vede se la partita e' vinta, persa, o si continua
   MG.tiro=null;
   if(MG.vinto)mgFinale(s,'vittoria');else if(MG.scaduto||MG.tempo<=0)mgFinale(s,'sconfitta');else{MG.mode='attesa';MG.ta=0}}
@@ -958,7 +965,7 @@ registraScena({
     if(MG.d&&MG.mode==='mira'){const L=mgBersaglio(MG.d.x,MG.d.y);gg.save();gg.strokeStyle='rgba(255,240,170,.9)';gg.fillStyle='rgba(255,240,170,.9)';gg.lineWidth=.7;gg.setLineDash([2,2.5]);gg.beginPath();gg.moveTo(120,50);gg.quadraticCurveTo((120+L[0])/2,Math.min(50,L[1])-24,L[0],L[1]);gg.stroke();gg.setLineDash([]);gg.beginPath();gg.arc(L[0],L[1],MG_P1/2,0,Math.PI*2);gg.stroke();gg.beginPath();gg.arc(L[0],L[1],.7,0,Math.PI*2);gg.fill();gg.restore()}
     // istruzioni (finche' non si e' tirato) e contatore
     if(MG.n===0&&MG.mode==='mira'&&!MG.d){const t='TRASCINA IL DITO DA NICK VERSO IL CANESTRO E RILASCIA',w=txtW(t,1);R(120-w/2-4,96,w+8,9,'#000');A.txt(t,120-w/2,98,'#ffe9a0',1);
-      const t2='10 CANESTRI IN UN MINUTO (IL TEMPO PARTE AL PRIMO TIRO)',w2=txtW(t2,1);R(120-w2/2-4,107,w2+8,9,'#000');A.txt(t2,120-w2/2,109,'#ffe9a0',1)}
+      const t2='10 CANESTRI IN 30 SECONDI (IL TEMPO PARTE AL PRIMO TIRO)',w2=txtW(t2,1);R(120-w2/2-4,107,w2+8,9,'#000');A.txt(t2,120-w2/2,109,'#ffe9a0',1)}
     {const t='CANESTRI '+MG.canestri+'/10';R(3,3,txtW(t,1)+6,9,'#000');A.txt(t,6,5,'#ffe9a0',1)}
     {const c=Math.ceil(Math.max(0,MG.tempo)),t='TEMPO '+Math.floor(c/60)+':'+String(c%60).padStart(2,'0'),w=txtW(t,1),urg=MG.avviato&&MG.tempo<10&&MG.tempo>0&&Math.floor(MG.t*3)%2===0;R(W-w-9,3,w+6,9,'#000');A.txt(t,W-w-6,5,urg?'#ff6a50':'#ffe9a0',1)}
     {const ts=MG.t-MG.spunta;if(ts>=0&&ts<1.3){const a=ts<.9?1:1-(ts-.9)/.4,sc=ts<.18?.4+ts/.18*.85:ts<.3?1.25-(ts-.18)/.12*.25:1;gg.save();gg.globalAlpha=a;gg.translate(150,25);gg.scale(sc,sc);gg.lineJoin='round';gg.lineCap='round';
