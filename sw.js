@@ -1,7 +1,7 @@
 // Service worker: il gioco funziona offline.
 // - i file del gioco (immagini, audio, icone) sono salvati alla prima apertura (sempre scaricati freschi: cache reload) e serviti dalla memoria del telefono;
 // - la pagina, gli script (.js), gli indici (.json) e questo file si chiedono prima alla rete (cosi' gli aggiornamenti arrivano subito) e, senza rete, si usa la copia salvata.
-const VERSION = "27 nov 16:00";
+const VERSION = "27 nov 18:00";
 const CACHE = "mistero-" + VERSION;
 const FILES = [
   "./",
@@ -634,12 +634,20 @@ const FILES = [
   "img/emb/capra_tesa_r1.png",
   "img/emb/chiavi_auto_icona_r1.png",
   "img/emb/chiavi_auto_r1.png",
+  "img/emb/cu_ax.json",
   "img/emb/cu_graziano.png",
+  "img/emb/cu_graziano_point.png",
   "img/emb/cu_graziano_profdx.png",
   "img/emb/cu_graziano_profsx.png",
   "img/emb/cu_leonardo.png",
   "img/emb/cu_leonardo_palla.png",
+  "img/emb/cu_leonardo_pensa0.png",
+  "img/emb/cu_leonardo_pensa1.png",
+  "img/emb/cu_leonardo_pensa2.png",
+  "img/emb/cu_leonardo_point.png",
+  "img/emb/cu_leonardo_prof.png",
   "img/emb/cu_nick_front.png",
+  "img/emb/cu_nick_point.png",
   "img/emb/cu_nick_profdx.png",
   "img/emb/cu_nick_profsx.png",
   "img/emb/dan_biglietto_r2.png",
@@ -696,6 +704,10 @@ const FILES = [
   "img/emb/nick_rabbia_r1.png",
   "img/emb/nick_scale_r1.png",
   "img/emb/nick_scale_r2.png",
+  "img/emb/nick_sp0.png",
+  "img/emb/nick_sp1.png",
+  "img/emb/nick_sp2.png",
+  "img/emb/nick_sp3.png",
   "img/emb/nick_spavento_r1.png",
   "img/emb/pallone_r1.png",
   "img/emb/panda_fianco_dx.png",
@@ -739,6 +751,7 @@ const FILES = [
   "img/scene/cimitero-busti.png",
   "img/scene/cimitero-tombe.png",
   "img/scene/donna-ritratto.png",
+  "img/scene/firenze-basket-frontale.png",
   "img/scene/firenze-biblioteca.png",
   "img/scene/firenze-castelnuovo-parcheggio.png",
   "img/scene/firenze-castelnuovo-scorcio.png",
