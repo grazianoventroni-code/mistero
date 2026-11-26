@@ -386,6 +386,7 @@ class Scena{
       this.oggetti=(this.cfg.oggetti||[]).map(o=>({...o,img:o.img?mkImg(o.img):null}));
       this.pronto=true;if(arr&&arr.cammina)this.giocatore.vaiA(arr.cammina.x,arr.cammina.y,false,arr.cammina.dir);
       const amb=this.cfg.ambiente;if(amb)ambiente(amb);
+      if(window.zoomCam)window.zoomCam(1,120,60,99,true);
       if(this.cfg.entra)this.cfg.entra(this)})}
   update(dt){
     this.t+=dt;if(!this.pronto)return;

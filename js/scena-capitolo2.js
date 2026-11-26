@@ -12,7 +12,7 @@ const M=A.motore;if(!M)return;
 const {registraScena,sfx}=M,{g,W,H,RS,R,ell,clamp,lerp,hash,mkImg,CHARS,setHint,fadeTo,setScene,scenes}=A;
 window.__C2=null;const C2={ritorno:false,ponteDetto:false,ponteVisto:false,sveglio:false,specchio:false,pensato:false,visto:false,ascia:0,scavo:0,chiavi:false,tw:0};   // stato del capitolo 2
 window.__C2=C2;const sm=x=>{x=clamp(x,0,1);return x*x*(3-2*x)};
-const pausa=s=>new Promise(r=>setTimeout(r,s*1000));
+const pausa=s=>new Promise(r=>{let t=s*1000,l=performance.now();const iv=setInterval(()=>{const n=performance.now();if(!window.__PAUSA)t-=n-l;l=n;if(t<=0){clearInterval(iv);r()}},30)});   // (27 nov) si ferma col tasto PAUSA
 /* (13 nov) i testi di Nick stanno in basso, nello stesso riquadro del capitolo 1, con la sua voce (clip Kokoro, indice voci-r2) */
 function dn(s,p,testo,opz={}){return A.sayP(testo,true)}   // (16 nov) i testi avanzano da soli, in fretta
 
@@ -477,7 +477,7 @@ registraScena({
    Rombo del motore (Web Audio, segue velocita' e curve) e fischio delle gomme negli intervalli indicati. Poi scena c2-casello: Igor lavora nella cabina. */
 const VIAGGIO=[{"t0":0.0,"v":[8.0,12.7,17.5,25.8,35.3,43.6,50.7,57.8,62.3,65.7,69.1,72.5],"c":[0.09,3.0,3.0,3.0,3.0,0.22,0.0,0.0,0.0,0.0,0.0,0.0],"sq":[[0.15000000000000002,1.2000000000000002,0.9]]},{"t0":3.0,"v":[40.0,40.9,41.9,42.8,43.8,44.7,45.7,46.6,47.6,48.5,49.5,50.4],"c":[0.0,0.0,0.0,0.78,1.06,0.28,0.99,0.56,0.0,0.0,0.0,0.0],"sq":[[0.75,1.7249999999999999,0.55]]},{"t0":6.0,"v":[40.0,40.9,41.9,42.8,43.8,44.7,45.7,46.6,47.6,48.5,49.5,50.4],"c":[0.0,0.0,0.19,1.87,0.07,1.82,1.85,0.43,1.78,0.38,0.0,0.0],"sq":[[0.675,1.4249999999999998,0.5],[1.6500000000000001,2.4749999999999996,0.55]]},{"t0":9.0,"v":[26.7,26.0,25.4,24.8,24.1,22.8,21.3,19.8,18.3,16.7,15.2,13.7],"c":[0.28,2.3,2.03,0.85,2.16,1.44,0.16,0.0,0.0,0.0,0.0,0.0],"sq":[[0.22499999999999998,1.275,0.6],[2.0250000000000004,2.8499999999999996,0.6]]},{"t0":12.0,"v":[20.0,19.5,19.1,18.6,18.1,17.6,17.2,16.7,16.2,15.7,15.3,14.8],"c":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"sq":[[1.7999999999999998,2.7,0.45]]},{"t0":15.0,"v":[9.3,9.2,9.0,8.9,8.7,8.0,6.6,5.2,3.7,1.7,0.0,0.0],"c":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"sq":[[1.4249999999999998,2.55,0.8]]}]; // VIAGGIO-DATI (generato da _strumenti/aggiorna_viaggio.py)
 const VIAGGIO2=[{"t0":0.0,"v":[22.0,22.6,23.3,23.9,24.6,25.2,25.8,26.5,27.1,27.8],"c":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"sq":[]},{"t0":2.5,"v":[8.7,8.5,8.4,8.2,8.1,7.9,7.6,7.0,6.5,5.9,5.3,4.8,4.2,3.7,3.1,2.6,2.1,1.5,1.1,0.7,0.3],"c":[0.57,2.71,3.0,2.62,1.55,0.64,0.14,0.9,1.66,2.38,2.74,2.43,1.68,0.83,0.36,0.08,0.0,0.0,0.0,0.0,0.0],"sq":[[3.0,4.3,0.5]]}]; // VIAGGIO2-DATI (generato da _strumenti/aggiorna_viaggio2.py)
-const VIAGGIO3=[{"t0":0.0,"v":[0.3,1.3,2.3,3.3,4.4,6.2,8.0,9.8,11.6,13.1,14.5,15.9,17.4,18.8],"c":[0.07,0.27,0.5,0.97,1.61,1.46,0.53,0.77,2.17,3.0,3.0,1.78,0.03,0.0],"sq":[[0.9,2.0,0.5]]},{"t0":3.5,"v":[9.0,8.8,8.7,8.5,8.3,8.2,8.0,6.9,5.8,4.7,3.6,2.5,1.5,0.4],"c":[0.0,0.01,0.29,1.56,2.88,1.79,0.95,2.5,2.39,1.61,0.72,0.29,0.12,0.0],"sq":[[2.3,3.4,0.5]]}]; // VIAGGIO3-DATI (generato da _strumenti/aggiorna_viaggio3.py)
+const VIAGGIO3=[{"t0":0.0,"v":[6.0,7.4,8.8,10.3,11.7,13.1,14.5,16.0,17.4,18.8,20.2,21.6,22.5,23.2,24.0,24.7,25.4],"c":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"sq":[]},{"t0":4.5,"v":[9.0,8.8,8.7,8.5,8.3,8.2,8.0,6.9,5.8,4.7,3.6,2.5,1.5,0.4],"c":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"sq":[[2.3,3.4,0.5]]}]; // VIAGGIO3-DATI (generato da _strumenti/aggiorna_viaggio3.py)
 const VG={fin:false,partito:false,t0:0,sq:0};
 let VGS={src:'video/viaggio.mp4',dati:VIAGGIO,next:'c2-casello'};   // quale filmato, con quali dati, e quale scena segue
 function gommeSuono(dur,vol){const U=A.AU;if(!U||!U.ctx||U.muted||U.ctx.state!=='running')return;const c=U.ctx,t=c.currentTime+.01,f0=880+Math.random()*160;
@@ -699,14 +699,16 @@ registraScena({
       await pausa(3.2);TRI.parla=false;
       TRI.esce=TRI.t;TRI.furia=0;await pausa(3.4);       // MJ esce a destra col moonwalk, i versetti vanno in dissolvenza...
       loopFerma(2.6);await pausa(3.0);                   // ...e dopo anche la musica
-      const gz=s.attori.graziano;gz.x=92;gz.y=100;gz.dir='E';gz.vel=18;gz.visibile=true;p.dir='W';   // in fondo alla strada compare Graziano
-      await vaiLibero(gz,100,111);gz.dir='E';await pausa(.5);
+      const gz=s.attori.graziano;gz.x=-14;gz.y=111;gz.dir='E';gz.vel=22;gz.visibile=true;                            // Graziano entra da sinistra e cammina sulle strisce pedonali
+      await vaiLibero(gz,84,111);p.dir='W';await vaiLibero(gz,97,111);gz.dir='E';await pausa(.4);
+      zoomCam(4.2,105,92,1.6);await pausa(1.8);                                                                    // zoom sullo stesso fondale: mezzo busto dei due
       await s.dici(p,'Scusi gran bell\'uomo, mi sa dire dove si trova Novoli?',F);
       await s.dici(gz,'Siamo a Novoli! È questo quartiere!',F);
       await s.dici(p,'Ah ottimo, finalmente! Ci voleva un gran bell\'uomo per avere una buona notizia! E mi sa anche dire dov\'è il ristorante da Settimo?',F);
       await s.dici(gz,'Certo! Allora deve andare a sinistra, poi a destra, poi dritto, poi di nuovo a destra, a sinistra, dritto e di nuovo a sinistra!',F);
       await s.dici(p,'Perfetto! Grazie!',F);
-      await pausa(.6);s.vaiScena('c2-ritorno-auto')})}
+      gz.dir='S';await pausa(2.4);                                                                                 // Graziano si gira frontalmente e sorride
+      s.vaiScena('c2-viaggio3')})}
 });
 
 /* ---------------- (26 nov) RITORNO ALL'AIUOLA: Nick sale in auto e parte ---------------- */
@@ -748,29 +750,22 @@ registraScena({
     s.sequenza(async()=>{await pausa(1.0);await s.dici(NICK_ATT,'Mi sa che mi son perso.',{frontale:false});await pausa(.8);
       PK.fase=1;PK.tShake=PK.t;scoppioSuono();A.setEng&&A.setEng(0,false);PK.fumoOn=true;await pausa(1.6);        // scoppio, sussulto, l'auto si ferma e fuma dal cofano
       await s.dici(NICK_ATT,'Dannazione.',{frontale:false});await pausa(.6);
-      PK.fase=2;PK.tPorta=PK.t;A.sfx.plic();await pausa(.35);PK.fase=3;A.sfx.thud();await pausa(.7);              // apre lo sportello e scende
-      PK.fase=4;PK.tEsce=PK.t;await pausa(1.4);PK.fase=5;await pausa(.8);
+      PK.fase=2;PK.tPorta=PK.t;A.sfx.plic();await pausa(.5);PK.fase=3;PK.tEsce=PK.t;A.sfx.thud();await pausa(1.8);              // apre lo sportello e scende, davanti al fumo
       await s.dici(NICK_ATT,'Ma perché succedono tutte a me? E ora che faccio? Devo cercare aiuto.',{frontale:false});
       await pausa(.7);s.vaiScena('c2-scorcio')})},
   aggiorna(s,dt){const a=s.attori['protagonista-esterno'];if(a)a.visibile=false;PK.t+=dt;const f=PK.fa;
-    if(PK.fumoOn&&Math.random()<dt*28)PK.fumo.push({x:f.x+f.w*.14+(Math.random()-.5)*3,y:f.y+f.h*.30,r:.8,t:0,vx:(Math.random()-.4)*2,vy:-(3+Math.random()*3)});
+    if(PK.fumoOn&&Math.random()<dt*28)PK.fumo.push({x:f.x+f.w*.5+(Math.random()-.5)*f.w*.3,y:f.y+f.h*.12,r:.8,t:0,vx:(Math.random()-.4)*2,vy:-(3+Math.random()*3)});
     for(const p of PK.fumo){p.t+=dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.r+=dt*2.2}PK.fumo=PK.fumo.filter(p=>p.t<3.2)},
-  sopra(gg,s){if(!(PK.car.complete&&PK.car.naturalWidth&&AIU.porta.complete))return;const f=PK.fa,k=PK.sc,t=PK.t;
+  sopra(gg,s){if(!(PK.car.complete&&PK.car.naturalWidth))return;const f=PK.fa,t=PK.t;
     let sh=0;if(PK.fase===1&&t-PK.tShake<.7)sh=Math.sin((t-PK.tShake)*70)*1.2*(1-(t-PK.tShake)/.7);   // sussulto
-    gg.save();gg.imageSmoothingEnabled=false;
-    const cw=AIU.cw*k/4,ch=AIU.ch*k/4,dx=f.x+f.w-cw,dy=f.y+f.h-ch+sh;
-    if(PK.fase>=3)gg.drawImage(AIU.porta,AIU.cw,0,AIU.cw,AIU.ch,dx,dy,cw,ch);
-    else if(PK.fase===2)gg.drawImage(AIU.porta,0,0,AIU.cw,AIU.ch,dx,dy,cw,ch);
-    else gg.drawImage(PK.car,f.x,f.y+sh,f.w,f.h);
-    gg.restore();
-    // Nick scende: cella 0 (di spalle), poi 'front' dell'atlante, scala come l'auto
-    const NX=f.x+7*k,NY=f.y+f.h+4*k,nc=AIU.NC*k/4;
-    if(PK.fase===4){gg.save();gg.imageSmoothingEnabled=false;gg.drawImage(AIU.nick,0,0,AIU.NC,AIU.NC,NX-nc/2,NY-(AIU.NC-2)*k/4,nc,nc);gg.restore()}
-    if(PK.fase>=5){const c=A.CHARS['protagonista-esterno'];if(c&&c.ready&&c.img.naturalWidth){const fr=c.fr.front,sc=AIU.NH*k/128;gg.save();gg.imageSmoothingEnabled=false;gg.drawImage(c.img,fr.x,fr.y,c.w,c.h,NX-c.ax*sc,NY-c.h*sc,c.w*sc,c.h*sc);gg.restore()}}
-    // fumo grigio dal cofano (davanti dell'auto, in alto a sinistra)
-    for(const p of PK.fumo){gg.globalAlpha=Math.max(0,.55*(1-p.t/3.2));gg.fillStyle='#bfc0c6';gg.beginPath();gg.arc(p.x,p.y,p.r,0,Math.PI*2);gg.fill()}gg.globalAlpha=1}
+    gg.save();gg.imageSmoothingEnabled=false;gg.drawImage(PK.car,f.x,f.y+sh,f.w,f.h);gg.restore();      // l'auto resta sulla strada, vista da dietro
+    // fumo grigio dal cofano: sale oltre il tetto (disegnato PRIMA di Nick, che gli sta davanti)
+    for(const p of PK.fumo){gg.globalAlpha=Math.max(0,.55*(1-p.t/3.2));gg.fillStyle='#bfc0c6';gg.beginPath();gg.arc(p.x,p.y,p.r,0,Math.PI*2);gg.fill()}gg.globalAlpha=1;
+    // Nick scende dal lato sinistro e si ferma davanti all'auto e al fumo (sempre sopra il fumo)
+    if(PK.fase>=3){const c=A.CHARS['protagonista-esterno'];if(c&&c.ready&&c.img.naturalWidth){const fr=c.fr.front,sc=f.h*1.3/c.h,u=Math.min(1,(t-PK.tEsce)/1.4),e=u*u*(3-2*u),
+      nx=f.x+f.w*.12-e*f.w*.22,ny=f.y+f.h+1+e*f.h*.35;gg.save();gg.imageSmoothingEnabled=false;gg.drawImage(c.img,fr.x,fr.y,c.w,c.h,nx-c.ax*sc,ny-c.h*sc,c.w*sc,c.h*sc);gg.restore()}}}
 });
-function PARK_FA(){return {"x":154.38,"y":52.5,"w":47.08,"h":26.25}}   // PARKFA (dati scritti da aggiorna_viaggio3.py)
+function PARK_FA(){return {"x":127.5,"y":52.71,"w":32.5,"h":27.08}}   // PARKFA (dati scritti da aggiorna_viaggio3.py)
 
 /* ---------------- (26 nov) SCORCIO DI CASTELNUOVO: i Ramones appoggiati al muro della casetta dell'elettricita' ---------------- */
 const SCO={t:0,clips:null,prossimo:1.0,caos:true};
@@ -793,45 +788,46 @@ registraScena({
       SCO.prossimo=SCO.t+.3+Math.random()*.7}}
 });
 
-const BK={t:0,cic:0,stop:false,fine:false,LX:46,LY:89,IMG:mkImg('img/emb/leonardo_basket_r1.png'),PAL:mkImg('img/emb/pallone_r1.png')};
-const BK_CICLO=2.7;
-/* un ciclo di tiro: [da,a,fotogramma] ; la palla parte al rilascio (.62), entra nel canestro (1.32), cade e rimbalza fino alle mani (2.7) */
-const BK_FR=[[0,.35,0],[.35,.62,1],[.62,.85,2],[.85,1.2,3],[1.2,1.6,4],[1.6,BK_CICLO,0]];
-function bkFrame(t){for(const f of BK_FR)if(t>=f[0]&&t<f[1])return f[2];return 0}
-function bkPalla(t,lx,ly,flip){   // posizione (logica) della palla nel ciclo; Leonardo guarda a sinistra quando flip
-  const sg=flip?-1:1,mano=(dx,dy)=>[lx+sg*dx/4,ly-dy/4],R=[42,51];
-  if(t<.35)return mano(14,33);
-  if(t<.62){const k=(t-.35)/.27,a=mano(14,33),b=mano(9,58);return [a[0]+(b[0]-a[0])*k,a[1]+(b[1]-a[1])*k]}
-  if(t<1.32){const k=(t-.62)/.7,a=mano(22,64);return [a[0]+(R[0]-a[0])*k,a[1]+(R[1]-a[1])*k-Math.sin(k*Math.PI)*13]}
-  if(t<1.78){const k=(t-1.32)/.46;return [R[0]+Math.sin(k*5)*.4,R[1]+(ly-2-R[1])*k*k]}   // cade dalla retina
-  const k=(t-1.78)/(BK_CICLO-1.78),h=mano(14,33),x0=R[0];return [x0+(h[0]-x0)*k,(ly-2)+(h[1]-(ly-2))*k-Math.abs(Math.sin(k*Math.PI*1.5))*7*(1-k)]}   // rimbalza fino alle mani
+const BK={t:0,cic:0,stop:false,fine:false,LX:72,LY:92,IMG:mkImg('img/emb/leonardo_basket_r1.png'),PAL:mkImg('img/emb/pallone_r1.png')};
+const BK_CIC=3.2;   // un tiro completo: 0-.45 palla in mano, .45-.75 sale, .75 la palla parte, arco fino al canestro (1.55), retina, cade, rimbalza e torna in mano (3.1)
+function bkFrame(t){return t<.45?0:t<.75?1:t<.95?2:t<1.3?3:t<3.1?4:0}
+function bkPalla(t,lx,ly){   // posizione logica della palla (Leonardo guarda a sinistra); null quando e' quella dello sprite (in mano)
+  if(t<.75||t>=3.1)return null;
+  const mano=(dx,dy)=>[lx-dx/4,ly-dy/4],R=[43.5,51.5];
+  if(t<1.55){const k=(t-.75)/.8,a=mano(9,58);return [a[0]+(R[0]-a[0])*k,a[1]+(R[1]-a[1])*k-4*17*k*(1-k)]}      // arco: sale, scende dall'alto dentro l'anello
+  if(t<1.7){const k=(t-1.55)/.15;return [R[0]-.3*Math.sin(k*3),R[1]+k*7]}                                          // attraversa la retina
+  if(t<2.0){const k=(t-1.7)/.3;return [R[0]-.3,R[1]+7+(86-R[1]-7)*k*k]}                                            // cade a terra
+  const u=(t-2.0)/1.1,x=44+(lx-3.5-44)*u,fl=86+(ly-86)*u,w=Math.abs(Math.sin(u*Math.PI*3))*15*(1-u);                // rimbalza due volte verso di lui
+  const h=mano(14,33),m=Math.max(0,(u-.85)/.15);return [x,(fl-w)*(1-m)+h[1]*m]}
 registraScena({
   id:'c2-basket',sfondo:'img/scene/firenze-giardino-basket.png',
   giocatore:'protagonista-esterno',nomeGiocatore:'NICK',partenza:{x:186,y:91,dir:'W'},
-  attori:[{nome:'gemella',id:'gemella',etichetta:'LE GEMELLE',x:262,y:98,dir:'W',visibile:false,vel:30},{nome:'gemella',id:'gemella2',etichetta:'LE GEMELLE',x:272,y:101,dir:'W',visibile:false,vel:30},{nome:'leonardo',etichetta:'LEONARDO',x:46,y:89,dir:'E',visibile:false}],
+  attori:[{nome:'gemella',id:'gemella',etichetta:'LE GEMELLE',x:262,y:92,dir:'W',visibile:false,vel:24},{nome:'gemella',id:'gemella2',etichetta:'LE GEMELLE',x:271,y:92,dir:'W',visibile:false,vel:24},{nome:'leonardo',etichetta:'LEONARDO',x:72,y:92,dir:'E',visibile:false}],
   area:[[64,72],[236,72],[236,112],[64,112]],ostacoli:[],rif:[100,1.1],audioPassi:false,ambiente:{stanza:0,vento:.25,foglie:1,pioggia:0,fuoco:0},suggerimento:'',senzaEtichette:true,
   entra(s){BK.t=0;BK.stop=false;BK.fine=false;BK.cic=0;const p=s.giocatore;fadeTo(0,.9);s.occupato=true;document.getElementById('bHint').style.display='none';
     if(p){p.x=186;p.y=91;p.dir='W';p.state='idle'}
-    const g1=s.attori.gemella,g2=s.attori.gemella2,F={frontale:false};for(const g of [g1,g2]){g.visibile=false}
+    const g1=s.attori.gemella,g2=s.attori.gemella2,F={frontale:false},Y=92,D=9;for(const g of [g1,g2]){g.visibile=false;g.vel=24}
+    const coppia=async(x,ms)=>{g1.vel=g2.vel=ms||24;await Promise.all([vaiLibero(g1,x,Y),vaiLibero(g2,x+D,Y)])};   // le gemelle vanno SEMPRE affiancate (stessa y, stessa velocita')
     s.sequenza(async()=>{await pausa(1.8);
-      g1.x=262;g1.y=92;g2.x=272;g2.y=95;g1.dir=g2.dir='W';g1.visibile=g2.visibile=true;               // compaiono all'improvviso da destra
+      g1.x=262;g2.x=262+D;g1.y=g2.y=Y;g1.dir=g2.dir='W';g1.visibile=g2.visibile=true;                              // compaiono all'improvviso da destra e si avvicinano camminando affiancate
       p.dir='E';try{window.FIATO&&FIATO.suona('protagonista-esterno','sorpresa',1,1)}catch(e){}
-      await Promise.all([vaiLibero(g1,206,92),vaiLibero(g2,216,95)]);g1.dir=g2.dir='W';await pausa(.5);
-      await s.dici(g1,'Vuoi giocare con noi?',F);await pausa(.4);                                            // all'unisono (voce inquietante registrata)
+      await coppia(206);g1.dir=g2.dir='S';await pausa(.5);                                                           // parlano frontali, una accanto all'altra
+      await s.dici(g1,'Vuoi giocare con noi?',F);await pausa(.4);
       p.state='idle';await p.vaiA(p.x-5,p.y+1,false,'E');p.dir='E';await pausa(.3);
       await s.dici(p,'Oh ehm no no, grazie, preferisco di no. Ciao belle bimbe.',F);await pausa(.5);
       await s.dici(g1,'Peccato.',F);await pausa(.5);
-      g1.vel=g2.vel=9;g1.dir=g2.dir='E';const u1=vaiLibero(g1,236,92),u2=vaiLibero(g2,246,95);await pausa(1.7);     // se ne vanno lente...
-      g1.dir=g2.dir='W';g1.path=[];g2.path=[];g1.state=g2.state='idle';await pausa(1.3);                           // ...si fermano e si girano a guardarlo
-      g1.dir=g2.dir='E';g1.vel=g2.vel=14;await Promise.all([vaiLibero(g1,275,92),vaiLibero(g2,284,95)]);g1.visibile=g2.visibile=false;await pausa(.8);
-      p.dir='W';await p.vaiA(78,95,false,'W');BK.stop=true;                                                     // Nick va da Leonardo, che continua a tirare
-      while(!BK.fine)await pausa(.1);await pausa(1.2);A.setHint('CONTINUA…',true)})},
-  aggiorna(s,dt){BK.t+=dt;const L=s.attori.leonardo;if(L)L.visibile=false;const g=s.attori;
-    if(!BK.fine){const t0=BK.t%BK_CICLO,n=Math.floor(BK.t/BK_CICLO);if(n>BK.cic){BK.cic=n;if(BK.stop&&!BK.fine)BK.fine=true}}},
-  sopra(gg,s){if(!BK.IMG.complete||!BK.IMG.naturalWidth)return;const LX=BK.LX,LY=BK.LY,fine=BK.fine;gg.save();gg.imageSmoothingEnabled=false;
-    if(fine){gg.drawImage(BK.IMG,5*80,0,80,96,Math.round(LX-10),Math.round(LY-23.5),20,24);gg.restore();return}   // in piedi, palla sotto il braccio, davanti a Nick
-    const t=BK.t%BK_CICLO,f=bkFrame(t),W=20,H=24;gg.translate(Math.round(LX),0);gg.scale(-1,1);gg.drawImage(BK.IMG,f*80,0,80,96,-W/2,Math.round(LY-H+.5),W,H);gg.restore();   // di profilo, guarda il canestro (a sinistra)
-    const q=bkPalla(t,LX,LY,true);if(BK.PAL.complete&&BK.PAL.naturalWidth){gg.save();gg.imageSmoothingEnabled=false;gg.drawImage(BK.PAL,Math.round(q[0]-1.7),Math.round(q[1]-1.7),3.4,3.4);gg.restore()}}
+      g1.dir=g2.dir='E';coppia(238,9);await pausa(2.0);                                                            // se ne vanno lente...
+      g1.path=[];g2.path=[];g1.state=g2.state='idle';g1.dir=g2.dir='W';await pausa(1.4);                          // ...si fermano insieme e si girano a guardarlo
+      g1.dir=g2.dir='E';await coppia(275,14);g1.visibile=g2.visibile=false;await pausa(.8);
+      p.dir='W';await p.vaiA(BK.LX+14,BK.LY+3,false,'W');BK.stop=true;                                               // Nick va da Leonardo, che continua a tirare
+      while(!BK.fine)await pausa(.1);zoomCam(4,(BK.LX+BK.LX+14)/2,BK.LY-14,1.4);await pausa(2.6);A.setHint('CONTINUA…',true)})},
+  aggiorna(s,dt){BK.t+=dt;const L=s.attori.leonardo;if(L)L.visibile=false;
+    if(!BK.fine){const n=Math.floor(BK.t/BK_CIC);if(n>BK.cic){BK.cic=n;if(BK.stop)BK.fine=true}}},
+  sopra(gg,s){if(!BK.IMG.complete||!BK.IMG.naturalWidth)return;const LX=BK.LX,LY=BK.LY,W=20,H=24;gg.save();gg.imageSmoothingEnabled=false;
+    gg.globalAlpha=.28;gg.fillStyle='#000';gg.beginPath();gg.ellipse(LX,LY+.5,4.5,1.2,0,0,Math.PI*2);gg.fill();gg.globalAlpha=1;
+    if(BK.fine){gg.drawImage(BK.IMG,5*80,0,80,96,Math.round(LX-10),Math.round(LY-H+.5),W,H);gg.restore();return}   // si gira verso Nick: in piedi, palla sotto il braccio
+    const t=BK.t%BK_CIC,f=bkFrame(t);gg.translate(Math.round(LX),0);gg.scale(-1,1);gg.drawImage(BK.IMG,f*80,0,80,96,-W/2,Math.round(LY-H+.5),W,H);gg.restore();   // di profilo verso il canestro
+    const q=bkPalla(t,LX,LY);if(q&&BK.PAL.complete&&BK.PAL.naturalWidth){gg.save();gg.imageSmoothingEnabled=false;gg.drawImage(BK.PAL,Math.round(q[0]-1.7),Math.round(q[1]-1.7),3.4,3.4);gg.restore()}}   // UNA sola palla: quella dello sprite e' in mano solo a inizio/fine ciclo
 });
 
 /* ---------------- (20 nov) PANNELLO: coperchio al buio (torcia dell'attrezzo) + enigma dei fili al buio ----------------
