@@ -1,7 +1,7 @@
 // Service worker: il gioco funziona offline.
 // - i file del gioco (immagini, audio, icone) sono salvati alla prima apertura (sempre scaricati freschi: cache reload) e serviti dalla memoria del telefono;
 // - la pagina, gli script (.js), gli indici (.json) e questo file si chiedono prima alla rete (cosi' gli aggiornamenti arrivano subito) e, senza rete, si usa la copia salvata.
-const VERSION = "28 nov 06:30";
+const VERSION = "28 nov 06:45";
 const CACHE = "mistero-" + VERSION;
 const FILES = [
   "./",
@@ -874,7 +874,12 @@ const FILES = [
   "js/scena-tutti.js",
   "manifest.webmanifest",
   "video/guida-alpina_r6-curve.json",
-  "video/guida-ponte_r5-curve.json"
+  "video/guida-alpina_r6.mp4",
+  "video/guida-ponte_r5-curve.json",
+  "video/guida-ponte_r5.mp4",
+  "video/viaggio.mp4",
+  "video/viaggio2.mp4",
+  "video/viaggio3.mp4"
 ];
 // si cerca SOLO nella cache di questa versione: caches.match() senza nome guarda anche le vecchie e serviva immagini superate
 const cerca = (r) => caches.open(CACHE).then((c) => c.match(r, { ignoreSearch: true }));
@@ -890,7 +895,19 @@ self.addEventListener("fetch", (e) => {
   const r = e.request;
   if (r.method !== "GET" || new URL(r.url).origin !== location.origin) return;
   const u = new URL(r.url);
-  if (u.pathname.endsWith(".mp4")) return;   // (14 nov) i video si leggono a pezzi (Range): Safari non li riproduce se serviti dalla cache; li gestisce la rete
+  if (u.pathname.endsWith(".mp4")) {   /* (28 nov) video offline: Safari li chiede a pezzi (Range) e vuole una risposta 206; dalla cache si taglia il pezzo richiesto. Se il video non e' in cache, va in rete come prima */
+    e.respondWith(cerca(new Request(u.pathname)).then((m) => {
+      if (!m) return fetch(r);
+      const rg = /bytes=(\d*)-(\d*)/.exec(r.headers.get("range") || "");
+      if (!rg) return m;
+      return m.arrayBuffer().then((buf) => {
+        const n = buf.byteLength; let a = rg[1] === "" ? Math.max(0, n - parseInt(rg[2], 10)) : parseInt(rg[1], 10), z = rg[1] === "" || rg[2] === "" ? n - 1 : Math.min(parseInt(rg[2], 10), n - 1);
+        if (a > z || a >= n) return new Response(null, { status: 416, headers: { "Content-Range": "bytes */" + n } });
+        return new Response(buf.slice(a, z + 1), { status: 206, statusText: "Partial Content", headers: { "Content-Type": "video/mp4", "Content-Length": String(z - a + 1), "Content-Range": "bytes " + a + "-" + z + "/" + n, "Accept-Ranges": "bytes" } });
+      });
+    }));
+    return;
+  }
   const pagina = r.mode === "navigate" || /(\/|index\.html|sw\.js|manifest\.webmanifest|\.js|\.json)$/.test(u.pathname);   // (12 nov) anche script e indici: mai codice vecchio con una pagina nuova
   if (pagina) {
     e.respondWith(fetch(r, { cache: "no-store" }).then((res) => { const cp = res.clone(); caches.open(CACHE).then((c) => c.put(r, cp)); return res; })
