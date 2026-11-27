@@ -1,7 +1,7 @@
 // Service worker: il gioco funziona offline.
 // - i file del gioco (immagini, audio, icone) sono salvati alla prima apertura (sempre scaricati freschi: cache reload) e serviti dalla memoria del telefono;
 // - la pagina, gli script (.js), gli indici (.json) e questo file si chiedono prima alla rete (cosi' gli aggiornamenti arrivano subito) e, senza rete, si usa la copia salvata.
-const VERSION = "28 nov 06:00";
+const VERSION = "28 nov 06:30";
 const CACHE = "mistero-" + VERSION;
 const FILES = [
   "./",
@@ -879,7 +879,7 @@ const FILES = [
 // si cerca SOLO nella cache di questa versione: caches.match() senza nome guarda anche le vecchie e serviva immagini superate
 const cerca = (r) => caches.open(CACHE).then((c) => c.match(r, { ignoreSearch: true }));
 self.addEventListener("install", (e) => {
-  e.waitUntil(caches.open(CACHE).then((c) => Promise.all(FILES.map((f) => c.add(new Request(f, { cache: "reload" })).catch(() => {}))   // cache: reload = salta la copia del browser (GitHub Pages la tiene 10 minuti) e scarica sempre il file nuovo)));
+  e.waitUntil(caches.open(CACHE).then((c) => Promise.all(FILES.map((f) => c.add(new Request(f, { cache: "reload" })).catch(() => {})))));   /* cache: reload = salta la copia del browser (GitHub Pages la tiene 10 minuti) e scarica sempre il file nuovo */
   self.skipWaiting();
 });
 self.addEventListener("activate", (e) => {
