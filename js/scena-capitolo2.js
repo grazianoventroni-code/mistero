@@ -18,10 +18,8 @@ for(const n of ['nick','graziano','leonardo'])for(let i=0;i<8;i++)cuImg('cu_'+n+
 for(const n of ['cu_graziano','cu_leonardo_palla','cu_leonardo_pensa0','cu_leonardo_pensa1','cu_leonardo_pensa2','cu_nickc_profsx','cu_nickc_point','cu_nickc_front'])cuImg(n);
 let CUAX={};fetch('img/emb/cu_ax.json?v='+Date.now()).then(r=>r.ok?r.json():{}).then(j=>{CUAX=j}).catch(()=>{});
 const cuQ=(nome,x,y,h,flip)=>({img:cuImg(nome),x,y,h,flip:!!flip,ax:CUAX[nome]===undefined?.5:CUAX[nome],dy:0});   // un personaggio ORIGINALE hi-res per l'inquadratura con zoom
-/* (28 nov) sorriso di Graziano (inquadratura frontale con zoom): denti + scintilla; bocca a (140,82) su sprite 241x760, ancora .5166 */
-const triSorriso=(c,OX,ox,oy,k,gz,t)=>{const h=gz.altezza()*.97*k,X=OX+(gz.x-ox)*k,Y=(gz.y-oy)*k,mx=X+(127-.5166*241)/760*h,my=Y-h+81/760*h,w=.026*h,a=Math.min(1,t/.35);
-  c.save();c.globalAlpha=a;c.fillStyle='#3a1a14';c.beginPath();c.moveTo(mx-w,my-.002*h);c.quadraticCurveTo(mx,my+.022*h,mx+w,my-.002*h);c.quadraticCurveTo(mx,my+.003*h,mx-w,my-.002*h);c.fill();
-  c.fillStyle='#fff8e8';c.beginPath();c.moveTo(mx-w*.85,my);c.quadraticCurveTo(mx,my+.016*h,mx+w*.85,my);c.quadraticCurveTo(mx,my+.002*h,mx-w*.85,my);c.fill();c.restore();
+/* (28 nov) Graziano a fine dialogo (inquadratura frontale con zoom): solo la scintilla sul sorriso, sprite originale intatto; bocca a (140,82) su sprite 241x760, ancora .5166 */
+const triSorriso=(c,OX,ox,oy,k,gz,t)=>{const h=gz.altezza()*.97*k,X=OX+(gz.x-ox)*k,Y=(gz.y-oy)*k,mx=X+(127-.5166*241)/760*h,my=Y-h+81/760*h,w=.026*h;
   const u=(t-.9)/.8;if(u>0&&u<1){const sx=mx+w*.4,sy=my+.008*h,r=(1-Math.abs(u*2-1))*.03*h;c.save();c.globalCompositeOperation='lighter';c.fillStyle='#fff';c.beginPath();
    c.moveTo(sx,sy-r);c.lineTo(sx+r*.18,sy-r*.18);c.lineTo(sx+r,sy);c.lineTo(sx+r*.18,sy+r*.18);c.lineTo(sx,sy+r);c.lineTo(sx-r*.18,sy+r*.18);c.lineTo(sx-r,sy);c.lineTo(sx-r*.18,sy-r*.18);c.closePath();c.fill();
    c.globalAlpha=.5;c.beginPath();c.arc(sx,sy,r*.35,0,7);c.fill();c.restore()}};
