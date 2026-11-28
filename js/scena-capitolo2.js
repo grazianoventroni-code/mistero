@@ -763,12 +763,15 @@ registraScena({
   id:'c2-parcheggio',sfondo:'img/scene/firenze-castelnuovo-parcheggio.png',
   attori:[{nome:'protagonista-esterno',etichetta:'NICK',x:-50,y:-50,dir:'S',visibile:false}],
   area:[[0,0],[2,0],[2,2],[0,2]],suggerimento:'',senzaEtichette:true,ambiente:{stanza:0,vento:.3,pioggia:0,fuoco:0},
-  entra(s){PK.t=0;PK.fase=0;PK.fumo=[];PK.fumoOn=false;A.say('');s.occupato=true;document.getElementById('bHint').style.display='none';fadeTo(0,.9);
+  entra(s){PK.t=0;PK.fase=0;PK.fumo=[];PK.fumoOn=false;PK.tPorta=1e9;PK.tChiude=1e9;A.say('');s.occupato=true;document.getElementById('bHint').style.display='none';fadeTo(0,.9);
+    for(const n of ['ramone-1','ramone-2','ramone-3','ramone-4'])try{A.loadChar(n)}catch(e){}   /* (28 nov) si caricano mentre Nick e' ancora alla macchina */
     A.setEng&&A.setEng(.5,true);const f=PARK_FA();PK.fa=f;PK.sc=f.w/AIU.fa.w;
     s.sequenza(async()=>{await pausa(1.0);await s.dici(NICK_ATT,'Mi sa che mi son perso.',{frontale:false});await pausa(.8);
       PK.fase=1;PK.tShake=PK.t;scoppioSuono();A.setEng&&A.setEng(0,false);PK.fumoOn=true;await pausa(1.6);        // scoppio, sussulto, l'auto si ferma e fuma dal cofano
       await s.dici(NICK_ATT,'Dannazione.',{frontale:false});await pausa(.6);
-      PK.fase=2;PK.tPorta=PK.t;A.sfx.plic();await pausa(.5);PK.fase=3;PK.tEsce=PK.t;A.sfx.thud();await pausa(1.8);              // apre lo sportello e scende, davanti al fumo
+      PK.fase=2;PK.tPorta=PK.t;try{A.motore.suonaClip('audio/effetti/sportello_apre_r1.mp3',.9)}catch(e){}await pausa(.8);   // (28 nov) prima si apre lo sportello (lato guida, visto da dietro)...
+      PK.fase=3;PK.tEsce=PK.t;A.sfx.thud();await pausa(1.1);                                                                  // ...Nick scende da dietro lo sportello, davanti al fumo...
+      PK.tChiude=PK.t;try{A.motore.suonaClip('audio/effetti/sportello_chiude_r1.mp3',.9)}catch(e){}await pausa(.9);            // ...e lo richiude
       await s.dici(NICK_ATT,'Ma perché succedono tutte a me? E ora che faccio? Devo cercare aiuto.',{frontale:false});
       await pausa(.7);s.vaiScena('c2-scorcio')})},
   aggiorna(s,dt){const a=s.attori['protagonista-esterno'];if(a)a.visibile=false;PK.t+=dt;const f=PK.fa;
@@ -781,7 +784,14 @@ registraScena({
     for(const p of PK.fumo){gg.globalAlpha=Math.max(0,.55*(1-p.t/3.2));gg.fillStyle='#bfc0c6';gg.beginPath();gg.arc(p.x,p.y,p.r,0,Math.PI*2);gg.fill()}gg.globalAlpha=1;
     // Nick scende dal lato sinistro e si ferma davanti all'auto e al fumo (sempre sopra il fumo)
     if(PK.fase>=3){const c=A.CHARS['protagonista-esterno'];if(c&&c.ready&&c.img.naturalWidth){const fr=c.fr.front,sc=f.h*1.3/c.h,u=Math.min(1,(t-PK.tEsce)/1.4),e=u*u*(3-2*u),
-      nx=f.x+f.w*.12-e*f.w*.22,ny=f.y+f.h+1+e*f.h*.35;gg.save();gg.imageSmoothingEnabled=false;gg.drawImage(c.img,fr.x,fr.y,c.w,c.h,nx-c.ax*sc,ny-c.h*sc,c.w*sc,c.h*sc);gg.restore()}}}
+      nx=f.x+f.w*.02-e*f.w*.32,ny=f.y+f.h+1+e*f.h*.35;gg.save();gg.beginPath();gg.rect(-50,-50,f.x+f.w*.065+50,400);gg.clip();   /* (28 nov) esce da dietro lo sportello: mai sopra la carrozzeria */
+      gg.imageSmoothingEnabled=false;gg.drawImage(c.img,fr.x,fr.y,c.w,c.h,nx-c.ax*sc,ny-c.h*sc,c.w*sc,c.h*sc);gg.restore()}}
+    // (28 nov) sportello lato guida aperto (visto da dietro: un pannello che si stacca dal fianco sinistro); sopra Nick, che ne esce
+    {const sg=(x,a,b)=>Math.max(0,Math.min(1,(x-a)/(b-a))),e=sg(t-PK.tPorta,0,.5)*(1-sg(t-PK.tChiude,0,.35));
+     if(e>.02){const yt=f.y+f.h*.30,yb=f.y+f.h*.84,dx=f.w*.2*e,dy=f.h*.06*e,x0=f.x+f.w*.065;
+      gg.save();gg.beginPath();gg.moveTo(x0,yt);gg.lineTo(x0-dx,yt+dy-f.h*.02*e);gg.lineTo(x0-dx,yb+dy);gg.lineTo(x0,yb);gg.closePath();gg.fillStyle='#6a5a52';gg.fill();
+      gg.beginPath();gg.moveTo(x0,yt+f.h*.04);gg.lineTo(x0-dx,yt+dy+f.h*.01*e);gg.lineTo(x0-dx,yt+dy+f.h*.2);gg.lineTo(x0,yt+f.h*.22);gg.closePath();gg.fillStyle='#27313f';gg.fill();
+      gg.strokeStyle='#14141c';gg.lineWidth=.7;gg.beginPath();gg.moveTo(x0,yt);gg.lineTo(x0-dx,yt+dy-f.h*.02*e);gg.lineTo(x0-dx,yb+dy);gg.lineTo(x0,yb);gg.stroke();gg.restore()}}}
 });
 function PARK_FA(){return {"x":127.5,"y":52.71,"w":32.5,"h":27.08}}   // PARKFA (dati scritti da aggiorna_viaggio3.py)
 
@@ -794,7 +804,10 @@ registraScena({
   giocatore:'protagonista-esterno',nomeGiocatore:'NICK',partenza:{x:236,y:97,dir:'W'},
   attori:[{nome:'ramone-1',etichetta:'RAMONE',x:127,y:79,dir:'S',k:1.152},{nome:'ramone-2',etichetta:'RAMONE',x:137,y:79,dir:'S',k:1.152},{nome:'ramone-3',etichetta:'RAMONE',x:147,y:79,dir:'S',k:1.152},{nome:'ramone-4',etichetta:'RAMONE',x:157,y:79,dir:'S',k:1.152}],
   area:[[70,70],[236,70],[236,100],[70,100]],ostacoli:[[[100,70],[166,70],[166,80],[100,80]]],rif:[90,1.14],audioPassi:false,ambiente:{stanza:0,vento:.25,foglie:1,pioggia:0,fuoco:0},suggerimento:'',senzaEtichette:true,
-  entra(s){SCO.t=0;SCO.prossimo=.8;SCO.caos=true;const p=s.giocatore;fadeTo(0,.9);s.occupato=true;document.getElementById('bHint').style.display='none';if(p){p.x=236;p.y=97;p.dir='W';p.state='idle'}
+  entra(s){SCO.t=0;SCO.prossimo=.8;SCO.caos=true;const p=s.giocatore;
+    {const R=['ramone-1','ramone-2','ramone-3','ramone-4'],t0=performance.now(),pr=()=>R.every(n=>{const c=A.CHARS[n];return c&&c.ready&&c.img.naturalWidth});   /* (28 nov) lo schermo resta nero finche' i Ramones non sono pronti: la dissolvenza parte con loro gia' al muro */
+     const att=()=>{if(pr()||performance.now()-t0>6000)fadeTo(0,.8);else setTimeout(att,50)};A.fade.a=1;A.fade.to=1;att()}
+    s.occupato=true;document.getElementById('bHint').style.display='none';if(p){p.x=236;p.y=97;p.dir='W';p.state='idle'}
     s.sequenza(async()=>{await pausa(1.6);await p.vaiA(188,96,false,'W');p.dir='W';await pausa(.8);const F={frontale:false};
       await s.dici(p,'Scusate ragazzi, ho bisogno di aiuto.',F);await pausa(3.4);                       // loro continuano con i versi, caotici
       await s.dici(p,"Ecco, ci risiamo. Va'. Proviamo a vedere se ho più fortuna dentro il parco.",F);await pausa(.4);
